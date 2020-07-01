@@ -7,8 +7,9 @@ import com.atlassian.jira.user.UserProjectHistoryManager;
 
 import java.util.Map;
 
-public interface MetricsInfo {
+public interface ProjectMonitor {
     String PROJECT = "project";
+    String ISSUE = "issue";
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
     UserProjectHistoryManager getUserProjectHistoryManager();

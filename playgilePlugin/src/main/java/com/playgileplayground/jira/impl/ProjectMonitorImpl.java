@@ -1,5 +1,7 @@
 package com.playgileplayground.jira.impl;
 
+import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
+
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
@@ -28,19 +30,17 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import static com.atlassian.jira.security.Permissions.BROWSE;
-import static com.atlassian.jira.security.Permissions.PROJECT_ADMIN;
-import static com.atlassian.jira.security.Permissions.BROWSE;
 
 @Scanned
-public class MetricsInfoImpl extends AbstractJiraContextProvider implements com.playgileplayground.jira.api.MetricsInfo {
-    private static final Logger log = Logger.getLogger(MetricsInfoImpl.class);
+public class ProjectMonitorImpl extends AbstractJiraContextProvider implements com.playgileplayground.jira.api.ProjectMonitor {
+    private static final Logger log = Logger.getLogger(ProjectMonitorImpl.class);
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
 
     List<Issue> issues;
     Issue issue;
 
-    public MetricsInfoImpl(UserProjectHistoryManager userProjectHistoryManager){
+    public ProjectMonitorImpl(UserProjectHistoryManager userProjectHistoryManager){
         this.userProjectHistoryManager = userProjectHistoryManager;
     }
 
@@ -53,7 +53,10 @@ public class MetricsInfoImpl extends AbstractJiraContextProvider implements com.
             contextMap.put(PROJECT, currentProject);
             this.issues = this.getAllIssues(applicationUser, currentProject);
             if (null != this.issues)
-                contextMap.put("issue", issues.get(0));
+            {
+                contextMap.put(ISSUE, issues.get(0));
+                contextMap.put("fields", getAllCustomFieldsForIssue(issues.get(0)));
+            }
             //log.debug("EdGonen issue " + issues.get(0).getSummary());
         }
 
@@ -64,6 +67,28 @@ public class MetricsInfoImpl extends AbstractJiraContextProvider implements com.
         return this.userProjectHistoryManager;
     }
 
+    private String getAllCustomFieldsForIssue(Issue issue)
+    {
+        StringBuilder result = new StringBuilder("Custom objects: ");
+        CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+        /*
+        List<CustomField> customFields = customFieldManager.getCustomFieldObjects(issue);
+        for (CustomField tmpField : customFields)
+        {
+            result.append("\n");
+            result.append(tmpField.getFieldName() + "=");
+            result.append(tmpField.getValue(issue));
+        }
+        */
+        //check the story points
+        Collection <CustomField> storyPoints = customFieldManager.getCustomFieldObjectsByName("Story Points");
+        if (storyPoints != null)
+        {
+            result.append(storyPoints.iterator().next().getValue(issue));
+        }
+        else result.append("### no value for story points ###");
+        return result.toString();
+    }
     private List<Issue> getAllIssues(ApplicationUser applicationUser, Project currentProject) {
         //CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
         //Collection<CustomField> customFields = customFieldManager.getCustomFieldObjectsByName("Sprint");

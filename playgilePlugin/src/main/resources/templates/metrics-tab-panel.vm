@@ -1,9 +1,8 @@
 <div class="mod-header">
     <h3>$i18n.getText('metrics--page--item.label')</h3>
-    <!--a href="/jira/plugins/servlet/projectmonitor">Check Out</a-->
     <table>
         <tr>
-            <td>Project Name</td><td>$project.name</td>
+            <td>Name</td><td>$project.name</td>
         </tr>
         <tr>
             <td>Key</td><td>$project.key</td>
@@ -23,14 +22,17 @@
         <tr>
             <td>Project Lead Email Address</td><td>$project.lead.emailAddress</td>
         </tr>
-        <!--tr>
-            <td>Issue info1</td>
+        <tr>
+            <td>Issue info</td>
             <td>
                 $issue.getSummary()
             </td>
             <td>
                 $issue.getStatusObject().getName()
             </td>
-        </tr-->
+            <td>
+                $fields
+            </td>
+        </tr>
     </table>
 </div>

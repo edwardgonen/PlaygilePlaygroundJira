@@ -26,6 +26,7 @@
 
 
 
+
 Now I'm working on creating a servlet according to tutorial.
 
 I can access it http://localhost:2990/jira/plugins/servlet/projectmonitor
