@@ -1,0 +1,46 @@
+1. Installed Jira 8.5.5
+2. Set JAVA_HOME to C:\Program Files\Java\jdk1.8.0_172
+3. Add to Path %JAVA_HOME%\bin
+4. Download Atlassian Plugin SDK for Windows
+5. Install Plugin SDK
+6. SDK is installed at C:\Applications\Atlassian\atlassian-plugin-sdk-8.0.16
+7. Add C:\Applications\Atlassian\atlassian-plugin-sdk-8.0.16\bin to Path
+8. Create folder for project c:\projects\PlaygilePlayground\PlaygilePlaygroundJira
+9. Run atlas-create-jira-plugin in the said folder
+10. During creation specifty "com.playgileplayground.jira" in groupId and "playgilePlugin" in artefactID. leave version as it is
+		Confirm properties configuration:
+		groupId: com.playgileplayground.jira
+		artifactId: playgilePlugin
+		version: 1.0.0-SNAPSHOT
+		package: com.playgileplayground.jira
+11. Press Enter to confirm
+12. Add or push to remote repository
+13. Run (not sure why it is needed, probably just run unittests)
+		$ cd playgilePlugin
+		$ atlas-integration-test 
+14. Seems that Atlassian SDK installation override the JAVA_HOME. to JAVA_HOME=C:\Applications\Atlassian\atlassian-plugin-sdk-8.0.16\jre
+15. I'm replacing that with my original JAVA_HOME C:\Program Files\Java\jdk1.8.0_172
+16. Run atlas-run -o (the -o switch prevents the download maven all the times)
+17. To package run atlas-package which creates ....jar file
+18. Import it to Jira via Manage Apps, select the JAR file and it is here!
+
+
+
+Now I'm working on creating a servlet according to tutorial.
+
+I can access it http://localhost:2990/jira/plugins/servlet/projectmonitor
+
+
+LOGGGING
+The file is C:\Projects\PlaygilePlayground\PlaygilePlaygroundJira\playgilePlugin\target\jira\home\log\atlassian-jira.log
+need to add
+log4j.logger.com.playgileplayground.jira.impl.MetricsInfoImpl = DEBUG, console, filelog
+log4j.additivity.com.playgileplayground.jira.impl.MetricsInfoImpl = false
+
+to the file
+C:\Users\ext_edg\Atlassian\JIRA\atlassian-jira\WEB-INF\classes\log4j.properties
+
+For test in Playtika
+
+https://jira-sandbox2.playtika.com/
+https://jira-sandbox.playtika.com/
