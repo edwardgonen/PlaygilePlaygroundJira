@@ -1,5 +1,44 @@
 <div class="mod-header">
     <h3>$i18n.getText('metrics--page--item.label')</h3>
+    <!--img style="-webkit-user-select: none" src="https://chart.googleapis.com/chart?cht=p&chs=380x200&chd=t:41,55,4&chl=41%|55%|4%&chdl=Cash|Credit_Card|Check&chco=26AD21|1D82C4|F0A016"-->
+    <html>
+    <head>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+
+            function drawChart() {
+
+                var x = document.getElementById("project").value;
+
+                var data = google.visualization.arrayToDataTable([
+                    ['Year', 'Ideal', 'Predicted'],
+                    [new Date("6/1/2020"),  1000,      500],
+                    [new Date("6/11/2020"),  1170,      460],
+                    [new Date("7/1/2020"),  660,       1120],
+                    [new Date("8/1/2020"),  1030,      540]
+                ]);
+                data.addRow([new Date("9/1/2020"), 3333, 5555]);
+
+
+                var options = {
+                    title: 'Project Monitor ' + '$project.name',
+                    curveType: 'function',
+                    legend: { position: 'bottom' }
+                };
+
+                var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+                chart.draw(data, options);
+            }
+        </script>
+    </head>
+    <body>
+    <div id="curve_chart" style="width: 900px; height: 500px"></div>
+    </body>
+    </html>
+    <input type="hidden" id="project" name="project" value="$project">
     <table>
         <tr>
             <td>Name</td><td>$project.name</td>
