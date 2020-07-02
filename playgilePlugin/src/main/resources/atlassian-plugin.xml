@@ -31,4 +31,11 @@
     <context-provider class="com.playgileplayground.jira.impl.ProjectMonitorImpl"/>
     <resource name="view" type="velocity" location="templates/metrics-tab-panel.vm"/>
   </web-panel>
+    <ao key="ao-module">
+        <description>The configuration of the Active Objects service</description>
+        <entity>com.playgileplayground.jira.persistence.ProjectStatusEntity</entity>
+    </ao>
+    <component-import key="ao" name="Active Objects components" interface="com.atlassian.activeobjects.external.ActiveObjects">
+        <description>Access to the Active Objects service</description>
+    </component-import>
 </atlassian-plugin>
