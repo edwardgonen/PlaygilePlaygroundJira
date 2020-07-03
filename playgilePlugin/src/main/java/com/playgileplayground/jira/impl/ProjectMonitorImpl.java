@@ -1,5 +1,6 @@
 package com.playgileplayground.jira.impl;
 
+import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
@@ -27,6 +28,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import org.apache.log4j.Logger;
 
 import static com.atlassian.jira.security.Permissions.BROWSE;
@@ -36,12 +40,14 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
     private static final Logger log = Logger.getLogger(ProjectMonitorImpl.class);
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
+    @ComponentImport
+    private final ActiveObjects ao;
 
     List<Issue> issues;
-    Issue issue;
 
-    public ProjectMonitorImpl(UserProjectHistoryManager userProjectHistoryManager){
+    public ProjectMonitorImpl(UserProjectHistoryManager userProjectHistoryManager, ActiveObjects ao){
         this.userProjectHistoryManager = userProjectHistoryManager;
+        this.ao = ao;
     }
 
     @Override
@@ -58,6 +64,13 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                 contextMap.put("fields", getAllCustomFieldsForIssue(issues.get(0)));
             }
             //log.debug("EdGonen issue " + issues.get(0).getSummary());
+            //test Active objects
+            ManageActiveObjects mao = new ManageActiveObjects(this.ao);
+            ManageActiveObjectsResult maor = mao.CreateProjectEntity(currentProject.getKey()); //will not create if exists
+            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                maor = mao.GetProjectKey(currentProject.getKey());
+            }
+            contextMap.put(AORESULT, maor.Message);
         }
 
         return contextMap;

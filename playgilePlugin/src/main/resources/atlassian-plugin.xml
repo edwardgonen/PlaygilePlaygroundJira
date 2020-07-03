@@ -33,9 +33,10 @@
   </web-panel>
     <ao key="ao-module">
         <description>The configuration of the Active Objects service</description>
-        <entity>com.playgileplayground.jira.persistence.ProjectStatusEntity</entity>
+        <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity>
     </ao>
-    <component-import key="ao" name="Active Objects components" interface="com.atlassian.activeobjects.external.ActiveObjects">
+    <!--component-import key="ao" name="Active Objects components"
+                      interface="com.atlassian.activeobjects.external.ActiveObjects">
         <description>Access to the Active Objects service</description>
-    </component-import>
+    </component-import-->
 </atlassian-plugin>

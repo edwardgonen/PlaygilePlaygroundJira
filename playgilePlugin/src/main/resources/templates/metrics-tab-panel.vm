@@ -47,7 +47,7 @@
             <td>Key</td><td>$project.key</td>
         </tr>
         <tr>
-            <td>Description</td><td>$project.description</td>
+            <td>Active Object result</td><td>$aoresult</td>
         </tr>
         <tr>
             <td>Project Lead Key</td><td>$project.lead.key</td>

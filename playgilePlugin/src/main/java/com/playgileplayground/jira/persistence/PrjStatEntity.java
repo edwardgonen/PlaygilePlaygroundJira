@@ -7,7 +7,7 @@ import java.util.Date;
 /**
  * Created by Ext_EdG on 7/2/2020.
  */
-public interface ProjectStatusEntity extends Entity {
+public interface PrjStatEntity extends Entity {
     public String getProjectKey();
     public void setProjectKey(String projectKey);
     public double getRemainingStoriesEstimation(Date date);
