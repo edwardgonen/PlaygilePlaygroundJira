@@ -8,8 +8,18 @@ import java.util.Date;
  * Created by Ext_EdG on 7/2/2020.
  */
 public interface PrjStatEntity extends Entity {
-    public String getProjectKey();
-    public void setProjectKey(String projectKey);
-    public double getRemainingStoriesEstimation(Date date);
-    public void setRemainingStoriesEstimation(Date date, double remainingEstimation);
+    String getProjectKey();
+    void setProjectKey(String projectKey);
+    String getRemainingStoriesEstimations();
+    void setRemainingStoriesEstimations(String data);
+    double getProjectTeamVelocity();
+    void setProjectTeamVelocity(double velocity);
+    double getInitialEstimation();
+    void setInitialEstimation(double initialEstimation);
+    double getSprintLength();
+    void setSprintLength(double sprintLength);
+    String getTeamName();
+    void setTeamName(String teamName);
+    Date getProjectStartDate();
+    void setProjectStartDate(Date projectStartDate);
 }

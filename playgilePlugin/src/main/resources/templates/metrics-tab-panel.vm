@@ -5,25 +5,58 @@
     <head>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type="text/javascript">
+
             google.charts.load('current', {'packages':['corechart']});
             google.charts.setOnLoadCallback(drawChart);
 
             function drawChart() {
+                const LINE_SEPARATOR = ",";
+                const PAIR_SEPARATOR = "|";
+                const DATE_FORMAT = "MM/dd/yyyy";
 
-                var x = document.getElementById("project").value;
+                var data = new google.visualization.DataTable();
+                data.addColumn('date', 'Date');
+                data.addColumn('number', 'Ideal');
+                data.addColumn('number', 'Predicted');
 
-                var data = google.visualization.arrayToDataTable([
-                    ['Year', 'Ideal', 'Predicted'],
-                    [new Date("6/1/2020"),  1000,      500],
-                    [new Date("6/11/2020"),  1170,      460],
-                    [new Date("7/1/2020"),  660,       1120],
-                    [new Date("8/1/2020"),  1030,      540]
-                ]);
-                data.addRow([new Date("9/1/2020"), 3333, 5555]);
+                var chartRows = '$chartrows';
+                //split and parse
+                if (typeof chartRows === 'undefined' || chartRows === null)
+                {
+                    alert("No rows for the chart");
+                    return;
+                }
 
+                var lines = chartRows.split(LINE_SEPARATOR);
+                if (lines.length <= 0)
+                {
+                    alert("Wrong rows format " + chartRows);
+                    return;
+                }
+                lines.forEach(function (line, index) {
+                    if (line.length > 0)//non empty line
+                    {
+                        //split by pair separator
+                        var items = line.split(PAIR_SEPARATOR);
+                        if (items.length < 3)
+                        {
+                            alert("Wrong line format " + line);
+                        }
 
+                        var date = new Date(items[0]);
+
+                        var ideal = parseFloat(items[1]);
+                        if (isNaN(ideal)) ideal = null;
+
+                        var predicted = parseFloat(items[2]);
+                        if (isNaN(predicted)) predicted = null;
+
+                        data.addRow([date, ideal, predicted]);
+                        //data.addRow([new Date(2010, 1, 1),  37.8, 80.8]);
+                    }
+                });
                 var options = {
-                    title: 'Project Monitor ' + '$project.name',
+                    title: 'Project Monitor ',
                     curveType: 'function',
                     legend: { position: 'bottom' }
                 };
@@ -31,6 +64,7 @@
                 var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
 
                 chart.draw(data, options);
+
             }
         </script>
     </head>
@@ -56,7 +90,7 @@
             <td>Project Lead Name</td><td>$project.lead.name</td>
         </tr>
         <tr>
-            <td>Project Lead Display Name</td><td>$project.lead.displayName</td>
+            <td>Status text</td><td>$statustext</td>
         </tr>
         <tr>
             <td>Project Lead Email Address</td><td>$project.lead.emailAddress</td>

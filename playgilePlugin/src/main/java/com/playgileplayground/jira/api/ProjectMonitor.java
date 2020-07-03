@@ -11,6 +11,8 @@ public interface ProjectMonitor {
     String PROJECT = "project";
     String ISSUE = "issue";
     String AORESULT = "aoresult";
+    String CHARTROWS = "chartrows";
+    String STATUSTEXT = "statustext";
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
     UserProjectHistoryManager getUserProjectHistoryManager();
