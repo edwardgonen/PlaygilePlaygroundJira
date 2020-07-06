@@ -15,6 +15,10 @@ public interface ProjectMonitor {
     String STATUSTEXT = "statustext";
     String STORYPOINTS = "storypoints";
     String SPRINTINFO = "sprintinfo";
+    String MAINJAVACLASS = "mainjavaclass";
+    String ALLISOK = "allisok";
+    String MESSAGETODISPLAY = "messagetodisplay";
+    String PROJECTVERSIONS = "projectversions";
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
     UserProjectHistoryManager getUserProjectHistoryManager();

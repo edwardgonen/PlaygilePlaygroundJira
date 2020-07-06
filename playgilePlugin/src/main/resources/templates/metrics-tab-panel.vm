@@ -1,6 +1,9 @@
-<div class="mod-header">
-    <h3>$i18n.getText('metrics--page--item.label')</h3>
+<tr class="mod-header">
+    <h3>$i18n.getText('metrics--page--item.label') for $project.name</h3>
     <!--img style="-webkit-user-select: none" src="https://chart.googleapis.com/chart?cht=p&chs=380x200&chd=t:41,55,4&chl=41%|55%|4%&chdl=Cash|Credit_Card|Check&chco=26AD21|1D82C4|F0A016"-->
+
+
+
     <html>
     <head>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -66,34 +69,53 @@
                 chart.draw(data, options);
 
             }
+            function OnRecalculateClick()
+            {
+                var velocity = document.getElementById("velocity").value;
+                var releaseversion = document.getElementById("releaseversion").value;
+                alert(velocity + " " + releaseversion);
+                alert('$mainjavaclass.testCallFromVelocity("lll")');
+                window.onbeforeunload = null;
+                location.reload();
+            }
         </script>
     </head>
-    <body>
-    <div id="curve_chart" style="width: 900px; height: 500px"></div>
-    </body>
+    #if ($allisok)
+        <body>
+            <form id="admin" class="aui">
+                <tr>
+                <tr class="field-group">
+                    <label for="versionlabel">Release version</label>
+                    <!--input type="text" id="releaseversion" name="releaseversion" class="text"-->
+                    <select id="releaseversion" name="releaseversion">
+                        #foreach( $version in $projectversions )
+                            <option value="$version">$version</option>
+                        #end
+                    </select>
+                </tr>
+                <tr class="field-group">
+                    <label for="velocity">Team's velocity</label>
+                    <input type="number" id="velocity" name="velocity" class="text" min="1" max="5" style="width: 10em;">
+                </tr>
+                <tr class="field-group">
+                    <input type="submit" value="Recalculate" class="button" onClick="OnRecalculateClick()">
+                </tr>
+                </tr>
+            </form>
+            <div id="curve_chart" style="width: 900px; height: 500px"></div>
+        </body>
+    #else
+        <h2>$messagetodisplay</h2>
+    #end
     </html>
-    <input type="hidden" id="project" name="project" value="$project">
+
+
     <table>
-        <tr>
-            <td>Name</td><td>$project.name</td>
-        </tr>
-        <tr>
-            <td>Key</td><td>$project.key</td>
-        </tr>
         <tr>
             <td>Active Object result</td><td>$aoresult</td>
         </tr>
         <tr>
-            <td>Project Lead Key</td><td>$project.lead.key</td>
-        </tr>
-        <tr>
-            <td>Project Lead Name</td><td>$project.lead.name</td>
-        </tr>
-        <tr>
             <td>Status text</td><td>$statustext</td>
-        </tr>
-        <tr>
-            <td>Project Lead Email Address</td><td>$project.lead.emailAddress</td>
         </tr>
         <tr>
             <td>Issue info</td>

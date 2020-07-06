@@ -1,22 +1,19 @@
 package com.playgileplayground.jira.impl;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
-import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.IssueManager;
-import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserProjectHistoryManager;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import org.apache.log4j.Logger;
-import org.ofbiz.core.entity.GenericEntityException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,28 +40,84 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
     public Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
         Map<String, Object> contextMap = new HashMap<>();
         String statusText = "";
+
+        String messageToDisplay = "";
+        boolean bAllisOk = false;
+
+
         Project currentProject = userProjectHistoryManager.getCurrentProject(BROWSE, applicationUser);
-
-
+        contextMap.put(MAINJAVACLASS, this);
+        JiraInterface jiraInterface = new JiraInterface();
         if(null != currentProject) {
             contextMap.put(PROJECT, currentProject);
-            this.issues = this.getAllIssues(applicationUser, currentProject);
-
+            this.issues = jiraInterface.getAllIssues(applicationUser, currentProject);
 
             if (null != this.issues)
             {
-                if (issues.size() > 0) contextMap.put(ISSUE, issues.get(0));
                 if (issues.size() > 0) {
-                    String[] storyPointValues = getStoryPointsForIssue(issues.get(0));
+                    contextMap.put(ISSUE, issues.get(0));
+
+                    String[] storyPointValues = jiraInterface.getStoryPointsForIssue(issues.get(0));
                     if (storyPointValues != null && storyPointValues.length > 0) {
                         contextMap.put(STORYPOINTS, storyPointValues[0]);
                     }
 
-                    String[] sprintsForIssue = getAllSprintsForIssue(issues.get(0));
+                    String[] sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
                     if (sprintsForIssue != null && sprintsForIssue.length > 0) {
                         contextMap.put(SPRINTINFO, sprintsForIssue[0]);
                     }
                 }
+                else
+                {
+                    bAllisOk = false;
+                    messageToDisplay = "There is none user story/issue defined for this project";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
+
+
+                //do we have any versions defined?
+                Collection<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
+                if (versions == null)
+                {
+                    bAllisOk = false;
+                    messageToDisplay = "Failed to retrieve a list of versions for the project. Please add release versions";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
+                else
+                {
+                    if (versions.size() > 0)
+                    {
+                        contextMap.put(PROJECTVERSIONS, versions);
+
+                        //get selected version and velocity from AO
+
+                        //if no version selected yet - give a message to select an recalculate
+                        //also check if no velocity stored yet - also give a message
+                        // if one of above is correct display a message to the user
+
+                        //now let's get all issues
+                        //from the issues find all those which have the selected version
+                        //find all User stories of the issues and only those that are not complteted
+                        //get list of sprints out of user stories.
+
+                        //At least one should be either:
+                        // ACTIVE
+                        // CLOSED
+                        // - this is a flag that project started
+                        //calculate remaining sum of story points
+                    }
+                    else
+                    {
+                        messageToDisplay = "The list of versions for the project is empty. Please add release versions";
+                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                    }
+                }
+            }
+            else
+            {
+                bAllisOk = false;
+                messageToDisplay = "Failed to retrieve project's issues";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
             //log.debug("EdGonen issue " + issues.get(0).getSummary());
 
@@ -125,87 +178,33 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
             }
             contextMap.put(AORESULT, maor.Message);
             contextMap.put(STATUSTEXT, statusText);
+
         }
-        return contextMap;
+        else
+        {
+            //no current project
+            bAllisOk = false;
+            messageToDisplay = "Cannot identify current project. Please try to reload this page";
+            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+
+        }
+        bAllisOk = true;
+        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
     }
     @Override
     public UserProjectHistoryManager getUserProjectHistoryManager() {
         return this.userProjectHistoryManager;
     }
-
-
-    private String[] getSpecificCustomFields(Issue issue, String key)
+    public String testCallFromVelocity(String str)
     {
-        String[] result = null;
-        CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
-        Collection <CustomField> fields = customFieldManager.getCustomFieldObjectsByName(key);
-        if (fields != null && fields.size() > 0)
-        {
-            result = new String[fields.size()];
-            int i = 0;
-            for (CustomField field : fields)
-            {
-                try {
-                    result[i] = field.getValue(issue).toString();
-                }
-                catch (Exception e)
-                {
-                    result[i] = "";
-                }
-                finally {
-                    if (result[i] == null)
-                    {
-                        System.out.println("$$$ NULL");
-                        result[i] = "";
-                    }
-                }
-                i++;
-            }
-        }
-        return result;
-    }
-    private String[] getAllSprintsForIssue(Issue issue)
-    {
-        return getSpecificCustomFields(issue, "Sprint");
-    }
-    private String[] getStoryPointsForIssue(Issue issue)
-    {
-        return getSpecificCustomFields(issue, "Story Points");
-    }
-    private String getAllCustomFieldsForIssue(Issue issue)
-    {
-        StringBuilder result = new StringBuilder("Custom objects: ");
-        CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
-
-        List<CustomField> customFields = customFieldManager.getCustomFieldObjects(issue);
-        for (CustomField tmpField : customFields)
-        {
-            result.append("\n");
-            result.append(tmpField.getFieldName() + "=");
-            result.append(tmpField.getValue(issue));
-        }
-        return result.toString();
-    }
-    private List<Issue> getAllIssues(ApplicationUser applicationUser, Project currentProject) {
-        //CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
-        //Collection<CustomField> customFields = customFieldManager.getCustomFieldObjectsByName("Sprint");
-
-        IssueManager issueManager = ComponentAccessor.getIssueManager();
-
-
-        Collection<Long> allIssueIds = null;
-        try {
-            allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
-        } catch (GenericEntityException e) {
-            System.out.println("Failed to get issue ids " + e.toString());
-        }
-        List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
-        return allIssues;
-
+        System.out.println("%%% " + str);
+        return str + " @@@";
     }
 
-    private void getAllSprints()
+    private Map<String, Object> ReturnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
     {
-
+        contextMap.put(ALLISOK, bAllisOk);
+        contextMap.put(MESSAGETODISPLAY, messageToDisplay);
+        return contextMap;
     }
 }
