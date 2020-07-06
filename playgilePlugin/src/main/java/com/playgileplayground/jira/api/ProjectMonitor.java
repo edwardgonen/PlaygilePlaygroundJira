@@ -10,6 +10,11 @@ import java.util.Map;
 public interface ProjectMonitor {
     String PROJECT = "project";
     String ISSUE = "issue";
+    String AORESULT = "aoresult";
+    String CHARTROWS = "chartrows";
+    String STATUSTEXT = "statustext";
+    String STORYPOINTS = "storypoints";
+    String SPRINTINFO = "sprintinfo";
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
     UserProjectHistoryManager getUserProjectHistoryManager();
