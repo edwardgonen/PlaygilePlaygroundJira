@@ -36,14 +36,21 @@ public final class ManageActiveObjects{
         try {
             PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
             if (projectStatusEntities.length > 0) {
-                result.Code = ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS;
-                result.Message = "Entry already exists -- " + projectKey + " " + projectStatusEntities.length;
-                return result;
+
+                PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+                if(prjStatEntity != null) {//Check whether optional has element you are looking for
+                    result.Code = ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS;
+                    result.Message = "Entry already exists -- " + projectKey + " " + projectStatusEntities.length;
+                    return result;
+                }
+                else //not found - create it
+                {
+                    PrjStatEntity prjCreatedStatEntity = ao.create(PrjStatEntity.class);
+                    prjCreatedStatEntity.setProjectKey(projectKey);
+                    prjCreatedStatEntity.save();
+                    result.Message = "Created";
+                }
             }
-            PrjStatEntity prjStatEntity = ao.create(PrjStatEntity.class);
-            prjStatEntity.setProjectKey(projectKey);
-            prjStatEntity.save();
-            result.Message = "Created";
         }
         catch (Exception ex)
         {

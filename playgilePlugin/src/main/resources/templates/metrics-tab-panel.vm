@@ -104,7 +104,10 @@
                 $issue.getStatusObject().getName()
             </td>
             <td>
-                $fields
+                $issue.getId()
+            </td>
+            <td>
+                $storypoints
             </td>
         </tr>
     </table>

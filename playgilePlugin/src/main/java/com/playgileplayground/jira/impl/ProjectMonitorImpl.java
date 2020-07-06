@@ -2,15 +2,18 @@ package com.playgileplayground.jira.impl;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.bc.issue.search.SearchService;
+import com.atlassian.jira.bc.project.component.ProjectComponent;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
+import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserProjectHistoryManager;
 import com.atlassian.jira.web.bean.PagerFilter;
@@ -20,6 +23,7 @@ import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.restapi.RestAPI;
 import org.apache.log4j.Logger;
+import org.ofbiz.core.entity.GenericEntityException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -47,14 +51,18 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         Map<String, Object> contextMap = new HashMap<>();
         String statusText = "";
         Project currentProject = userProjectHistoryManager.getCurrentProject(BROWSE, applicationUser);
+
+
         if(null != currentProject) {
             contextMap.put(PROJECT, currentProject);
-
             this.issues = this.getAllIssues(applicationUser, currentProject);
+
+
             if (null != this.issues)
             {
                 if (issues.size() > 0) contextMap.put(ISSUE, issues.get(0));
-                if (issues.size() > 0) contextMap.put("fields", getAllCustomFieldsForIssue(issues.get(0)));
+                if (issues.size() > 0)
+                    contextMap.put(STORYPOINTS, getAllCustomFieldsForIssue(issues.get(0)));
             }
             //log.debug("EdGonen issue " + issues.get(0).getSummary());
 
@@ -63,22 +71,22 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
 
                 //maor = mao.GetProjectKey(currentProject.getKey());
-                //maor = mao.DeleteProjectEntity(currentProject.getKey());
+               // maor = mao.DeleteProjectEntity(currentProject.getKey());
 
 
                 Date tmpDate;
 
                 try {
-/*
-                    tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
-                    maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 400);
+
+                    //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
+                    //maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 400);
 
                     tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/2/2020");
                     maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 350);
 
-                    tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/14/2020");
-                    maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 300);
-*/
+                    //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/14/2020");
+                    //maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 300);
+
                     tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/2/2020");
                     maor = mao.GetRemainingEstimationsForDate(currentProject.getKey(), tmpDate);
 
@@ -116,9 +124,6 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
             contextMap.put(AORESULT, maor.Message);
             contextMap.put(STATUSTEXT, statusText);
         }
-        //**********
-        //RestAPI ra = new RestAPI();
-        //ra.TestGet();
         return contextMap;
     }
     @Override
@@ -150,33 +155,25 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         return result.toString();
     }
     private List<Issue> getAllIssues(ApplicationUser applicationUser, Project currentProject) {
-        CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
-        Collection<CustomField> customFields = customFieldManager.getCustomFieldObjectsByName("Sprint");
+        //CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
+        //Collection<CustomField> customFields = customFieldManager.getCustomFieldObjectsByName("Sprint");
 
-        SearchService searchProvider = ComponentAccessor.getComponentOfType(SearchService.class);
-        JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
+        IssueManager issueManager = ComponentAccessor.getIssueManager();
 
-        builder.where()
-                .project(currentProject.getKey())
-                .and()
-                .sub()
-                .issueType("Story").or().issueType("Bug").or().issueType("Task")
-                .endsub();
-                //.and()
-                //.customField(customField.getIdAsLong()).eq(sprint.trim()
 
+        Collection<Long> allIssueIds = null;
         try {
-            SearchResults results = searchProvider
-                    .searchOverrideSecurity(applicationUser, builder.buildQuery(), PagerFilter.getUnlimitedFilter());
-            if (results != null)
-                return results.getIssues();
-            else
-                return null;
+            allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
+        } catch (GenericEntityException e) {
+            System.out.println("Failed to get issue ids " + e.toString());
         }
-        catch (com.atlassian.jira.issue.search.SearchException se)
-        {
-            return null;
-        }
+        List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
+        return allIssues;
+
+    }
+
+    private void getAllSprints()
+    {
 
     }
 }
