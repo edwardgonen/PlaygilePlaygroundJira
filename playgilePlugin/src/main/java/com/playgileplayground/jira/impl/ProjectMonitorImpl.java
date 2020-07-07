@@ -11,6 +11,7 @@ import com.atlassian.jira.user.UserProjectHistoryManager;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
+import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import org.apache.log4j.Logger;
@@ -57,15 +58,15 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                 if (issues.size() > 0) {
                     contextMap.put(ISSUE, issues.get(0));
 
-                    String[] storyPointValues = jiraInterface.getStoryPointsForIssue(issues.get(0));
-                    if (storyPointValues != null && storyPointValues.length > 0) {
-                        contextMap.put(STORYPOINTS, storyPointValues[0]);
-                    }
+                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issues.get(0));
+                    contextMap.put(STORYPOINTS, storyPointValue);
 
-                    String[] sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
-                    if (sprintsForIssue != null && sprintsForIssue.length > 0) {
-                        contextMap.put(SPRINTINFO, sprintsForIssue[0]);
-                    }
+                    Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
+                    System.out.println(" **** " + sprintsForIssue.iterator().next().toString());
+//                    if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
+//                        contextMap.put(SPRINTINFO, sprintsForIssue.iterator().next());
+//                   }
+                    contextMap.put(SPRINTINFO, "kuku");
                 }
                 else
                 {

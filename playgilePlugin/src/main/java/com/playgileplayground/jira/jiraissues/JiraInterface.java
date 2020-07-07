@@ -30,13 +30,34 @@ public class JiraInterface {
         List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
         return allIssues;
     }
-    public String[] getAllSprintsForIssue(Issue issue)
+    public Collection<PlaygileSprint> getAllSprintsForIssue(Issue issue)
     {
-        return getSpecificCustomFields(issue, "Sprint");
+        Collection<PlaygileSprint> result = new ArrayList<>();
+        String[] allSprintsAsStrings = getSpecificCustomFields(issue, "Sprint");
+        if (allSprintsAsStrings != null && allSprintsAsStrings.length > 0)
+        {
+            for (String item : allSprintsAsStrings) {
+                PlaygileSprint playgileSprint = new PlaygileSprint();
+                result.add(playgileSprint.parse(item));
+            }
+        }
+
+        return result;
     }
-    public String[] getStoryPointsForIssue(Issue issue)
+    public double getStoryPointsForIssue(Issue issue)
     {
-        return getSpecificCustomFields(issue, "Story Points");
+        double result = -1;
+        String[] values = getSpecificCustomFields(issue, "Story Points");
+        if (values != null && values.length > 0)
+        {
+            try {
+                result = Double.parseDouble(values[0]);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+        return result;
     }
 
 
@@ -98,5 +119,6 @@ public class JiraInterface {
         }
         return result.toString();
     }
+
 
 }

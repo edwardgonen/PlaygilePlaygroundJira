@@ -132,7 +132,7 @@
                 $storypoints
             </td>
             <td>
-                $sprintinfo
+                $sprintinfo.toString()
             </td>
         </tr>
     </table>
