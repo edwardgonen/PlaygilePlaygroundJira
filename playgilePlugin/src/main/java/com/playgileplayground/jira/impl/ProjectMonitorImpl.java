@@ -59,13 +59,16 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                     contextMap.put(ISSUE, issues.get(0));
 
                     double storyPointValue = jiraInterface.getStoryPointsForIssue(issues.get(0));
+                    if (storyPointValue <= 0) storyPointValue = 21;
                     contextMap.put(STORYPOINTS, storyPointValue);
 
+/*
                     Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
                     System.out.println(" **** " + sprintsForIssue.iterator().next().toString());
 //                    if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
 //                        contextMap.put(SPRINTINFO, sprintsForIssue.iterator().next());
 //                   }
+*/
                     contextMap.put(SPRINTINFO, "kuku");
                 }
                 else

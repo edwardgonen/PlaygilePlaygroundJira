@@ -2,6 +2,8 @@ package com.playgileplayground.jira.jiraissues;
 
 import org.joda.time.DateTime;
 
+import java.util.Date;
+
 /**
  * Created by Ext_EdG on 7/7/2020.
  */
@@ -23,9 +25,9 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
     private long rapidViewId = -1;
     private SprintState state = SprintState.UNDEFINED;
     private String name = "";
-    private DateTime startDate = new DateTime();
-    private DateTime endDate = new DateTime();
-    private DateTime completeDate = new DateTime();
+    private Date startDate = new Date();
+    private Date endDate = new Date();
+    private Date completeDate = new Date();
     private long sequence;
     private String goal = "";
 
@@ -36,14 +38,15 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
 
         if (input != null && !input.isEmpty())
         {
+            System.out.println("input = " + input);
             //find second "["
-            int beginIndex = input.indexOf("[", input.indexOf("is") + 1);
+            int beginIndex = input.lastIndexOf("[");
             if (beginIndex >= 0) {
                 int endIndex = input.indexOf("]", beginIndex);
                 if (endIndex > beginIndex)
                 {
                     //get the substring
-                    String sprintInfo = input.substring(beginIndex, endIndex);
+                    String sprintInfo = input.substring(beginIndex + 1, endIndex);
                     if (!sprintInfo.isEmpty())
                     {
                         //split it
@@ -64,7 +67,7 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
                 }
             }
         }
-
+        System.out.println("%%% " + toString());
         return result;
     }
     @Override
@@ -98,15 +101,15 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
         return name;
     }
 
-    public DateTime getStartDate() {
+    public Date getStartDate() {
         return startDate;
     }
 
-    public DateTime getEndDate() {
+    public Date getEndDate() {
         return endDate;
     }
 
-    public DateTime getCompleteDate() {
+    public Date getCompleteDate() {
         return completeDate;
     }
 
@@ -121,7 +124,6 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
     private boolean ConvertToField(String name, String value)
     {
         boolean result = true;
-        System.out.println("*** " + name + "=" + value);
         switch (name)
         {
             case "id":
@@ -168,32 +170,31 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
             case "startDate":
                 try
                 {
-                    startDate = new DateTime(value);
+                    startDate = new Date(value);
                 }
                 catch (Exception ex)
                 {
-                    startDate = new DateTime();
-                    System.out.println("exception on startDate");
+                    startDate = new Date();
                 }
                 break;
             case "endDate":
                 try
                 {
-                    endDate = new DateTime(value);
+                    endDate = new Date(value);
                 }
                 catch (Exception ex)
                 {
-                    endDate = new DateTime();
+                    endDate = new Date();
                 }
                 break;
             case "completeDate":
                 try
                 {
-                    completeDate = new DateTime(value);
+                    completeDate = new Date(value);
                 }
                 catch (Exception ex)
                 {
-                    completeDate = new DateTime();
+                    completeDate = new Date();
                 }
                 break;
             case "sequence":
