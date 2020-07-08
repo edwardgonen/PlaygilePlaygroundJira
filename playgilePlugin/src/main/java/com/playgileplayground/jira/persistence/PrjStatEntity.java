@@ -22,4 +22,8 @@ public interface PrjStatEntity extends Entity {
     void setTeamName(String teamName);
     Date getProjectStartDate();
     void setProjectStartDate(Date projectStartDate);
+    boolean getProjectStartedFlag();
+    void setProjectStartedFlag(boolean flag);
+    String getProjectVersionLabel();
+    void setProjectVersionLabel(String label);
 }

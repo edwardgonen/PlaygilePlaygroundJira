@@ -74,7 +74,8 @@
                 var velocity = document.getElementById("velocity").value;
                 var releaseversion = document.getElementById("releaseversion").value;
                 alert(velocity + " " + releaseversion);
-                alert('$mainjavaclass.testCallFromVelocity("lll")');
+                //alert("return from java " + lll);
+                //alert('$mainjavaclass.testCallFromVelocity("kuku")');
                 window.onbeforeunload = null;
                 location.reload();
             }
