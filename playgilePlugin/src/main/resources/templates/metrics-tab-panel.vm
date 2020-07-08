@@ -13,6 +13,8 @@
             google.charts.setOnLoadCallback(drawChart);
 
             function drawChart() {
+                if (!'$allisok') return;
+
                 const LINE_SEPARATOR = ",";
                 const PAIR_SEPARATOR = "|";
                 const DATE_FORMAT = "MM/dd/yyyy";
@@ -73,67 +75,74 @@
             {
                 var velocity = document.getElementById("velocity").value;
                 var releaseversion = document.getElementById("releaseversion").value;
-                alert(velocity + " " + releaseversion);
-                //alert("return from java " + lll);
-                //alert('$mainjavaclass.testCallFromVelocity("kuku")');
-                /////////////////////////////
                 jQuery.ajax({
                     type: "GET",
-                    //url: "activeobjectsaccess?key=" + "kuku",
-                    url: "/jira/plugins/servlet/activeobjectsaccess",
+                    url: "/jira/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
+                        + "&teamVelocity=" + velocity + "&releaseVersion=" + releaseversion,
                     success: function(data) {
-                        //console.log('dom', self, data);
-                        //self.parent().parent().remove();
-                        alert(data);
+                        //alert(data);
+                        location.reload();
                     },
                     error: function() {
                         alert("error");
                         //console.log('error', arguments);
                     }
                 });
-                ////////////////////////////
 
-                window.onbeforeunload = null;
-                location.reload();
+                //window.onbeforeunload = null;
+
             }
         </script>
     </head>
-    #if ($allisok)
         <body>
+            #if (!$allisok)
+                <h2>$messagetodisplay</h2>
+            #end
             <form id="admin" class="aui">
                 <tr>
                 <tr class="field-group">
                     <label for="versionlabel">Release version</label>
-                    <!--input type="text" id="releaseversion" name="releaseversion" class="text"-->
                     <select id="releaseversion" name="releaseversion">
                         #foreach( $version in $projectversions )
-                            <option value="$version">$version</option>
+                            #if ($version == $selectedprojectversion)
+                                <option value="$version" selected="selected">$version</option>
+                            #else
+                                <option value="$version">$version</option>
+                            #end
                         #end
                     </select>
                 </tr>
                 <tr class="field-group">
                     <label for="velocity">Team's velocity</label>
-                    <input type="number" id="velocity" name="velocity" class="text" min="1" max="5" style="width: 10em;">
+                    <input type="number" id="velocity" value=$teamvelocity name="velocity" class="text" min="0" max="1000" style="width: 10em;">
                 </tr>
                 <tr class="field-group">
                     <input type="submit" value="Recalculate" class="button" onClick="OnRecalculateClick()">
                 </tr>
                 </tr>
             </form>
-            <div id="curve_chart" style="width: 900px; height: 500px"></div>
+            #if ($allisok)
+                <table>
+                    <tr>
+                        <td>
+                            <div id="curve_chart" style="width: 900px; height: 500px"></div>
+                        </td>
+                        <td>
+                            kkkk
+                        </td>
+                        <td>
+                            1111
+                        </td>
+                    </tr>
+                </table>
+            #end
         </body>
-    #else
-        <h2>$messagetodisplay</h2>
-    #end
     </html>
 
 
     <table>
         <tr>
             <td>Active Object result</td><td>$aoresult</td>
-        </tr>
-        <tr>
-            <td>Status text</td><td>$statustext</td>
         </tr>
         <tr>
             <td>Issue info</td>
@@ -153,5 +162,8 @@
                 $sprintinfo.toString()
             </td>
         </tr>
+        <div style="height:120px;width:500px;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
+            $statustext
+        </div>
     </table>
 </div>

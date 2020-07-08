@@ -82,6 +82,80 @@ public final class ManageActiveObjects{
 
         return result;
     }
+    public ManageActiveObjectsResult GetProjectReleaseVersion(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+
+        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
+        if (projectStatusEntities.length <= 0) {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
+            result.Message = "Entry not found -- " + projectKey;
+            return result;
+        }
+
+        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+            String releaseVersion = prjStatEntity.getProjectVersionLabel();
+            result.Result = releaseVersion;
+            result.Message = "Version: " + releaseVersion;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    public ManageActiveObjectsResult GetTeamVelocity(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+
+        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
+        if (projectStatusEntities.length <= 0) {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
+            result.Message = "Entry not found -- " + projectKey;
+            return result;
+        }
+
+        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+            double teamVelocity = prjStatEntity.getProjectTeamVelocity();
+            result.Result = teamVelocity;
+            result.Message = "Velocity " + teamVelocity;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+
+    public ManageActiveObjectsResult AddVelocityAndReleaseVersion(String projectKey, String releaseVersion, double teamVelocity)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+
+        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
+        if (projectStatusEntities.length <= 0) {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
+            result.Message = "Entry not found -- " + projectKey;
+            return result;
+        }
+
+        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+            prjStatEntity.setProjectTeamVelocity(teamVelocity);
+            prjStatEntity.setProjectVersionLabel(releaseVersion);
+            prjStatEntity.save();
+            result.Message = "Data added";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
     public ManageActiveObjectsResult AddRemainingEstimationsRecord(String projectKey, Date date, double remainingEstimations)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();

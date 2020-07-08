@@ -9,6 +9,7 @@ import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.project.version.VersionManager;
 import com.atlassian.jira.user.ApplicationUser;
+import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.util.ArrayList;
@@ -19,12 +20,19 @@ import java.util.List;
  * Created by Ext_EdG on 7/6/2020.
  */
 public class JiraInterface {
+    ProjectMonitorImpl mainClass;
+    public JiraInterface(ProjectMonitorImpl mainClass)
+    {
+        this.mainClass = mainClass;
+    }
     public List<Issue> getAllIssues(ApplicationUser applicationUser, Project currentProject) {
+        mainClass.WriteToStatus("In JiraInterface Getting all issues");
         IssueManager issueManager = ComponentAccessor.getIssueManager();
         Collection<Long> allIssueIds = null;
         try {
             allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
         } catch (GenericEntityException e) {
+            mainClass.WriteToStatus("Failed to get all issues " + e.toString());
             System.out.println("Failed to get issue ids " + e.toString());
         }
         List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);

@@ -19,6 +19,9 @@ public interface ProjectMonitor {
     String ALLISOK = "allisok";
     String MESSAGETODISPLAY = "messagetodisplay";
     String PROJECTVERSIONS = "projectversions";
+    String SELECTEDPROJECTVERSION = "selectedprojectversion";
+    String TEAMVELOCITY = "teamvelocity";
+
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
     UserProjectHistoryManager getUserProjectHistoryManager();

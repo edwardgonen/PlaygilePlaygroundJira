@@ -174,7 +174,7 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
             case "startDate":
                 try
                 {
-                    startDate = DateFormat.getDateInstance().parse(value);
+                    startDate = new DateTime(value).toDate();
                 }
                 catch (Exception ex)
                 {
@@ -184,7 +184,7 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
             case "endDate":
                 try
                 {
-                    endDate = DateFormat.getDateInstance().parse(value);
+                    endDate = new DateTime(value).toDate();
                 }
                 catch (Exception ex)
                 {
@@ -194,7 +194,7 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
             case "completeDate":
                 try
                 {
-                    completeDate = DateFormat.getDateInstance().parse(value);
+                    completeDate = new DateTime(value).toDate();
                 }
                 catch (Exception ex)
                 {
