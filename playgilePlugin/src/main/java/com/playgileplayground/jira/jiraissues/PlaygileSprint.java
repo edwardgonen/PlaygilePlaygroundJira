@@ -2,6 +2,7 @@ package com.playgileplayground.jira.jiraissues;
 
 import org.joda.time.DateTime;
 
+import java.text.DateFormat;
 import java.util.Date;
 
 /**
@@ -62,12 +63,12 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
                                     ConvertToField(pair[0], pair[1]);
                                 }
                             }
+                            result = this;
                         }
                     }
                 }
             }
         }
-        System.out.println("%%% " + toString());
         return result;
     }
     @Override
@@ -77,11 +78,14 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
 
     public String toString()
     {
+        String strStartDate = startDate == null?"": startDate.toString();
+        String strEndDate = endDate == null?"": endDate.toString();
+
         return "id=" + id + ","
             + "name=" + name + ","
             + "state=" + state + ","
-            + "startDate=" + startDate + ","
-            + "endDate=" + endDate;
+            + "startDate=" + strStartDate + ","
+            + "endDate=" + strEndDate;
     }
 
 
@@ -121,10 +125,10 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
         return goal;
     }
 
-    private boolean ConvertToField(String name, String value)
+    private boolean ConvertToField(String itemName, String value)
     {
         boolean result = true;
-        switch (name)
+        switch (itemName)
         {
             case "id":
                 try {
@@ -162,7 +166,7 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
                 }
                 break;
             case "name":
-                if (value != "<null>")
+                if (!value.equals("<null>"))
                     name = value;
                 else
                     name = "";
@@ -170,31 +174,31 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
             case "startDate":
                 try
                 {
-                    startDate = new Date(value);
+                    startDate = DateFormat.getDateInstance().parse(value);
                 }
                 catch (Exception ex)
                 {
-                    startDate = new Date();
+                    startDate = null;
                 }
                 break;
             case "endDate":
                 try
                 {
-                    endDate = new Date(value);
+                    endDate = DateFormat.getDateInstance().parse(value);
                 }
                 catch (Exception ex)
                 {
-                    endDate = new Date();
+                    endDate = null;
                 }
                 break;
             case "completeDate":
                 try
                 {
-                    completeDate = new Date(value);
+                    completeDate = DateFormat.getDateInstance().parse(value);
                 }
                 catch (Exception ex)
                 {
-                    completeDate = new Date();
+                    completeDate = null;
                 }
                 break;
             case "sequence":
@@ -207,7 +211,7 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
                 }
                 break;
             case "goal":
-                if (value != "<null>")
+                if (!value.equals("<null>"))
                     goal = value;
                 else
                     goal = "";
