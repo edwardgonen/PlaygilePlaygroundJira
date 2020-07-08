@@ -19,20 +19,24 @@
     <context>playgilePlugin</context> 
   </web-resource>  
   <web-item name="metrics-page-item" i18n-name-key="metrics--page--item.name" key="metrics--page--item" section="jira.project.sidebar.plugins.navigation" weight="1000"> 
-    <description key="metrics--page--item.description">Menu Item For Project Monitor</description>
-    <icon width="32" height="32">
-      <link linkId="metrics--page--item-icon">${baseurl}/download/resources/${atlassian.plugin.key}:playgilePlugin-resources/images/project-monitoring.png</link>
-    </icon>
+    <description key="metrics--page--item.description">Menu Item For Project Monitor</description>  
+    <icon width="32" height="32"> 
+      <link linkId="metrics--page--item-icon">${baseurl}/download/resources/${atlassian.plugin.key}:playgilePlugin-resources/images/project-monitoring.png</link> 
+    </icon>  
     <label key="metrics--page--item.label"/>  
     <link linkId="metrics--page--item-link">/projects/${pathEncodedProjectKey}?selectedItem=com.atlassian.jira.jira-projects-plugin:metrics-page</link> 
   </web-item>  
   <web-panel name="metrics-page" i18n-name-key="metrics--page.name" key="metrics--page" location="com.atlassian.jira.jira-projects-plugin:metrics-page" weight="1000"> 
     <description key="metrics--page.description">Playgile Project Monitor</description>  
-    <context-provider class="com.playgileplayground.jira.impl.ProjectMonitorImpl"/>
-    <resource name="view" type="velocity" location="templates/metrics-tab-panel.vm"/>
-  </web-panel>
-  <ao key="ao-module">
-        <description>The configuration of the Active Objects service</description>
-        <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity>
-  </ao>
+    <context-provider class="com.playgileplayground.jira.impl.ProjectMonitorImpl"/>  
+    <resource name="view" type="velocity" location="templates/metrics-tab-panel.vm"/> 
+  </web-panel>  
+  <ao key="ao-module"> 
+    <description>The configuration of the Active Objects service</description>  
+    <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity> 
+  </ao>  
+  <servlet name="active Objects Access" i18n-name-key="active-objects-access.name" key="active-objects-access" class="com.playgileplayground.jira.servlet.activeObjectsAccess"> 
+    <description key="active-objects-access.description">The active Objects Access Plugin</description>  
+    <url-pattern>/activeobjectsaccess</url-pattern> 
+  </servlet>
 </atlassian-plugin>

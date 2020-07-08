@@ -2642,3 +2642,26 @@ Add Another Plugin Module? (Y/y/N/n) N: :
 [INFO] ------------------------------------------------------------------------
 
 C:\Projects\PlaygilePlaygroundTest\playgilePlugin>
+
+=================================================================
+add servlet
+
+Choose a number (1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30/31/32/33/34): 21
+[INFO] Google Analytics Tracking is enabled to collect AMPS usage statistics.
+[INFO] Although no personal information is sent, you may disable tracking by adding <allowGoogleTracking>false</allowGoogleTracking> to the amps plugin configuration in your pom.xml
+[INFO] Sending event to Google Analytics: AMPS:jira - Create Plugin Module - jira:Servlet
+Enter New Classname MyServlet: : activeObjectsAccess
+Enter Package Name com.playgileplayground.jira.servlet: :
+Show Advanced Setup? (Y/y/N/n) N: :
+[INFO] Adding the following items to the project:
+[INFO]   [class: com.playgileplayground.jira.servlet.activeObjectsAccess]
+[INFO]   [class: it.com.playgileplayground.jira.servlet.activeObjectsAccessFuncTest]
+[INFO]   [class: ut.com.playgileplayground.jira.servlet.activeObjectsAccessTest]
+[INFO]   [dependency: javax.servlet:servlet-api]
+[INFO]   [dependency: org.apache.httpcomponents:httpclient]
+[INFO]   [dependency: org.mockito:mockito-all]
+[INFO]   [dependency: org.slf4j:slf4j-api]
+[INFO]   [module: servlet]
+[INFO]   i18n strings: 2
+
+Access it by http://localhost:2990/jira/plugins/servlet/activeobjectsaccess

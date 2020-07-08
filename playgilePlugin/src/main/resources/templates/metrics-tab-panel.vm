@@ -76,6 +76,23 @@
                 alert(velocity + " " + releaseversion);
                 //alert("return from java " + lll);
                 //alert('$mainjavaclass.testCallFromVelocity("kuku")');
+                /////////////////////////////
+                jQuery.ajax({
+                    type: "GET",
+                    //url: "activeobjectsaccess?key=" + "kuku",
+                    url: "/jira/plugins/servlet/activeobjectsaccess",
+                    success: function(data) {
+                        //console.log('dom', self, data);
+                        //self.parent().parent().remove();
+                        alert(data);
+                    },
+                    error: function() {
+                        alert("error");
+                        //console.log('error', arguments);
+                    }
+                });
+                ////////////////////////////
+
                 window.onbeforeunload = null;
                 location.reload();
             }
