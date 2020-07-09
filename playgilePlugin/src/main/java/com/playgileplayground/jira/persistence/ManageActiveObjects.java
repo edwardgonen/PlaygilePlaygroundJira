@@ -6,7 +6,6 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.Console;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -205,9 +204,9 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             //read the existing data
-            Hashtable<Date, Double> existingDate = GetDateRemainingEstimationsList(prjStatEntity);
-            existingDate.put(date, remainingEstimations);
-            SetDateRemainingEstimationsList(existingDate, prjStatEntity);
+            Hashtable<Date, Double> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            existingData.put(date, remainingEstimations);
+            SetDateRemainingEstimationsList(existingData, prjStatEntity);
             prjStatEntity.save();
             result.Message = "Data added";
         }
@@ -225,7 +224,7 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             //read the data
-            Hashtable<Date, Double> existingData = GetDateRemainingEstimationsList(prjStatEntity);
+            Hashtable<Date, Double> existingData = GetDataRemainingEstimationsList(prjStatEntity);
             if (existingData.containsKey(date))
             {
                 result.Result = existingData.get(date);
@@ -269,7 +268,7 @@ public final class ManageActiveObjects{
         }
         else return null;
     }
-    private Hashtable<Date, Double> GetDateRemainingEstimationsList(PrjStatEntity entity)
+    private Hashtable<Date, Double> GetDataRemainingEstimationsList(PrjStatEntity entity)
     {
         Hashtable<Date, Double> list = new Hashtable<>();
         String allEstimationsListAsString = entity.getRemainingStoriesEstimations();

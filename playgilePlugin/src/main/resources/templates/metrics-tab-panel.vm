@@ -11,7 +11,7 @@
             google.charts.setOnLoadCallback(drawChart);
 
             function drawChart() {
-                if (!'$allisok') return;
+                if (!$allisok) return; //no need to execute
 
                 const LINE_SEPARATOR = ",";
                 const PAIR_SEPARATOR = "|";
