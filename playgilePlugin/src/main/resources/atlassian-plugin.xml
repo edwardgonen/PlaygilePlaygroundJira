@@ -38,5 +38,9 @@
   <servlet name="active Objects Access" i18n-name-key="active-objects-access.name" key="active-objects-access" class="com.playgileplayground.jira.servlet.activeObjectsAccess"> 
     <description key="active-objects-access.description">The active Objects Access Plugin</description>  
     <url-pattern>/activeobjectsaccess</url-pattern> 
+  </servlet>  
+  <servlet name="active Objects Delete" i18n-name-key="active-objects-delete.name" key="active-objects-delete" class="com.playgileplayground.jira.servlet.activeObjectsDelete"> 
+    <description key="active-objects-delete.description">The active Objects Delete Plugin</description>  
+    <url-pattern>/activeobjectsdelete</url-pattern> 
   </servlet>
 </atlassian-plugin>

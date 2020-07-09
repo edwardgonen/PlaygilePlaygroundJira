@@ -2665,3 +2665,6 @@ Show Advanced Setup? (Y/y/N/n) N: :
 [INFO]   i18n strings: 2
 
 Access it by http://localhost:2990/jira/plugins/servlet/activeobjectsaccess
+
+
+http://localhost:2990/jira/plugins/servlet/activeobjectsdelete?projectKey=

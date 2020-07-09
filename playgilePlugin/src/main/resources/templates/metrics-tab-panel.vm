@@ -1,5 +1,5 @@
 <tr class="mod-header">
-    <h3>$i18n.getText('metrics--page--item.label') for $project.name</h3>
+    <h3>$i18n.getText('metrics--page--item.label') for $project.name ($project.getKey())</h3>
     <!--img style="-webkit-user-select: none" src="https://chart.googleapis.com/chart?cht=p&chs=380x200&chd=t:41,55,4&chl=41%|55%|4%&chdl=Cash|Credit_Card|Check&chco=26AD21|1D82C4|F0A016"-->
 
 
