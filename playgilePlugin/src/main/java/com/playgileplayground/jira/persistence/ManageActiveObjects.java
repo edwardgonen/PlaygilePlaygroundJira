@@ -62,14 +62,7 @@ public final class ManageActiveObjects{
     public ManageActiveObjectsResult DeleteProjectEntity(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Entry not found -- " + projectKey;
-            return result;
-        }
-        //see if it already there
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {//Check whether optional has element you are looking for
             ao.delete(prjStatEntity);
             result.Message = "Deleted";
@@ -85,15 +78,7 @@ public final class ManageActiveObjects{
     public ManageActiveObjectsResult GetProjectReleaseVersion(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Entry not found -- " + projectKey;
-            return result;
-        }
-
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {//Check whether optional has element you are looking for
             String releaseVersion = prjStatEntity.getProjectVersionLabel();
             result.Result = releaseVersion;
@@ -106,18 +91,84 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    public ManageActiveObjectsResult GetProjectStartedFlag(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            result.Result = prjStatEntity.getProjectStartedFlag();
+            result.Message = "Started flag: " + result.Result;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    public ManageActiveObjectsResult SetProjectStartedFlag(String projectKey, boolean startedFlag)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            prjStatEntity.setProjectStartedFlag(startedFlag);
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+
+    public ManageActiveObjectsResult GetProjectStartDate(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            result.Result = prjStatEntity.getProjectStartDate();
+            result.Message = "Started date: " + result.Result;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    public ManageActiveObjectsResult SetProjectStartDate(String projectKey, Date startedDate)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            prjStatEntity.setProjectStartDate(startedDate);
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    public ManageActiveObjectsResult SetProjectInitialEstimation(String projectKey, double initialEstimation)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            prjStatEntity.setInitialEstimation(initialEstimation);
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+
     public ManageActiveObjectsResult GetTeamVelocity(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Entry not found -- " + projectKey;
-            return result;
-        }
-
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {//Check whether optional has element you are looking for
             double teamVelocity = prjStatEntity.getProjectTeamVelocity();
             result.Result = teamVelocity;
@@ -134,16 +185,8 @@ public final class ManageActiveObjects{
     public ManageActiveObjectsResult AddVelocityAndReleaseVersion(String projectKey, String releaseVersion, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Entry not found -- " + projectKey;
-            return result;
-        }
-
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
-        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
             prjStatEntity.setProjectTeamVelocity(teamVelocity);
             prjStatEntity.setProjectVersionLabel(releaseVersion);
             prjStatEntity.save();
@@ -159,16 +202,8 @@ public final class ManageActiveObjects{
     public ManageActiveObjectsResult AddRemainingEstimationsRecord(String projectKey, Date date, double remainingEstimations)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Entry not found -- " + projectKey;
-            return result;
-        }
-
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
-        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
             //read the existing data
             Hashtable<Date, Double> existingDate = GetDateRemainingEstimationsList(prjStatEntity);
             existingDate.put(date, remainingEstimations);
@@ -187,15 +222,8 @@ public final class ManageActiveObjects{
     public ManageActiveObjectsResult GetRemainingEstimationsForDate(String projectKey, Date date)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Entry not found -- " + projectKey;
-            return result;
-        }
-        //find our project key
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
-        if (prjStatEntity != null) {//Check whether optional has element you are looking for
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
             //read the data
             Hashtable<Date, Double> existingData = GetDateRemainingEstimationsList(prjStatEntity);
             if (existingData.containsKey(date))
@@ -220,15 +248,8 @@ public final class ManageActiveObjects{
     public ManageActiveObjectsResult GetProjectKey(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-        if (projectStatusEntities.length <= 0) {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
-            result.Message = "Table not found";
-            return result;
-        }
-        //find our project key
-        PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
-        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
             result.Result = prjStatEntity.getProjectKey();
             result.Message = "Retrieved data " + result.Result.toString();
         }
@@ -283,6 +304,15 @@ public final class ManageActiveObjects{
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         list.forEach((key, value) -> outputString.append(formatter.format(key) + PAIR_SEPARATOR + value + LINE_SEPARATOR));
         entity.setRemainingStoriesEstimations(outputString.toString());
+    }
+    private PrjStatEntity GetProjectEntity(String projectKey)
+    {
+        PrjStatEntity result = null;
+        PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
+        if (projectStatusEntities.length <= 0) {
+            return result;
+        }
+        return FindEntityByProjectKey(projectKey, projectStatusEntities);
     }
 }
 

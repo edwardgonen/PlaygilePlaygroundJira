@@ -3,12 +3,13 @@ package com.playgileplayground.jira.jiraissues;
 import org.joda.time.DateTime;
 
 import java.text.DateFormat;
+import java.util.Comparator;
 import java.util.Date;
 
 /**
  * Created by Ext_EdG on 7/7/2020.
  */
-public class PlaygileSprint implements Comparable<PlaygileSprint>{
+public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<PlaygileSprint> {
     /*
     [com.atlassian.greenhopper.service.sprint.Sprint@5b3d69da
         [
@@ -74,6 +75,10 @@ public class PlaygileSprint implements Comparable<PlaygileSprint>{
     @Override
     public int compareTo(PlaygileSprint o) {
         return getStartDate().compareTo(o.getStartDate());
+    }
+    @Override
+    public int compare(PlaygileSprint o1, PlaygileSprint o2) {
+        return o1.getStartDate().compareTo(o2.getStartDate());
     }
 
     public String toString()

@@ -46,7 +46,8 @@ public class JiraInterface {
         {
             for (String item : allSprintsAsStrings) {
                 PlaygileSprint playgileSprint = new PlaygileSprint();
-                result.add(playgileSprint.parse(item));
+                playgileSprint = playgileSprint.parse(item);
+                if (playgileSprint != null) result.add(playgileSprint);
             }
         }
 
@@ -63,7 +64,13 @@ public class JiraInterface {
             }
             catch (Exception ex)
             {
+                result = -3;
             }
+        }
+        else
+        {
+            if (values == null) result = -1; //no story points at all - null returned
+            else result = -2; //no story points values
         }
         return result;
     }
