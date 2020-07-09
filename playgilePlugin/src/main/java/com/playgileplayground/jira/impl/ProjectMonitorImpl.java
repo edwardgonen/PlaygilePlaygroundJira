@@ -18,6 +18,7 @@ import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.atlassian.jira.security.Permissions.BROWSE;
@@ -97,18 +98,6 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                         messageToDisplay = "Cannot identify current project. Please try to reload this page";
                         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                     }
-
-
-                    contextMap.put(ISSUE, issues.get(0));
-
-                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issues.get(0));
-                    if (storyPointValue <= 0) storyPointValue = 21;
-                    contextMap.put(STORYPOINTS, storyPointValue);
-
-                    Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
-                    if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
-                        contextMap.put(SPRINTINFO, sprintsForIssue.iterator().next().toString());
-                   }
                 }
                 else
                 {
@@ -169,7 +158,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                 continue;
                             }
                             Collection<Version> fixedVersions = issue.getFixVersions();
-                            if (statusCategory == null)
+                            if (fixedVersions == null)
                             {
                                 WriteToStatus( "Failed to retrieve versions for issue " + issue.getId());
                                 //go to next issue
@@ -196,7 +185,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                     WriteToStatus( "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
                                     for (PlaygileSprint playgileSprint : sprintsForIssue)
                                     {
-                                        if (playgileSprint.getState() != SprintState.FUTURE || (playgileSprint.getState() != SprintState.UNDEFINED))
+                                        if (playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
                                         {
                                             WriteToStatus("Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
                                             playgileSprints.add(playgileSprint);
@@ -298,7 +287,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                         {
                                             StatusCategory statusCategory = issueStatus.getStatusCategory();
                                             WriteToStatus("Issue status " + statusCategory);
-                                            if (statusCategory.getName() == StatusCategory.IN_PROGRESS || statusCategory.getName() == StatusCategory.TO_DO)
+                                            if (statusCategory.getKey() == StatusCategory.IN_PROGRESS || statusCategory.getKey() == StatusCategory.TO_DO)
                                             {
                                                 WriteToStatus("Issue status is one of ours " + statusCategory);
                                                 double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
@@ -313,7 +302,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                     WriteToStatus("Calculated estimation " + currentEstimation);
                                     //after calculation
                                     //1. set initial estimation if previousProjectStartFlag is false
-                                    if (!previousProjectStartedFlag)
+                                    if (!previousProjectStartedFlag) //first time so store the initial estimations
                                     {
                                         WriteToStatus("Setting initial estimation " + currentEstimation);
                                         maor = mao.SetProjectInitialEstimation(currentProject.getKey(), currentEstimation);
@@ -331,6 +320,19 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                     }
 
                                     //2. add current estimation to the list of estimations
+                                    //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
+                                    Date timeStamp = Calendar.getInstance().getTime();
+                                    WriteToStatus("Current time to add to list " + timeStamp);
+                                    maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), timeStamp, currentEstimation);
+                                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                                        WriteToStatus( "Last estimation added to the list " + timeStamp + " " + currentEstimation);
+                                    }
+                                    else {
+                                        WriteToStatus( "Failed to add Last estimation " + maor.Message);
+                                        bAllisOk = false;
+                                        messageToDisplay = "General failure - Failed to add last estimation to the list. Report to Ed";
+                                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                    }
                                 }
                             }
                             else //not retrieved start flag
@@ -365,34 +367,8 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                 messageToDisplay = "Failed to retrieve project's issues";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-            //log.debug("EdGonen issue " + issues.get(0).getSummary());
-
-            //maor = mao.GetProjectKey(currentProject.getKey());
-           // maor = mao.DeleteProjectEntity(currentProject.getKey());
 
 
-            Date tmpDate;
-/*
-            try {
-
-                //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
-                //maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 400);
-
-                tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/2/2020");
-                maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 350);
-
-                //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/14/2020");
-                //maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), tmpDate, 300);
-
-                tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("7/2/2020");
-                maor = mao.GetRemainingEstimationsForDate(currentProject.getKey(), tmpDate);
-
-            }
-            catch (ParseException e) {
-                maor.Code = ManageActiveObjectsResult.STATUS_CODE_DATA_FORMAT_PARSING_ERROR;
-                maor.Message = "Failed to parse date";
-            }
-*/
             //test Active objects
 
             String chartRows =
