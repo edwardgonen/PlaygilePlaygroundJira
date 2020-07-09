@@ -86,9 +86,6 @@
                         //console.log('error', arguments);
                     }
                 });
-
-                //window.onbeforeunload = null;
-
             }
         </script>
     </head>
@@ -96,29 +93,32 @@
             #if (!$allisok)
                 <h1 style="color:red">$messagetodisplay</h1>
             #end
-            <form id="admin" class="aui">
-                <tr>
-                <tr class="field-group">
-                    <label for="versionlabel">Release version</label>
-                    <select id="releaseversion" name="releaseversion">
-                        #foreach( $version in $projectversions )
-                            #if ($version == $selectedprojectversion)
-                                <option value="$version" selected="selected">$version</option>
-                            #else
-                                <option value="$version">$version</option>
+
+            #if ($projectversions.size()> 0)
+                <form id="admin" class="aui">
+                    <tr>
+                    <tr class="field-group">
+                        <label for="versionlabel">Release version</label>
+                        <select id="releaseversion" name="releaseversion">
+                            #foreach( $version in $projectversions )
+                                #if ($version == $selectedprojectversion)
+                                    <option value="$version" selected="selected">$version</option>
+                                #else
+                                    <option value="$version">$version</option>
+                                #end
                             #end
-                        #end
-                    </select>
-                </tr>
-                <tr class="field-group">
-                    <label for="velocity">Team's velocity</label>
-                    <input type="number" id="velocity" value=$teamvelocity name="velocity" class="text" min="0" max="1000" style="width: 10em;">
-                </tr>
-                <tr class="field-group">
-                    <input type="submit" value="Recalculate" class="button" onClick="OnRecalculateClick()">
-                </tr>
-                </tr>
-            </form>
+                        </select>
+                    </tr>
+                    <tr class="field-group">
+                        <label for="velocity">Team's velocity</label>
+                        <input type="number" id="velocity" value=$teamvelocity name="velocity" class="text" min="0" max="1000" style="width: 10em;">
+                    </tr>
+                    <tr class="field-group">
+                        <input type="submit" value="Recalculate" class="button" onClick="OnRecalculateClick()">
+                    </tr>
+                    </tr>
+                </form>
+            #end
             #if ($allisok)
                 <table>
                     <tr>
