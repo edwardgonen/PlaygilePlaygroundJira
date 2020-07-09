@@ -94,7 +94,7 @@
     </head>
         <body>
             #if (!$allisok)
-                <h2>$messagetodisplay</h2>
+                <h1 style="color:red">$messagetodisplay</h1>
             #end
             <form id="admin" class="aui">
                 <tr>
