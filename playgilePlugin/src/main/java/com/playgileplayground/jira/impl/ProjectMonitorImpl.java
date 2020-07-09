@@ -1,6 +1,8 @@
 package com.playgileplayground.jira.impl;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
@@ -48,7 +50,8 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         boolean bAllisOk = false;
         ManageActiveObjectsResult maor;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-
+        String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
+        contextMap.put(BASEURL, baseUrl);
         Project currentProject = userProjectHistoryManager.getCurrentProject(BROWSE, applicationUser);
         WriteToStatus("After getting current project " + (currentProject != null));
 

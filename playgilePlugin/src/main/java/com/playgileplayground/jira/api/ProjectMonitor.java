@@ -21,6 +21,7 @@ public interface ProjectMonitor {
     String PROJECTVERSIONS = "projectversions";
     String SELECTEDPROJECTVERSION = "selectedprojectversion";
     String TEAMVELOCITY = "teamvelocity";
+    String BASEURL = "baseurl";
 
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
