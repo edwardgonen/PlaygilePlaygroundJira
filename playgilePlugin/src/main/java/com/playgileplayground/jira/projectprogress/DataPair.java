@@ -1,4 +1,4 @@
-package com.playgileplayground.jira.impl;
+package com.playgileplayground.jira.projectprogress;
 
 
 import java.util.Date;

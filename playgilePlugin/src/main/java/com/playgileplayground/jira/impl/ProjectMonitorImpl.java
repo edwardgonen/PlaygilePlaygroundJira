@@ -19,6 +19,9 @@ import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
+import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.projectprogress.ProjectProgress;
+import org.apache.commons.collections.ArrayStack;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -371,7 +374,14 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
+            ProjectProgress pp = new ProjectProgress();
+            ArrayList<DataPair> testData = new ArrayList<>();
+            DataPair item = new DataPair(new Date("7/1/2020"), 500);
+            testData.add(item);
+            item = new DataPair(new Date("7/15/2020"), 480);
+            testData.add(item);
 
+            pp.Initiate(50, 14, testData);
             //test Active objects
 
             String chartRows =

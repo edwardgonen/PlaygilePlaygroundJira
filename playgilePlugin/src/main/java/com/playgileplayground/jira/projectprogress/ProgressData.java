@@ -1,7 +1,6 @@
-package com.playgileplayground.jira.impl;
+package com.playgileplayground.jira.projectprogress;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -16,12 +15,12 @@ public class ProgressData {
         return _progressData.size();
     }
 
-    public Collection<Double> GetEstimationValuesList() {
+    public ArrayList<Double> GetEstimationValuesList() {
         ArrayList<Double> result = _progressData.stream().map(dataPair -> dataPair.RemainingEstimation).collect(Collectors.toCollection(ArrayList::new));
         return result;
     }
 
-    public Collection<Date> GetEstimationDatesList() {
+    public ArrayList<Date> GetEstimationDatesList() {
         ArrayList<Date> result = _progressData.stream().map(dataPair -> dataPair.Date).collect(Collectors.toCollection(ArrayList::new));
         return result;
     }
