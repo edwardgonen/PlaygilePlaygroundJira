@@ -3,15 +3,14 @@ package com.playgileplayground.jira.persistence;
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.playgileplayground.jira.projectprogress.DataPair;
+import org.apache.commons.lang.time.DateUtils;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by Ext_EdG on 7/2/2020.
@@ -111,6 +110,7 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             prjStatEntity.setProjectStartedFlag(startedFlag);
+            prjStatEntity.save();
         }
         else
         {
@@ -141,6 +141,7 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             prjStatEntity.setProjectStartDate(startedDate);
+            prjStatEntity.save();
         }
         else
         {
@@ -149,12 +150,17 @@ public final class ManageActiveObjects{
         }
         return result;
     }
-    public ManageActiveObjectsResult SetProjectInitialEstimation(String projectKey, double initialEstimation)
+    public ManageActiveObjectsResult SetProjectInitialEstimation(String projectKey, Date startDate, double initialEstimation)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             prjStatEntity.setInitialEstimation(initialEstimation);
+            prjStatEntity.save();
+            //also add it as the first element in the list
+            ArrayList<DataPair> tmpList = new ArrayList<>();
+            tmpList.add(new DataPair(startDate, initialEstimation));
+            SetDateRemainingEstimationsList(tmpList, prjStatEntity);
         }
         else
         {
@@ -198,16 +204,41 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    public ManageActiveObjectsResult GetProgressDataList(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            //read the existing data
+            result.Result = GetDataRemainingEstimationsList(prjStatEntity);
+            result.Message = "List returned";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+
+        return result;
+    }
     public ManageActiveObjectsResult AddRemainingEstimationsRecord(String projectKey, Date date, double remainingEstimations)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             //read the existing data
-            Hashtable<Date, Double> existingData = GetDataRemainingEstimationsList(prjStatEntity);
-            existingData.put(date, remainingEstimations);
+            ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            //do we have such date?
+            for (DataPair dataPair : existingData) {
+                if (DateUtils.isSameDay(dataPair.Date, date)) {
+                    dataPair.RemainingEstimation = remainingEstimations;
+                    prjStatEntity.save();
+                    result.Message = "Data updated";
+                    return result;
+                }
+            }
+            existingData.add(new DataPair(date, remainingEstimations));
             SetDateRemainingEstimationsList(existingData, prjStatEntity);
-            prjStatEntity.save();
             result.Message = "Data added";
         }
         else
@@ -224,18 +255,16 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
         if(prjStatEntity != null) {
             //read the data
-            Hashtable<Date, Double> existingData = GetDataRemainingEstimationsList(prjStatEntity);
-            if (existingData.containsKey(date))
-            {
-                result.Result = existingData.get(date);
-                result.Message = "Retrieved data " + result.Result.toString();
-
-            }
-            else {
-                result.Result = null;
-                result.Message = "No remaining estimation for date found";
-                result.Code = ManageActiveObjectsResult.STATUS_CODE_REMAINING_ESTIMATIONS_FOR_DATE_NOT_FOUND;
-            }
+            ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            for (DataPair dataPair : existingData)
+                if (dataPair.Date == date) {
+                    result.Result = dataPair;
+                    result.Message = "Retrieved data " + result.Result.toString();
+                    return result;
+                }
+            result.Result = null;
+            result.Message = "No remaining estimation for date found";
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_REMAINING_ESTIMATIONS_FOR_DATE_NOT_FOUND;
         }
         else
         {
@@ -268,9 +297,9 @@ public final class ManageActiveObjects{
         }
         else return null;
     }
-    private Hashtable<Date, Double> GetDataRemainingEstimationsList(PrjStatEntity entity)
+    public ArrayList<DataPair> GetDataRemainingEstimationsList(PrjStatEntity entity)
     {
-        Hashtable<Date, Double> list = new Hashtable<>();
+        ArrayList<DataPair> list = new ArrayList<>();
         String allEstimationsListAsString = entity.getRemainingStoriesEstimations();
 
         if (allEstimationsListAsString == null) return list; //first time, so the list does not exists
@@ -286,7 +315,7 @@ public final class ManageActiveObjects{
                     try {
                         Date tmpDate = new SimpleDateFormat(DATE_FORMAT).parse(pairParts[0]);
                         Double tmpRemainingEstimation = Double.parseDouble(pairParts[1]);
-                        list.put(tmpDate, tmpRemainingEstimation);
+                        list.add(new DataPair(tmpDate, tmpRemainingEstimation));
                     }
                     catch (ParseException e) {
                         //ignore
@@ -297,12 +326,13 @@ public final class ManageActiveObjects{
         return list;
     }
 
-    private void SetDateRemainingEstimationsList(Hashtable<Date, Double> list, PrjStatEntity entity)
+    private void SetDateRemainingEstimationsList(ArrayList<DataPair> list, PrjStatEntity entity)
     {
         StringBuilder outputString = new StringBuilder();
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-        list.forEach((key, value) -> outputString.append(formatter.format(key) + PAIR_SEPARATOR + value + LINE_SEPARATOR));
+        list.forEach((dataPair) -> outputString.append(formatter.format(dataPair.Date) + PAIR_SEPARATOR + dataPair.RemainingEstimation + LINE_SEPARATOR));
         entity.setRemainingStoriesEstimations(outputString.toString());
+        entity.save();
     }
     private PrjStatEntity GetProjectEntity(String projectKey)
     {

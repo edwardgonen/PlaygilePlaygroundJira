@@ -137,7 +137,7 @@
         </body>
     </html>
     <table>
-        <div style="height:120px;width:500px;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
+        <div style="height:120px;width:500px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
             $statustext
         </div>
     </table>

@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.servlet;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
@@ -18,6 +19,7 @@ import java.util.Date;
 import java.util.Optional;
 
 @Scanned
+@Transactional
 public class activeObjectsDelete extends HttpServlet{
     ActiveObjects ao;
     public activeObjectsDelete(ActiveObjects ao)

@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.servlet;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
@@ -26,6 +27,7 @@ public class activeObjectsAccess extends HttpServlet{
         this.ao = ao;
     }
     @Override
+    @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");

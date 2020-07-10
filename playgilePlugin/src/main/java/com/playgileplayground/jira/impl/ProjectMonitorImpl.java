@@ -20,7 +20,9 @@ import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
+import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 import org.apache.commons.collections.ArrayStack;
 
 import java.text.SimpleDateFormat;
@@ -51,6 +53,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         String selectedVersion = "";
         String messageToDisplay = "";
         boolean bAllisOk = false;
+        Date startDate = null;
         ManageActiveObjectsResult maor;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
@@ -235,7 +238,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                         WriteToStatus("Valid sprints " + playgileSprints.size());
                                         Collections.sort(playgileSprints); //sort by dates
                                         //the first sprint startDate would be the project start date
-                                        Date startDate = playgileSprints.iterator().next().getStartDate();
+                                        startDate = playgileSprints.iterator().next().getStartDate();
                                         WriteToStatus("Detected start date " + startDate);
                                         //set to AO entity
                                         maor = mao.SetProjectStartedFlag(currentProject.getKey(), true);
@@ -311,7 +314,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                     if (!previousProjectStartedFlag) //first time so store the initial estimations
                                     {
                                         WriteToStatus("Setting initial estimation " + currentEstimation);
-                                        maor = mao.SetProjectInitialEstimation(currentProject.getKey(), currentEstimation);
+                                        maor = mao.SetProjectInitialEstimation(currentProject.getKey(), startDate, currentEstimation);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                                             WriteToStatus( "initial estimation set for project");
                                         }
@@ -374,6 +377,80 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
+
+            maor = mao.GetProgressDataList(currentProject.getKey());
+            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                ProjectProgress projectProgress = new ProjectProgress();
+
+                ///////////////////////////////////
+                maor.Result = new ArrayList<DataPair>();
+                DataPair item = new DataPair(new Date("7/1/2020"), 500);
+                ((ArrayList<DataPair>)maor.Result).add(item);
+                item = new DataPair(new Date("7/15/2020"), 400);
+                ((ArrayList<DataPair>)maor.Result).add(item);
+                /////////////////////////////////
+                ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, 14, (ArrayList<DataPair>) maor.Result);
+                //what is the longest array?
+                StringBuilder chartRows = new StringBuilder();
+                ProgressData longestList;
+                ProgressData shortestList;
+                boolean predictedIsLongest;
+                if (ppr.progressData.Length() >= ppr.idealData.Length()) {
+                    longestList = ppr.progressData;
+                    shortestList = ppr.idealData;
+                    predictedIsLongest = true;
+                }
+                else
+                {
+                    longestList = ppr.idealData;
+                    shortestList = ppr.progressData;
+                    predictedIsLongest = false;
+                }
+
+                for (int i = 0; i < longestList.Length(); i++)
+                {
+                    DataPair tmpPredictedDataPair = longestList.GetElementAtIndex(i);
+                    if (i >= shortestList.Length()) //no more elements in shortest
+                    {
+                        if (predictedIsLongest) {
+                            chartRows.append(
+                                ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                    "" + ManageActiveObjects.PAIR_SEPARATOR +
+                                    tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
+                            );
+                        }
+                        else
+                        {
+                            chartRows.append(
+                                ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                    tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
+                                    "" + ManageActiveObjects.LINE_SEPARATOR
+                            );
+                        }
+                    }
+                    else //both records available
+                    {
+                        DataPair tmpIdealDataPair = shortestList.GetElementAtIndex(i);
+                        chartRows.append(
+                            ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
+                                tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
+                        );
+                    }
+                }
+                contextMap.put(CHARTROWS, chartRows.toString());
+            }
+            else
+            {
+                WriteToStatus( "Failed to retrieve project list of progress data");
+                bAllisOk = false;
+                messageToDisplay = "General failure - no progress data - AO problem. Report to Ed";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+
+
+            /*
+
             ProjectProgress pp = new ProjectProgress();
             ArrayList<DataPair> testData = new ArrayList<>();
             DataPair item = new DataPair(new Date("7/1/2020"), 500);
@@ -381,7 +458,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
             item = new DataPair(new Date("7/15/2020"), 480);
             testData.add(item);
 
-            pp.Initiate(50, 14, testData);
+            pp.Initiate(teamVelocity, 14, testData);
             //test Active objects
 
             String chartRows =
@@ -405,7 +482,8 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                     "" + ManageActiveObjects.PAIR_SEPARATOR +
                     "0.0" + ManageActiveObjects.LINE_SEPARATOR;
 
-            contextMap.put(CHARTROWS, chartRows);
+*/
+
             contextMap.put(AORESULT, maor.Message);
 
         }
@@ -428,6 +506,11 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         return this.userProjectHistoryManager;
     }
 
+    private String ConvertDateToOurFormat(Date dateToConvert)
+    {
+        SimpleDateFormat outputDateFormat = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT);
+        return outputDateFormat.format(dateToConvert);
+    }
     private Map<String, Object> ReturnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
     {
         contextMap.put(ALLISOK, bAllisOk);

@@ -15,8 +15,9 @@ public class ProjectProgress
     private ProgressData _progressData;
     private ProgressData _idealData;
 
-    public void Initiate(double teamVelocity, int sprintLength, ArrayList<DataPair> remainingEstimations)
+    public ProjectProgressResult Initiate(double teamVelocity, int sprintLength, ArrayList<DataPair> remainingEstimations)
     {
+        ProjectProgressResult result = new ProjectProgressResult();
         SprintLength = sprintLength;
         _teamVelocity = teamVelocity;
         _idealData = new ProgressData();
@@ -107,6 +108,12 @@ public class ProjectProgress
                 break;
             }
         }
+        result.idealData = _idealData;
+        result.progressData = _progressData;
+        result.idealProjectEnd = idealProjectEnd;
+        result.predictedProjectEnd = predictedProjectEnd;
+
+        return result;
     }
 
     private boolean AddDataPairToList(boolean continueAddingPoints, Date date, double estimation, ProgressData data)
