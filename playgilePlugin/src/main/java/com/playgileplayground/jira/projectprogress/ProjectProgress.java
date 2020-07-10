@@ -129,17 +129,17 @@ public class ProjectProgress
     }
     private Double CalculateIdealEstimationByDate(Date projectStartDate, Date currentDate, double initialProjectEstimation, double dailyVelocity)
     {
-        long distanceDays = Days(currentDate, projectStartDate);
+        long distanceDays = ProjectProgress.Days(currentDate, projectStartDate);
         return (initialProjectEstimation - distanceDays * dailyVelocity);
     }
-    private Date AddDays(Date date, int addDays)
+    public Date AddDays(Date date, int addDays)
     {
         Calendar c = Calendar.getInstance();
         c.setTime(date);
         c.add(Calendar.DATE, addDays);
         return c.getTime();
     }
-    private int Days(Date secondDate, Date firstDate)
+    public static int Days(Date secondDate, Date firstDate)
     {
         long diffInMillies = Math.abs(secondDate.getTime() - firstDate.getTime());
         return (int)TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);

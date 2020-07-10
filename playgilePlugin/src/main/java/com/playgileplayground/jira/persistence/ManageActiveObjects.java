@@ -94,6 +94,38 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
+    public ManageActiveObjectsResult GetSprintLength(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            result.Result = prjStatEntity.getSprintLength();
+            result.Message = "Sprint length : " + result.Result;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult SetSprintLength(String projectKey, double sprintLength)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            prjStatEntity.setSprintLength(sprintLength);
+            prjStatEntity.save();
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    @Transactional
     public ManageActiveObjectsResult GetProjectStartedFlag(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();

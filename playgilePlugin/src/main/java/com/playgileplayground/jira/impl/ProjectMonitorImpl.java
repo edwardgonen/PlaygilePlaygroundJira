@@ -54,6 +54,7 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         String messageToDisplay = "";
         boolean bAllisOk = false;
         Date startDate = null;
+        double sprintLength;
         ManageActiveObjectsResult maor;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
@@ -238,8 +239,12 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                         WriteToStatus("Valid sprints " + playgileSprints.size());
                                         Collections.sort(playgileSprints); //sort by dates
                                         //the first sprint startDate would be the project start date
-                                        startDate = playgileSprints.iterator().next().getStartDate();
+                                        PlaygileSprint sprint = playgileSprints.iterator().next(); //first
+                                        startDate = sprint.getStartDate();
+                                        //also get the sprint length
+                                        sprintLength = ProjectProgress.Days(sprint.getStartDate(), sprint.getEndDate()) + 1;
                                         WriteToStatus("Detected start date " + startDate);
+                                        WriteToStatus("Detected sprint length " + sprintLength);
                                         //set to AO entity
                                         maor = mao.SetProjectStartedFlag(currentProject.getKey(), true);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
@@ -256,6 +261,19 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                                                 WriteToStatus( "Failed to set project start date " + maor.Message);
                                                 bAllisOk = false;
                                                 messageToDisplay = "General failure - AO problem - failed to set project start date. Report to Ed";
+                                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                            }
+                                            maor = mao.SetSprintLength(currentProject.getKey(), sprintLength);
+                                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                                            {
+                                                projectStarted = true;
+                                                WriteToStatus("Project sprint length is set " + sprintLength);
+                                            }
+                                            else
+                                            {
+                                                WriteToStatus( "Failed to set project sprint length " + maor.Message);
+                                                bAllisOk = false;
+                                                messageToDisplay = "General failure - AO problem - failed to set project sprint length. Report to Ed";
                                                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                                             }
                                         }
@@ -377,19 +395,28 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
-
+            maor = mao.GetSprintLength(currentProject.getKey());
+            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                WriteToStatus("Got sprint length " + maor.Result);
+                sprintLength = (double)maor.Result;
+            }
+            else
+            {
+                WriteToStatus("Failed to retrieve sprint length, using 14");
+                sprintLength = 14;
+            }
             maor = mao.GetProgressDataList(currentProject.getKey());
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                 ProjectProgress projectProgress = new ProjectProgress();
 
-                ///////////////////////////////////
+                /*//////////////////////////////////
                 maor.Result = new ArrayList<DataPair>();
                 DataPair item = new DataPair(new Date("7/1/2020"), 500);
                 ((ArrayList<DataPair>)maor.Result).add(item);
                 item = new DataPair(new Date("7/15/2020"), 400);
                 ((ArrayList<DataPair>)maor.Result).add(item);
-                /////////////////////////////////
-                ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, 14, (ArrayList<DataPair>) maor.Result);
+                ////////////////////////////////*/
+                ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
                 //what is the longest array?
                 StringBuilder chartRows = new StringBuilder();
                 ProgressData longestList;
@@ -446,6 +473,8 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                     }
                 }
                 contextMap.put(CHARTROWS, chartRows.toString());
+                contextMap.put(IDEALENDOFPROJECT, ConvertDateToOurFormat(ppr.idealProjectEnd));
+                contextMap.put(PREDICTEDENDOFPROJECT, ConvertDateToOurFormat(ppr.predictedProjectEnd));
             }
             else
             {
