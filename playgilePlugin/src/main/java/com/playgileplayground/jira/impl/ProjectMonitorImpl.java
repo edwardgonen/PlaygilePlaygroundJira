@@ -406,10 +406,18 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                     shortestList = ppr.progressData;
                     predictedIsLongest = false;
                 }
-
+                DataPair tmpPredictedDataPair, tmpIdealDataPair;
                 for (int i = 0; i < longestList.Length(); i++)
                 {
-                    DataPair tmpPredictedDataPair = longestList.GetElementAtIndex(i);
+                    if (predictedIsLongest) {
+                        tmpPredictedDataPair = longestList.GetElementAtIndex(i);
+                        tmpIdealDataPair = shortestList.GetElementAtIndex(i);
+                    }
+                    else
+                    {
+                        tmpPredictedDataPair = shortestList.GetElementAtIndex(i);
+                        tmpIdealDataPair = longestList.GetElementAtIndex(i);
+                    }
                     if (i >= shortestList.Length()) //no more elements in shortest
                     {
                         if (predictedIsLongest) {
@@ -422,15 +430,14 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
                         else
                         {
                             chartRows.append(
-                                ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                                    tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
+                                ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                    tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
                                     "" + ManageActiveObjects.LINE_SEPARATOR
                             );
                         }
                     }
                     else //both records available
                     {
-                        DataPair tmpIdealDataPair = shortestList.GetElementAtIndex(i);
                         chartRows.append(
                             ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                 tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
