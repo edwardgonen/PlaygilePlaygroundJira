@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.persistence;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.playgileplayground.jira.projectprogress.DataPair;
@@ -27,6 +28,7 @@ public final class ManageActiveObjects{
     {
         this.ao = ao;
     }
+    @Transactional
     public ManageActiveObjectsResult CreateProjectEntity(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -57,6 +59,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult DeleteProjectEntity(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -73,6 +76,7 @@ public final class ManageActiveObjects{
 
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult GetProjectReleaseVersion(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -89,6 +93,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult GetProjectStartedFlag(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -104,6 +109,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult SetProjectStartedFlag(String projectKey, boolean startedFlag)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -119,7 +125,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
-
+    @Transactional
     public ManageActiveObjectsResult GetProjectStartDate(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -135,6 +141,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult SetProjectStartDate(String projectKey, Date startedDate)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -150,6 +157,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult SetProjectInitialEstimation(String projectKey, Date startDate, double initialEstimation)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -169,7 +177,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
-
+    @Transactional
     public ManageActiveObjectsResult GetTeamVelocity(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -186,7 +194,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
-
+    @Transactional
     public ManageActiveObjectsResult AddVelocityAndReleaseVersion(String projectKey, String releaseVersion, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -204,6 +212,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult GetProgressDataList(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -221,6 +230,7 @@ public final class ManageActiveObjects{
 
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult AddRemainingEstimationsRecord(String projectKey, Date date, double remainingEstimations)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -249,6 +259,7 @@ public final class ManageActiveObjects{
 
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult GetRemainingEstimationsForDate(String projectKey, Date date)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -273,6 +284,7 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
     public ManageActiveObjectsResult GetProjectKey(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -297,6 +309,7 @@ public final class ManageActiveObjects{
         }
         else return null;
     }
+    @Transactional
     public ArrayList<DataPair> GetDataRemainingEstimationsList(PrjStatEntity entity)
     {
         ArrayList<DataPair> list = new ArrayList<>();
