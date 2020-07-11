@@ -274,6 +274,7 @@ public final class ManageActiveObjects{
             for (DataPair dataPair : existingData) {
                 if (DateUtils.isSameDay(dataPair.Date, date)) {
                     dataPair.RemainingEstimation = remainingEstimations;
+                    SetDateRemainingEstimationsList(existingData, prjStatEntity);
                     prjStatEntity.save();
                     result.Message = "Data updated";
                     return result;
