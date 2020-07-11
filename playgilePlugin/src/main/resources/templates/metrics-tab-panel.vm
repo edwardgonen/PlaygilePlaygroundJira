@@ -123,10 +123,11 @@
                 <table>
                     <tr>
                         <td><div id="curve_chart" style="width: 600px; height: 500px"></div></td>
-                        <td>Ideal end of project<br>Predicted end of project</td>
+                        <td>Initial end of project<br>Predicted end of project</td>
                         <td>$idealendofproject<br>$predictedendofproject</td>
                     </tr>
                 </table>
+
             #end
         </body>
     </html>
