@@ -84,7 +84,7 @@ public class ProjectProgress
             continueAddingProgressPoints = AddDataPairToList(continueAddingProgressPoints, pointDate, endSprintExpectation, _progressData);
             idealEstimation = CalculateIdealEstimationByDate(startProjectDate, pointDate, initialProjectEstimation, dailyVelocity);
             continueAddingIdealPoints = AddDataPairToList(continueAddingIdealPoints, pointDate, idealEstimation, _idealData);
-        };
+        }
 
         Date idealProjectEnd = null;
         //end of the project for each set is the first date where the estimation is 0
@@ -121,7 +121,6 @@ public class ProjectProgress
         if (continueAddingPoints)
         {
             DataPair tmpPair = new DataPair(date, Math.max(estimation, 0));
-            data.AddDataPair(tmpPair);
             if (estimation <= 0) result = false;
             data.AddDataPair(tmpPair);
         }
