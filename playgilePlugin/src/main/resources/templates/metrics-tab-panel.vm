@@ -75,6 +75,7 @@
                 var releaseversion = document.getElementById("releaseversion").value;
                 jQuery.ajax({
                     type: "GET",
+                    async: false,
                     url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
                         + "&teamVelocity=" + velocity + "&releaseVersion=" + releaseversion,
                     success: function(data) {
