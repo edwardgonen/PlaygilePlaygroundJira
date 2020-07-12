@@ -9,11 +9,15 @@ import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.ProjectManager;
 import com.atlassian.jira.project.version.Version;
+import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserProjectHistoryManager;
+import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.plugin.web.ContextProvider;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
@@ -31,22 +35,35 @@ import java.util.*;
 import static com.atlassian.jira.security.Permissions.BROWSE;
 
 @Scanned
-public class ProjectMonitorImpl extends AbstractJiraContextProvider implements com.playgileplayground.jira.api.ProjectMonitor {
+public class ProjectMonitorImpl implements com.playgileplayground.jira.api.ProjectMonitor, ContextProvider {
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
     @ComponentImport
     private final ActiveObjects ao;
+    @ComponentImport
+    ProjectManager projectManager;
 
     List<Issue> issues;
     StringBuilder statusText = new StringBuilder();
 
-    public ProjectMonitorImpl(UserProjectHistoryManager userProjectHistoryManager, ActiveObjects ao){
+    public ProjectMonitorImpl(UserProjectHistoryManager userProjectHistoryManager,
+                              ProjectManager projectManager,
+                              ActiveObjects ao){
         this.userProjectHistoryManager = userProjectHistoryManager;
         this.ao = ao;
+        this.projectManager = projectManager;
+    }
+    @Override
+    public Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
+        return null;
     }
 
     @Override
-    public Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
+    public void init(Map<String, String> map) throws PluginParseException {
+    }
+
+    @Override
+    public Map getContextMap(Map<String, Object> map) {
         Map<String, Object> contextMap = new HashMap<>();
 
         double teamVelocity = 0;
@@ -57,9 +74,11 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
         double sprintLength;
         ManageActiveObjectsResult maor;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
+        JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
         contextMap.put(BASEURL, baseUrl);
-        Project currentProject = userProjectHistoryManager.getCurrentProject(BROWSE, applicationUser);
+        ApplicationUser applicationUser = jac.getLoggedInUser();
+        Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
         WriteToStatus("After getting current project " + (currentProject != null));
 
         contextMap.put(MAINJAVACLASS, this);
@@ -559,4 +578,5 @@ public class ProjectMonitorImpl extends AbstractJiraContextProvider implements c
     {
         statusText.append(text + "***");
     }
+
 }
