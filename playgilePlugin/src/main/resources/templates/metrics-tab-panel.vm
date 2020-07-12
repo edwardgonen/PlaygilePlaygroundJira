@@ -60,6 +60,11 @@
                 });
                 var options = {
                     title: 'Project Monitor ',
+                    lineWidth: 3,
+                    series: {
+                        0: {lineDashStyle: [0, 0]},
+                        1: {lineDashStyle: [2, 2]}
+                    },
                     curveType: 'function',
                     legend: { position: 'bottom' }
                 };
