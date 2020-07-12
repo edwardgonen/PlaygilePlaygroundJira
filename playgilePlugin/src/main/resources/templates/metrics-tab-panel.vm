@@ -78,6 +78,8 @@
             {
                 var velocity = document.getElementById("velocity").value;
                 var releaseversion = document.getElementById("releaseversion").value;
+
+
                 jQuery.ajax({
                     type: "GET",
                     async: false,
@@ -97,6 +99,20 @@
     </head>
         <body>
             #if (!$allisok)
+                <script>
+                    var dialog = new AJS.Dialog({
+                        id: "message-status-dialog",
+                        closeOnOutsideClick: false
+                    });
+
+                    dialog.addHeader("Playgile Project Monitor");
+                    dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
+
+                    dialog.addButton("OK", function (dialog) {
+                        dialog.hide();
+                    }, "#");
+                    dialog.show();
+                </script>
                 <h1 style="color:red">$messagetodisplay</h1>
             #end
 
