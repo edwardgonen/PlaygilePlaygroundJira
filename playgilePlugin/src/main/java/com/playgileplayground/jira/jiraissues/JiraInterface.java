@@ -31,6 +31,7 @@ import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.project.version.VersionManager;
+import com.atlassian.jira.web.bean.Page;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
@@ -44,6 +45,8 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import org.ofbiz.core.entity.GenericEntityException;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -61,7 +64,7 @@ public class JiraInterface {
         this.applicationUser = applicationUser;
         this.searchService = searchService;
     }
-    public List<Issue> getAllIssues(ApplicationUser applicationUser, Project currentProject) {
+    public List<Issue> getAllIssues(Project currentProject) {
         mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
         IssueManager issueManager = ComponentAccessor.getIssueManager();
         Collection<Long> allIssueIds = null;
@@ -79,14 +82,43 @@ public class JiraInterface {
         JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
         Query query = jqlClauseBuilder.project(currentProject.getKey()).buildQuery();
         PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
-
         SearchResults searchResults = null;
         try {
             searchResults = searchService.search(applicationUser, query, pagerFilter);
         } catch (SearchException e) {
-            e.printStackTrace();
+            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
-        return searchResults != null ? searchResults.getIssues() : null;
+        if (searchResults == null)
+        {
+            return null;
+        }
+        else {
+            //ugly situation - jira replaced API from getIssues to getResult :(
+            Method newGetMethod = null;
+            List<Issue> result;
+            try {
+                newGetMethod = SearchResults.class.getMethod("getIssues");
+            } catch (NoSuchMethodException e) {
+                try {
+                    newGetMethod = SearchResults.class.getMethod("getResults");
+                } catch (NoSuchMethodException e1) {
+                }
+            }
+            if (newGetMethod != null) {
+                try {
+                    result = (List<Issue>)newGetMethod.invoke(searchResults);
+                } catch (IllegalAccessException e) {
+                    result = null;
+                } catch (InvocationTargetException e) {
+                    result = null;
+                }
+            }
+            else
+            {
+                result = null;
+            }
+            return result;
+        }
     }
 
     public Collection<PlaygileSprint> getAllSprintsForIssue(Issue issue)

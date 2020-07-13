@@ -91,9 +91,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         if(null != currentProject) {
             WriteToStatus(false,"Got current project " + currentProject.getName() + " key " + currentProject.getKey());
             contextMap.put(PROJECT, currentProject);
-            //this.issues = jiraInterface.getIssues(applicationUser, currentProject);
-
-            this.issues = jiraInterface.getAllIssues(applicationUser, currentProject);
+            this.issues = jiraInterface.getIssues(applicationUser, currentProject);
+            //this.issues = jiraInterface.getAllIssues(currentProject);
             if (null != this.issues)
             {
                 WriteToStatus(false, "Got issues " + this.issues.size());
