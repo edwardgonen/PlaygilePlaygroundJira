@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.impl;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
@@ -42,16 +43,20 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
     private final ActiveObjects ao;
     @ComponentImport
     ProjectManager projectManager;
+    @ComponentImport
+    SearchService searchService;
 
     List<Issue> issues;
     StringBuilder statusText = new StringBuilder();
 
     public ProjectMonitorImpl(UserProjectHistoryManager userProjectHistoryManager,
                               ProjectManager projectManager,
-                              ActiveObjects ao){
+                              ActiveObjects ao,
+                              SearchService searchService){
         this.userProjectHistoryManager = userProjectHistoryManager;
         this.ao = ao;
         this.projectManager = projectManager;
+        this.searchService = searchService;
     }
     @Override
     public Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
@@ -79,50 +84,52 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         contextMap.put(BASEURL, baseUrl);
         ApplicationUser applicationUser = jac.getLoggedInUser();
         Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
-        WriteToStatus("After getting current project " + (currentProject != null));
+        WriteToStatus(false,"After getting current project " + (currentProject != null));
 
         contextMap.put(MAINJAVACLASS, this);
-        JiraInterface jiraInterface = new JiraInterface(this);
+        JiraInterface jiraInterface = new JiraInterface(this, applicationUser,  searchService);
         if(null != currentProject) {
-            WriteToStatus("Got current project " + currentProject.getName() + " key " + currentProject.getKey());
+            WriteToStatus(false,"Got current project " + currentProject.getName() + " key " + currentProject.getKey());
             contextMap.put(PROJECT, currentProject);
+            //this.issues = jiraInterface.getIssues(applicationUser, currentProject);
+
             this.issues = jiraInterface.getAllIssues(applicationUser, currentProject);
             if (null != this.issues)
             {
-                WriteToStatus( "Got issues " + this.issues.size());
+                WriteToStatus(false, "Got issues " + this.issues.size());
                 if (issues.size() > 0) {
                     //get velocity and release version
                     maor = mao.CreateProjectEntity(currentProject.getKey()); //will not create if exists
-                    WriteToStatus( "Tried to create new entry in AO");
+                    WriteToStatus(false, "Tried to create new entry in AO");
                     if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                        WriteToStatus( "Created or existed in AO");
+                        WriteToStatus(false, "Created or existed in AO");
                         maor = mao.GetTeamVelocity(currentProject.getKey());
                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                            WriteToStatus( "Team velocity found " + maor.Result);
+                            WriteToStatus(false, "Team velocity found " + maor.Result);
                             teamVelocity = (double)maor.Result;
                             contextMap.put(TEAMVELOCITY, maor.Result);
                         }
                         else
                         {
-                            WriteToStatus( "Team velocity not found " + maor.Code);
+                            WriteToStatus(false, "Team velocity not found " + maor.Code);
                             contextMap.put(TEAMVELOCITY, maor.Message);
                         }
                         maor = mao.GetProjectReleaseVersion(currentProject.getKey());
                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                             selectedVersion = (String)maor.Result;
-                            WriteToStatus( "Release version found " + maor.Result);
+                            WriteToStatus(false, "Release version found " + maor.Result);
                             contextMap.put(SELECTEDPROJECTVERSION, maor.Result);
                         }
                         else
                         {
-                            WriteToStatus( "Release version not found " + maor.Code);
+                            WriteToStatus(false, "Release version not found " + maor.Code);
                             contextMap.put(SELECTEDPROJECTVERSION, maor.Message);
                         }
                     }
                     else
                     {
                         //no current project
-                        WriteToStatus( "Current project not found. Setting AllIsOk to false");
+                        WriteToStatus(false, "Current project not found. Setting AllIsOk to false");
                         bAllisOk = false;
                         messageToDisplay = "Cannot identify current project. Please try to reload this page";
                         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -130,7 +137,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 }
                 else
                 {
-                    WriteToStatus( "No issues found for current project");
+                    WriteToStatus(false, "No issues found for current project");
                     bAllisOk = false;
                     messageToDisplay = "There is none user story/issue defined for this project";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -141,7 +148,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 Collection<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
                 if (versions == null)
                 {
-                    WriteToStatus( "No versions found for project");
+                    WriteToStatus(false, "No versions found for project");
                     bAllisOk = false;
                     messageToDisplay = "Failed to retrieve a list of versions for the project. Please add release versions";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -150,7 +157,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 {
                     if (versions.size() > 0)
                     {
-                        WriteToStatus( "Found versions total " + versions.size());
+                        WriteToStatus(false, "Found versions total " + versions.size());
                         contextMap.put(PROJECTVERSIONS, versions);
 
                         //if no version selected yet - give a message to select an recalculate
@@ -158,20 +165,20 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         // if one of above is correct display a message to the user
                         if (teamVelocity <= 0)
                         {
-                            WriteToStatus( "Team velocity is not specified");
+                            WriteToStatus(false, "Team velocity is not specified");
                             bAllisOk = false;
                             messageToDisplay = "Please specify team's velocity and press Recalculate";
                             return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                         }
                         if (selectedVersion.isEmpty())
                         {
-                            WriteToStatus( "Team velocity is not specified");
+                            WriteToStatus(false, "Team velocity is not specified");
                             bAllisOk = false;
                             messageToDisplay = "Please select the Release Version and press Recalculate";
                             return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                         }
 
-                        WriteToStatus( "We have version and team's velocity " + selectedVersion + " " + teamVelocity);
+                        WriteToStatus(false, "We have version and team's velocity " + selectedVersion + " " + teamVelocity);
                         //from the issues find all those which have the selected version
                         //find all User stories of the issues and only those that are not completed
                         ArrayList<Issue> foundIssues = new ArrayList<>();
@@ -182,14 +189,14 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             StatusCategory statusCategory = issueStatus.getStatusCategory();
                             if (statusCategory == null)
                             {
-                                WriteToStatus( "Failed to retrieve issue status for issue " + issue.getId());
+                                WriteToStatus(false, "Failed to retrieve issue status for issue " + issue.getId());
                                 //go to next issue
                                 continue;
                             }
                             Collection<Version> fixedVersions = issue.getFixVersions();
                             if (fixedVersions == null)
                             {
-                                WriteToStatus( "Failed to retrieve versions for issue " + issue.getId());
+                                WriteToStatus(false, "Failed to retrieve versions for issue " + issue.getId());
                                 //go to next issue
                                 continue;
                             }
@@ -204,31 +211,31 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             }
                             //is story points field?
                             double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                            WriteToStatus( "Story points " + issue.getId() + " " + storyPointValue);
+                            WriteToStatus(false, "Story points " + issue.getId() + " " + storyPointValue);
                             if (statusCategory.getKey() != StatusCategory.COMPLETE && versionFound && storyPointValue >= 0)
                             {
                                 foundIssues.add(issue);
 
                                 Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
                                 if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
-                                    WriteToStatus( "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
+                                    WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
                                     for (PlaygileSprint playgileSprint : sprintsForIssue)
                                     {
                                         if (playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
                                         {
-                                            WriteToStatus("Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
+                                            WriteToStatus(false,"Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
                                             playgileSprints.add(playgileSprint);
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    WriteToStatus( "No sprints for " + issue.getId());
+                                    WriteToStatus(false, "No sprints for " + issue.getId());
                                 }
                             }
                             else
                             {
-                                WriteToStatus( "Issue version does not match selected or status is COMPLETE " +
+                                WriteToStatus(false, "Issue version does not match selected or status is COMPLETE " +
                                     statusCategory.getKey() + " " +
                                     storyPointValue + " " +
                                     selectedVersion + " " +
@@ -251,33 +258,33 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 boolean projectStarted = (boolean)maor.Result;
                                 if (!projectStarted) //not started
                                 {
-                                    WriteToStatus("Project start flag is false");
+                                    WriteToStatus(false,"Project start flag is false");
                                     //let's find out if the project has started
                                     //we should have a list of sprints
                                     if (playgileSprints.size() > 0) {
-                                        WriteToStatus("Valid sprints " + playgileSprints.size());
+                                        WriteToStatus(false,"Valid sprints " + playgileSprints.size());
                                         Collections.sort(playgileSprints); //sort by dates
                                         //the first sprint startDate would be the project start date
                                         PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                         startDate = sprint.getStartDate();
                                         //also get the sprint length
                                         sprintLength = ProjectProgress.Days(sprint.getStartDate(), sprint.getEndDate()) + 1;
-                                        WriteToStatus("Detected start date " + startDate);
-                                        WriteToStatus("Detected sprint length " + sprintLength);
+                                        WriteToStatus(false,"Detected start date " + startDate);
+                                        WriteToStatus(false,"Detected sprint length " + sprintLength);
                                         //set to AO entity
                                         maor = mao.SetProjectStartedFlag(currentProject.getKey(), true);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                         {
-                                            WriteToStatus("Project start flag is set to true. Setting start date");
+                                            WriteToStatus(false,"Project start flag is set to true. Setting start date");
                                             maor = mao.SetProjectStartDate(currentProject.getKey(), startDate);
                                             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                             {
                                                 projectStarted = true;
-                                                WriteToStatus("Project start date is set to " + startDate);
+                                                WriteToStatus(false,"Project start date is set to " + startDate);
                                             }
                                             else
                                             {
-                                                WriteToStatus( "Failed to set project start date " + maor.Message);
+                                                WriteToStatus(false, "Failed to set project start date " + maor.Message);
                                                 bAllisOk = false;
                                                 messageToDisplay = "General failure - AO problem - failed to set project start date. Report to Ed";
                                                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -286,11 +293,11 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                             {
                                                 projectStarted = true;
-                                                WriteToStatus("Project sprint length is set " + sprintLength);
+                                                WriteToStatus(false,"Project sprint length is set " + sprintLength);
                                             }
                                             else
                                             {
-                                                WriteToStatus( "Failed to set project sprint length " + maor.Message);
+                                                WriteToStatus(false, "Failed to set project sprint length " + maor.Message);
                                                 bAllisOk = false;
                                                 messageToDisplay = "General failure - AO problem - failed to set project sprint length. Report to Ed";
                                                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -298,7 +305,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                         }
                                         else
                                         {
-                                            WriteToStatus( "Failed to set project start flag " + maor.Message);
+                                            WriteToStatus(false, "Failed to set project start flag " + maor.Message);
                                             bAllisOk = false;
                                             messageToDisplay = "General failure - AO problem - failed to set project start flag. Report to Ed";
                                             return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -306,24 +313,24 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                     }
                                     else //no active or closed sprints at all - not started yet
                                     {
-                                        WriteToStatus( "No valid sprints found for any issues");
+                                        WriteToStatus(false, "No valid sprints found for any issues");
                                         bAllisOk = false;
                                         messageToDisplay = "The project has not started yet. Please start a sprint";
                                         maor = mao.SetProjectStartedFlag(currentProject.getKey(), false);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                         {
-                                            WriteToStatus("Set false project start flag");
+                                            WriteToStatus(false,"Set false project start flag");
                                         }
                                         else
                                         {
-                                            WriteToStatus("Failed to set project flag to false " + maor.Message);
+                                            WriteToStatus(false,"Failed to set project flag to false " + maor.Message);
                                         }
                                         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                                     }
                                 }
                                 if (projectStarted)
                                 {
-                                    WriteToStatus("Project start flag is true");
+                                    WriteToStatus(false,"Project start flag is true");
                                     //now let's calculate the remaining story points
                                     double currentEstimation = 0;
                                     for (Issue issue : foundIssues)
@@ -332,32 +339,32 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                         if (issueStatus != null)
                                         {
                                             StatusCategory statusCategory = issueStatus.getStatusCategory();
-                                            WriteToStatus("Issue status " + statusCategory);
+                                            WriteToStatus(false,"Issue status " + statusCategory);
                                             if (statusCategory.getKey() == StatusCategory.IN_PROGRESS || statusCategory.getKey() == StatusCategory.TO_DO)
                                             {
-                                                WriteToStatus("Issue status is one of ours " + statusCategory);
+                                                WriteToStatus(false,"Issue status is one of ours " + statusCategory);
                                                 double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
                                                 currentEstimation += storyPointValue;
                                             }
                                         }
                                         else
                                         {
-                                            WriteToStatus("Failed to get status for issue " + issue.getKey());
+                                            WriteToStatus(false,"Failed to get status for issue " + issue.getKey());
                                         }
                                     }
-                                    WriteToStatus("Calculated estimation " + currentEstimation);
+                                    WriteToStatus(false,"Calculated estimation " + currentEstimation);
                                     //after calculation
                                     //1. set initial estimation if previousProjectStartFlag is false
                                     if (!previousProjectStartedFlag) //first time so store the initial estimations
                                     {
-                                        WriteToStatus("Setting initial estimation " + currentEstimation);
+                                        WriteToStatus(false,"Setting initial estimation " + currentEstimation);
                                         maor = mao.SetProjectInitialEstimation(currentProject.getKey(), startDate, currentEstimation);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                            WriteToStatus( "initial estimation set for project");
+                                            WriteToStatus(false, "initial estimation set for project");
                                         }
                                         else
                                         {
-                                            WriteToStatus( "Failed to set initial project estimation " + maor.Message);
+                                            WriteToStatus(false, "Failed to set initial project estimation " + maor.Message);
                                             bAllisOk = false;
                                             messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
                                             return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -368,13 +375,13 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                     //2. add current estimation to the list of estimations
                                     //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
                                     Date timeStamp = Calendar.getInstance().getTime();
-                                    WriteToStatus("Current time to add to list " + timeStamp);
+                                    WriteToStatus(false,"Current time to add to list " + timeStamp);
                                     maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), timeStamp, currentEstimation);
                                     if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                        WriteToStatus( "Last estimation added to the list " + timeStamp + " " + currentEstimation);
+                                        WriteToStatus(false, "Last estimation added to the list " + timeStamp + " " + currentEstimation);
                                     }
                                     else {
-                                        WriteToStatus( "Failed to add Last estimation " + maor.Message);
+                                        WriteToStatus(false, "Failed to add Last estimation " + maor.Message);
                                         bAllisOk = false;
                                         messageToDisplay = "General failure - Failed to add last estimation to the list. Report to Ed";
                                         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -383,7 +390,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             }
                             else //not retrieved start flag
                             {
-                                WriteToStatus( "Failed to read project start flag " + maor.Message);
+                                WriteToStatus(false, "Failed to read project start flag " + maor.Message);
                                 bAllisOk = false;
                                 messageToDisplay = "General failure - AO problem. Report to Ed";
                                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -391,7 +398,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         }
                         else
                         {
-                            WriteToStatus( "Didn't find any issue with selected version, not COMPLETED and contains Story Points estimation");
+                            WriteToStatus(false, "Didn't find any issue with selected version, not COMPLETED and contains Story Points estimation");
                             bAllisOk = false;
                             messageToDisplay = "The backlog does not contain any issue matching version " +
                                 selectedVersion + " or not completed";
@@ -400,7 +407,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     }
                     else
                     {
-                        WriteToStatus( "No versions found for project");
+                        WriteToStatus(false, "No versions found for project");
                         messageToDisplay = "The list of versions for the project is empty. Please add release versions";
                         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                     }
@@ -408,7 +415,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             }
             else
             {
-                WriteToStatus( "Failed to retrieve project settings");
+                WriteToStatus(false, "Failed to retrieve project settings");
                 bAllisOk = false;
                 messageToDisplay = "Failed to retrieve project's issues";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -416,12 +423,12 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
             maor = mao.GetSprintLength(currentProject.getKey());
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                WriteToStatus("Got sprint length " + maor.Result);
+                WriteToStatus(false,"Got sprint length " + maor.Result);
                 sprintLength = (double)maor.Result;
             }
             else
             {
-                WriteToStatus("Failed to retrieve sprint length, using 14");
+                WriteToStatus(false,"Failed to retrieve sprint length, using 14");
                 sprintLength = 14;
             }
             maor = mao.GetProgressDataList(currentProject.getKey());
@@ -499,7 +506,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             }
             else
             {
-                WriteToStatus( "Failed to retrieve project list of progress data");
+                WriteToStatus(false, "Failed to retrieve project list of progress data");
                 bAllisOk = false;
                 messageToDisplay = "General failure - no progress data - AO problem. Report to Ed";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -547,14 +554,14 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         else
         {
             //no current project
-            WriteToStatus( "No current project found");
+            WriteToStatus(false, "No current project found");
             bAllisOk = false;
             messageToDisplay = "Cannot identify current project. Please try to reload this page";
             return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
 
         }
 
-        WriteToStatus( "Exiting successfully");
+        WriteToStatus(false, "Exiting successfully");
         bAllisOk = true;
         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
     }
@@ -576,9 +583,9 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         return contextMap;
     }
 
-    public void WriteToStatus(String text)
+    public void WriteToStatus(boolean debug,String text)
     {
-        statusText.append(text + "<br>");
+        if (debug) statusText.append(text + "<br>");
     }
 
 }

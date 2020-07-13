@@ -1,14 +1,46 @@
 package com.playgileplayground.jira.jiraissues;
 
+/*
+import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.search.SearchException;
+import com.atlassian.jira.issue.search.SearchResults;
+import com.atlassian.jira.jql.builder.JqlClauseBuilder;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.project.version.VersionManager;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.web.bean.PagerFilter;
+import com.atlassian.query.Query;
+*/
+
+import com.atlassian.jira.bc.issue.IssueService;
+import com.atlassian.jira.bc.issue.search.SearchService;
+import com.atlassian.jira.bc.project.ProjectService;
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.config.ConstantsManager;
+import com.atlassian.jira.issue.*;
+import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.issue.search.SearchException;
+import com.atlassian.jira.issue.search.SearchResults;
+import com.atlassian.jira.project.version.Version;
+import com.atlassian.jira.project.version.VersionManager;
+import com.atlassian.jira.web.bean.PagerFilter;
+import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
+import com.atlassian.query.Query;
+import com.atlassian.jira.jql.builder.JqlClauseBuilder;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
+import com.atlassian.jira.project.Project;
+import com.atlassian.jira.security.JiraAuthenticationContext;
+import com.atlassian.jira.user.ApplicationUser;
+
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import org.ofbiz.core.entity.GenericEntityException;
 
@@ -21,23 +53,42 @@ import java.util.List;
  */
 public class JiraInterface {
     ProjectMonitorImpl mainClass;
-    public JiraInterface(ProjectMonitorImpl mainClass)
+    ApplicationUser applicationUser;
+    SearchService searchService;
+    public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
     {
         this.mainClass = mainClass;
+        this.applicationUser = applicationUser;
+        this.searchService = searchService;
     }
     public List<Issue> getAllIssues(ApplicationUser applicationUser, Project currentProject) {
-        mainClass.WriteToStatus("In JiraInterface Getting all issues");
+        mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
         IssueManager issueManager = ComponentAccessor.getIssueManager();
         Collection<Long> allIssueIds = null;
         try {
             allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
         } catch (GenericEntityException e) {
-            mainClass.WriteToStatus("Failed to get all issues " + e.toString());
+            mainClass.WriteToStatus(false, "Failed to get all issues " + e.toString());
             System.out.println("Failed to get issue ids " + e.toString());
         }
         List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
         return allIssues;
     }
+
+    public List<Issue> getIssues(ApplicationUser applicationUser, Project currentProject) {
+        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
+        Query query = jqlClauseBuilder.project(currentProject.getKey()).buildQuery();
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            e.printStackTrace();
+        }
+        return searchResults != null ? searchResults.getIssues() : null;
+    }
+
     public Collection<PlaygileSprint> getAllSprintsForIssue(Issue issue)
     {
         Collection<PlaygileSprint> result = new ArrayList<>();
