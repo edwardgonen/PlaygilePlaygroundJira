@@ -51,6 +51,14 @@ public final class ManageActiveObjects{
                     result.Message = "Created";
                 }
             }
+            else //no entity at all
+            {
+                //create
+                PrjStatEntity prjCreatedStatEntity = ao.create(PrjStatEntity.class);
+                prjCreatedStatEntity.setProjectKey(projectKey);
+                prjCreatedStatEntity.save();
+                result.Message = "Created";
+            }
         }
         catch (Exception ex)
         {
