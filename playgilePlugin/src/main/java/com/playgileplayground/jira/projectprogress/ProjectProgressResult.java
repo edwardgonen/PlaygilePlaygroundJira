@@ -1,5 +1,6 @@
 package com.playgileplayground.jira.projectprogress;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -13,6 +14,7 @@ public class ProjectProgressResult {
     public Date predictedProjectEnd;
     public ProgressData progressData;
     public ProgressData idealData;
+    public Color progressDataColor;
 
 
     public ProjectProgressResult()

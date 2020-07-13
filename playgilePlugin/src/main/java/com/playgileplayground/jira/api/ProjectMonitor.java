@@ -24,6 +24,7 @@ public interface ProjectMonitor {
     String BASEURL = "baseurl";
     String IDEALENDOFPROJECT = "idealendofproject";
     String PREDICTEDENDOFPROJECT = "predictedendofproject";
+    String PREDICTIONCOLOR = "predictioncolor";
 
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);

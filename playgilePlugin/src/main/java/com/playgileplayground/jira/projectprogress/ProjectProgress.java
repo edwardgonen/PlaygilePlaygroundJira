@@ -1,5 +1,6 @@
 package com.playgileplayground.jira.projectprogress;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -112,6 +113,13 @@ public class ProjectProgress
         result.idealProjectEnd = idealProjectEnd;
         result.predictedProjectEnd = predictedProjectEnd;
 
+        //logic of color
+        int differenceInDays = ProjectProgress.Days(predictedProjectEnd, idealProjectEnd);
+        if (differenceInDays <= 7) result.progressDataColor = Color.GREEN;
+        else
+        if (differenceInDays > 7 && differenceInDays < 30) result.progressDataColor = Color.YELLOW;
+        else result.progressDataColor = Color.RED;
+
         return result;
     }
 
@@ -142,5 +150,20 @@ public class ProjectProgress
     {
         long diffInMillies = Math.abs(secondDate.getTime() - firstDate.getTime());
         return (int)TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+    }
+    public static String convertColorToHexadeimal(Color color)
+    {
+        String hex = Integer.toHexString(color.getRGB() & 0xffffff);
+        if(hex.length() < 6)
+        {
+            if(hex.length()==5)
+                hex = "0" + hex;
+            if(hex.length()==4)
+                hex = "00" + hex;
+            if(hex.length()==3)
+                hex = "000" + hex;
+        }
+        hex = "#" + hex;
+        return hex;
     }
 }

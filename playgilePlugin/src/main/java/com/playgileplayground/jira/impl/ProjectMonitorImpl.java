@@ -493,6 +493,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 }
                 contextMap.put(CHARTROWS, chartRows.toString());
                 contextMap.put(IDEALENDOFPROJECT, ConvertDateToOurFormat(ppr.idealProjectEnd));
+                //make the logic of color
+                contextMap.put(PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(ppr.progressDataColor));
                 contextMap.put(PREDICTEDENDOFPROJECT, ConvertDateToOurFormat(ppr.predictedProjectEnd));
             }
             else
@@ -576,7 +578,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
     public void WriteToStatus(String text)
     {
-        statusText.append(text + "***");
+        statusText.append(text + "<br>");
     }
 
 }
