@@ -91,50 +91,50 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         if(null != currentProject) {
             WriteToStatus(false,"Got current project " + currentProject.getName() + " key " + currentProject.getKey());
             contextMap.put(PROJECT, currentProject);
-            this.issues = jiraInterface.getIssues(applicationUser, currentProject);
+
+            //get velocity and release version
+            maor = mao.CreateProjectEntity(currentProject.getKey()); //will not create if exists
+            WriteToStatus(false, "Tried to create new entry in AO");
+            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                WriteToStatus(false, "Created or existed in AO");
+                maor = mao.GetTeamVelocity(currentProject.getKey());
+                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                    WriteToStatus(false, "Team velocity found " + maor.Result);
+                    teamVelocity = (double)maor.Result;
+                    contextMap.put(TEAMVELOCITY, maor.Result);
+                }
+                else
+                {
+                    WriteToStatus(false, "Team velocity not found " + maor.Code);
+                    contextMap.put(TEAMVELOCITY, maor.Message);
+                }
+                maor = mao.GetProjectReleaseVersion(currentProject.getKey());
+                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                    selectedVersion = (String)maor.Result;
+                    WriteToStatus(false, "Release version found " + maor.Result);
+                    contextMap.put(SELECTEDPROJECTVERSION, maor.Result);
+                }
+                else
+                {
+                    WriteToStatus(false, "Release version not found " + maor.Code);
+                    contextMap.put(SELECTEDPROJECTVERSION, maor.Message);
+                }
+            }
+            else
+            {
+                //no current project
+                WriteToStatus(false, "Current project not found. Setting AllIsOk to false");
+                bAllisOk = false;
+                messageToDisplay = "Cannot identify current project. Please try to reload this page";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+
+            this.issues = jiraInterface.getIssues(applicationUser, currentProject, selectedVersion);
             //this.issues = jiraInterface.getAllIssues(currentProject);
             if (null != this.issues)
             {
                 WriteToStatus(false, "Got issues " + this.issues.size());
-                if (issues.size() > 0) {
-                    //get velocity and release version
-                    maor = mao.CreateProjectEntity(currentProject.getKey()); //will not create if exists
-                    WriteToStatus(false, "Tried to create new entry in AO");
-                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                        WriteToStatus(false, "Created or existed in AO");
-                        maor = mao.GetTeamVelocity(currentProject.getKey());
-                        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                            WriteToStatus(false, "Team velocity found " + maor.Result);
-                            teamVelocity = (double)maor.Result;
-                            contextMap.put(TEAMVELOCITY, maor.Result);
-                        }
-                        else
-                        {
-                            WriteToStatus(false, "Team velocity not found " + maor.Code);
-                            contextMap.put(TEAMVELOCITY, maor.Message);
-                        }
-                        maor = mao.GetProjectReleaseVersion(currentProject.getKey());
-                        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                            selectedVersion = (String)maor.Result;
-                            WriteToStatus(false, "Release version found " + maor.Result);
-                            contextMap.put(SELECTEDPROJECTVERSION, maor.Result);
-                        }
-                        else
-                        {
-                            WriteToStatus(false, "Release version not found " + maor.Code);
-                            contextMap.put(SELECTEDPROJECTVERSION, maor.Message);
-                        }
-                    }
-                    else
-                    {
-                        //no current project
-                        WriteToStatus(false, "Current project not found. Setting AllIsOk to false");
-                        bAllisOk = false;
-                        messageToDisplay = "Cannot identify current project. Please try to reload this page";
-                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                    }
-                }
-                else
+                if (issues.size() <= 0)
                 {
                     WriteToStatus(false, "No issues found for current project");
                     bAllisOk = false;

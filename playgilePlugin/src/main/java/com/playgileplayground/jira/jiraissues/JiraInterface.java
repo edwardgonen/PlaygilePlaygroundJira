@@ -78,9 +78,10 @@ public class JiraInterface {
         return allIssues;
     }
 
-    public List<Issue> getIssues(ApplicationUser applicationUser, Project currentProject) {
+    public List<Issue> getIssues(ApplicationUser applicationUser, Project currentProject, String fixVersion) {
         JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
-        Query query = jqlClauseBuilder.project(currentProject.getKey()).buildQuery();
+
+        Query query = jqlClauseBuilder.project(currentProject.getKey()).and().fixVersion(fixVersion).buildQuery();
         PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
         SearchResults searchResults = null;
         try {
