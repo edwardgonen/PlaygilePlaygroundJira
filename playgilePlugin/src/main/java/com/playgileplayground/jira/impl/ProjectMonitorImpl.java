@@ -5,6 +5,7 @@ import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
@@ -131,7 +132,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             }
 
             //do we have any versions defined?
-            Collection<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
+            ArrayList<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
             if (versions == null)
             {
                 WriteToStatus(false, "No versions found for project");
@@ -146,11 +147,10 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     messageToDisplay = "The list of versions for the project is empty. Please add release versions";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
-
+                Collections.sort(versions);//sort alphabetically for better user experience
                 WriteToStatus(false, "Found versions total " + versions.size());
                 contextMap.put(PROJECTVERSIONS, versions);
             }
-
             this.issues = jiraInterface.getIssues(applicationUser, currentProject, selectedVersion);
             //this.issues = jiraInterface.getAllIssues(currentProject);
             if (null != this.issues)
@@ -199,6 +199,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         //go to next issue
                         continue;
                     }
+
                     Collection<Version> fixedVersions = issue.getFixVersions();
                     if (fixedVersions == null)
                     {

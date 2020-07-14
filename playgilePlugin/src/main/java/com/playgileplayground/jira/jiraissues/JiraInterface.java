@@ -71,31 +71,25 @@ public class JiraInterface {
             return null;
         }
         else {
-            //ugly situation - jira replaced API from getIssues to getResult :(
-            Method newGetMethod = null;
-            List<Issue> result;
-            try {
-                newGetMethod = SearchResults.class.getMethod("getIssues");
-            } catch (NoSuchMethodException e) {
-                try {
-                    newGetMethod = SearchResults.class.getMethod("getResults");
-                } catch (NoSuchMethodException e1) {
-                }
-            }
-            if (newGetMethod != null) {
-                try {
-                    result = (List<Issue>)newGetMethod.invoke(searchResults);
-                } catch (IllegalAccessException e) {
-                    result = null;
-                } catch (InvocationTargetException e) {
-                    result = null;
-                }
-            }
-            else
-            {
-                result = null;
-            }
-            return result;
+            return this.AccessVersionIndependentListOfIssues(searchResults);
+        }
+    }
+    public List<Issue> getEpics(ApplicationUser applicationUser, Project currentProject) {
+        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
+        Query query = jqlClauseBuilder.project(currentProject.getKey()).and().issueType("Epic").buildQuery();
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        if (searchResults == null)
+        {
+            return null;
+        }
+        else {
+            return this.AccessVersionIndependentListOfIssues(searchResults);
         }
     }
 
@@ -137,7 +131,7 @@ public class JiraInterface {
     }
 
 
-    public Collection<String> getAllVersionsForProject(Project currentProject)
+    public ArrayList<String> getAllVersionsForProject(Project currentProject)
     {
         ArrayList<String> result = new ArrayList<>();
         VersionManager vm = ComponentAccessor.getVersionManager();
@@ -196,5 +190,33 @@ public class JiraInterface {
         return result.toString();
     }
 
+    private List<Issue> AccessVersionIndependentListOfIssues(SearchResults searchResults)
+    {
+        //ugly situation - jira replaced API from getIssues to getResult :(
+        Method newGetMethod = null;
+        List<Issue> result;
+        try {
+            newGetMethod = SearchResults.class.getMethod("getIssues");
+        } catch (NoSuchMethodException e) {
+            try {
+                newGetMethod = SearchResults.class.getMethod("getResults");
+            } catch (NoSuchMethodException e1) {
+            }
+        }
+        if (newGetMethod != null) {
+            try {
+                result = (List<Issue>)newGetMethod.invoke(searchResults);
+            } catch (IllegalAccessException e) {
+                result = null;
+            } catch (InvocationTargetException e) {
+                result = null;
+            }
+        }
+        else
+        {
+            result = null;
+        }
+        return result;
+    }
 
 }
