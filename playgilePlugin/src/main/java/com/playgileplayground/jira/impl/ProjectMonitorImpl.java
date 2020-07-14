@@ -77,6 +77,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         boolean bAllisOk = false;
         Date startDate = null;
         double sprintLength;
+        boolean atLeastOneStoryWithEstimations = false;
         ManageActiveObjectsResult maor;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
@@ -129,6 +130,27 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
+            //do we have any versions defined?
+            Collection<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
+            if (versions == null)
+            {
+                WriteToStatus(false, "No versions found for project");
+                bAllisOk = false;
+                messageToDisplay = "Failed to retrieve a list of versions for the project. Please add release versions";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+            else
+            {
+                if (versions.size() <= 0) {
+                    WriteToStatus(false, "No versions found for project");
+                    messageToDisplay = "The list of versions for the project is empty. Please add release versions";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
+
+                WriteToStatus(false, "Found versions total " + versions.size());
+                contextMap.put(PROJECTVERSIONS, versions);
+            }
+
             this.issues = jiraInterface.getIssues(applicationUser, currentProject, selectedVersion);
             //this.issues = jiraInterface.getAllIssues(currentProject);
             if (null != this.issues)
@@ -143,281 +165,281 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 }
 
 
-                //do we have any versions defined?
-                Collection<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
-                if (versions == null)
+
+                //if no version selected yet - give a message to select an recalculate
+                //also check if no velocity stored yet - also give a message
+                // if one of above is correct display a message to the user
+                if (teamVelocity <= 0)
                 {
-                    WriteToStatus(false, "No versions found for project");
+                    WriteToStatus(false, "Team velocity is not specified");
                     bAllisOk = false;
-                    messageToDisplay = "Failed to retrieve a list of versions for the project. Please add release versions";
+                    messageToDisplay = "Please specify team's velocity and press Recalculate";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
-                else
+                if (selectedVersion.isEmpty())
                 {
-                    if (versions.size() > 0)
+                    WriteToStatus(false, "Team velocity is not specified");
+                    bAllisOk = false;
+                    messageToDisplay = "Please select the Release Version and press Recalculate";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
+
+                WriteToStatus(false, "We have version and team's velocity " + selectedVersion + " " + teamVelocity);
+                //from the issues find all those which have the selected version
+                //find all User stories of the issues and only those that are not completed
+                ArrayList<Issue> foundIssues = new ArrayList<>();
+                ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
+                for (Issue issue : issues)
+                {
+                    Status issueStatus = issue.getStatus();
+                    StatusCategory statusCategory = issueStatus.getStatusCategory();
+                    if (statusCategory == null)
                     {
-                        WriteToStatus(false, "Found versions total " + versions.size());
-                        contextMap.put(PROJECTVERSIONS, versions);
-
-                        //if no version selected yet - give a message to select an recalculate
-                        //also check if no velocity stored yet - also give a message
-                        // if one of above is correct display a message to the user
-                        if (teamVelocity <= 0)
+                        WriteToStatus(false, "Failed to retrieve issue status for issue " + issue.getId());
+                        //go to next issue
+                        continue;
+                    }
+                    Collection<Version> fixedVersions = issue.getFixVersions();
+                    if (fixedVersions == null)
+                    {
+                        WriteToStatus(false, "Failed to retrieve versions for issue " + issue.getId());
+                        //go to next issue
+                        continue;
+                    }
+                    boolean versionFound = false;
+                    for (Version version : fixedVersions)
+                    {
+                        if (version.getName().equals(selectedVersion))
                         {
-                            WriteToStatus(false, "Team velocity is not specified");
-                            bAllisOk = false;
-                            messageToDisplay = "Please specify team's velocity and press Recalculate";
-                            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                            versionFound = true;
+                            break;
                         }
-                        if (selectedVersion.isEmpty())
-                        {
-                            WriteToStatus(false, "Team velocity is not specified");
-                            bAllisOk = false;
-                            messageToDisplay = "Please select the Release Version and press Recalculate";
-                            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                        }
+                    }
+                    //is story points field?
+                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                    WriteToStatus(false, "Story points " + issue.getId() + " " + storyPointValue);
+                    if (storyPointValue >= 0)
+                    {
+                        atLeastOneStoryWithEstimations = true;
+                    }
+                    if (statusCategory.getKey() != StatusCategory.COMPLETE && versionFound && storyPointValue >= 0)
+                    {
+                        foundIssues.add(issue);
 
-                        WriteToStatus(false, "We have version and team's velocity " + selectedVersion + " " + teamVelocity);
-                        //from the issues find all those which have the selected version
-                        //find all User stories of the issues and only those that are not completed
-                        ArrayList<Issue> foundIssues = new ArrayList<>();
-                        ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
-                        for (Issue issue : issues)
-                        {
-                            Status issueStatus = issue.getStatus();
-                            StatusCategory statusCategory = issueStatus.getStatusCategory();
-                            if (statusCategory == null)
+                        Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
+                        if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
+                            WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
+                            for (PlaygileSprint playgileSprint : sprintsForIssue)
                             {
-                                WriteToStatus(false, "Failed to retrieve issue status for issue " + issue.getId());
-                                //go to next issue
-                                continue;
-                            }
-                            Collection<Version> fixedVersions = issue.getFixVersions();
-                            if (fixedVersions == null)
-                            {
-                                WriteToStatus(false, "Failed to retrieve versions for issue " + issue.getId());
-                                //go to next issue
-                                continue;
-                            }
-                            boolean versionFound = false;
-                            for (Version version : fixedVersions)
-                            {
-                                if (version.getName().equals(selectedVersion))
+                                if (playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
                                 {
-                                    versionFound = true;
-                                    break;
+                                    WriteToStatus(false,"Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
+                                    playgileSprints.add(playgileSprint);
                                 }
-                            }
-                            //is story points field?
-                            double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                            WriteToStatus(false, "Story points " + issue.getId() + " " + storyPointValue);
-                            if (statusCategory.getKey() != StatusCategory.COMPLETE && versionFound && storyPointValue >= 0)
-                            {
-                                foundIssues.add(issue);
-
-                                Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
-                                if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
-                                    WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
-                                    for (PlaygileSprint playgileSprint : sprintsForIssue)
-                                    {
-                                        if (playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
-                                        {
-                                            WriteToStatus(false,"Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
-                                            playgileSprints.add(playgileSprint);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    WriteToStatus(false, "No sprints for " + issue.getId());
-                                }
-                            }
-                            else
-                            {
-                                WriteToStatus(false, "Issue version does not match selected or status is COMPLETE " +
-                                    statusCategory.getKey() + " " +
-                                    storyPointValue + " " +
-                                    selectedVersion + " " +
-                                    issue.getId());
-                                //go to the next issue
-                                continue;
-                            }
-                        }
-
-                        //get list of sprints out of user stories.
-                        //did we find any matching issues?
-                        if (foundIssues.size() > 0)
-                        {
-                            //the project is ok. Let's see if it has started yet
-                            //get the start flag from AO
-                            maor = mao.GetProjectStartedFlag(currentProject.getKey());
-                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-                            {
-                                boolean previousProjectStartedFlag = (boolean)maor.Result;
-                                boolean projectStarted = (boolean)maor.Result;
-                                if (!projectStarted) //not started
-                                {
-                                    WriteToStatus(false,"Project start flag is false");
-                                    //let's find out if the project has started
-                                    //we should have a list of sprints
-                                    if (playgileSprints.size() > 0) {
-                                        WriteToStatus(false,"Valid sprints " + playgileSprints.size());
-                                        Collections.sort(playgileSprints); //sort by dates
-                                        //the first sprint startDate would be the project start date
-                                        PlaygileSprint sprint = playgileSprints.iterator().next(); //first
-                                        startDate = sprint.getStartDate();
-                                        //also get the sprint length
-                                        sprintLength = ProjectProgress.Days(sprint.getStartDate(), sprint.getEndDate()) + 1;
-                                        WriteToStatus(false,"Detected start date " + startDate);
-                                        WriteToStatus(false,"Detected sprint length " + sprintLength);
-                                        //set to AO entity
-                                        maor = mao.SetProjectStartedFlag(currentProject.getKey(), true);
-                                        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-                                        {
-                                            WriteToStatus(false,"Project start flag is set to true. Setting start date");
-                                            maor = mao.SetProjectStartDate(currentProject.getKey(), startDate);
-                                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-                                            {
-                                                projectStarted = true;
-                                                WriteToStatus(false,"Project start date is set to " + startDate);
-                                            }
-                                            else
-                                            {
-                                                WriteToStatus(false, "Failed to set project start date " + maor.Message);
-                                                bAllisOk = false;
-                                                messageToDisplay = "General failure - AO problem - failed to set project start date. Report to Ed";
-                                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                            }
-                                            maor = mao.SetSprintLength(currentProject.getKey(), sprintLength);
-                                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-                                            {
-                                                projectStarted = true;
-                                                WriteToStatus(false,"Project sprint length is set " + sprintLength);
-                                            }
-                                            else
-                                            {
-                                                WriteToStatus(false, "Failed to set project sprint length " + maor.Message);
-                                                bAllisOk = false;
-                                                messageToDisplay = "General failure - AO problem - failed to set project sprint length. Report to Ed";
-                                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            WriteToStatus(false, "Failed to set project start flag " + maor.Message);
-                                            bAllisOk = false;
-                                            messageToDisplay = "General failure - AO problem - failed to set project start flag. Report to Ed";
-                                            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                        }
-                                    }
-                                    else //no active or closed sprints at all - not started yet
-                                    {
-                                        WriteToStatus(false, "No valid sprints found for any issues");
-                                        bAllisOk = false;
-                                        messageToDisplay = "The project has not started yet. Please start a sprint";
-                                        maor = mao.SetProjectStartedFlag(currentProject.getKey(), false);
-                                        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-                                        {
-                                            WriteToStatus(false,"Set false project start flag");
-                                        }
-                                        else
-                                        {
-                                            WriteToStatus(false,"Failed to set project flag to false " + maor.Message);
-                                        }
-                                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                    }
-                                }
-                                if (projectStarted)
-                                {
-                                    WriteToStatus(false,"Project start flag is true");
-                                    //now let's calculate the remaining story points
-                                    double currentEstimation = 0;
-                                    for (Issue issue : foundIssues)
-                                    {
-                                        com.atlassian.jira.issue.status.Status issueStatus = issue.getStatus();
-                                        if (issueStatus != null)
-                                        {
-                                            StatusCategory statusCategory = issueStatus.getStatusCategory();
-                                            WriteToStatus(false,"Issue status " + statusCategory);
-                                            if (statusCategory.getKey() == StatusCategory.IN_PROGRESS || statusCategory.getKey() == StatusCategory.TO_DO)
-                                            {
-                                                WriteToStatus(false,"Issue status is one of ours " + statusCategory);
-                                                double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                                                currentEstimation += storyPointValue;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            WriteToStatus(false,"Failed to get status for issue " + issue.getKey());
-                                        }
-                                    }
-                                    WriteToStatus(false,"Calculated estimation " + currentEstimation);
-                                    //after calculation
-                                    //1. set initial estimation if previousProjectStartFlag is false
-                                    if (!previousProjectStartedFlag) //first time so store the initial estimations
-                                    {
-                                        WriteToStatus(false,"Setting initial estimation " + currentEstimation);
-                                        maor = mao.SetProjectInitialEstimation(currentProject.getKey(), startDate, currentEstimation);
-                                        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                            WriteToStatus(false, "initial estimation set for project");
-                                        }
-                                        else
-                                        {
-                                            WriteToStatus(false, "Failed to set initial project estimation " + maor.Message);
-                                            bAllisOk = false;
-                                            messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
-                                            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                        }
-
-                                    }
-
-                                    //2. add current estimation to the list of estimations
-                                    //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
-                                    Date timeStamp = Calendar.getInstance().getTime();
-                                    WriteToStatus(false,"Current time to add to list " + timeStamp);
-                                    maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), timeStamp, currentEstimation);
-                                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                        WriteToStatus(false, "Last estimation added to the list " + timeStamp + " " + currentEstimation);
-                                    }
-                                    else {
-                                        WriteToStatus(false, "Failed to add Last estimation " + maor.Message);
-                                        bAllisOk = false;
-                                        messageToDisplay = "General failure - Failed to add last estimation to the list. Report to Ed";
-                                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                    }
-                                }
-                            }
-                            else //not retrieved start flag
-                            {
-                                WriteToStatus(false, "Failed to read project start flag " + maor.Message);
-                                bAllisOk = false;
-                                messageToDisplay = "General failure - AO problem. Report to Ed";
-                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                             }
                         }
                         else
                         {
-                            WriteToStatus(false, "Didn't find any issue with selected version, not COMPLETED and contains Story Points estimation");
-                            bAllisOk = false;
-                            messageToDisplay = "The backlog does not contain any issue matching version " +
-                                selectedVersion + " or not completed";
-                            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                            WriteToStatus(false, "No sprints for " + issue.getId());
                         }
                     }
                     else
                     {
-                        WriteToStatus(false, "No versions found for project");
-                        messageToDisplay = "The list of versions for the project is empty. Please add release versions";
+                        WriteToStatus(false, "Issue version does not match selected or status is COMPLETE " +
+                            statusCategory.getKey() + " " +
+                            storyPointValue + " " +
+                            selectedVersion + " " +
+                            issue.getId());
+                        //go to the next issue
+                        continue;
+                    }
+                }
+
+                //get list of sprints out of user stories.
+                //did we find any matching issues?
+                if (foundIssues.size() > 0)
+                {
+                    //the project is ok. Let's see if it has started yet
+                    //get the start flag from AO
+                    maor = mao.GetProjectStartedFlag(currentProject.getKey());
+                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                    {
+                        boolean previousProjectStartedFlag = (boolean)maor.Result;
+                        boolean projectStarted = (boolean)maor.Result;
+                        if (!projectStarted) //not started
+                        {
+                            WriteToStatus(false,"Project start flag is false");
+                            //let's find out if the project has started
+                            //we should have a list of sprints
+                            if (playgileSprints.size() > 0) {
+                                WriteToStatus(false,"Valid sprints " + playgileSprints.size());
+                                Collections.sort(playgileSprints); //sort by dates
+                                //the first sprint startDate would be the project start date
+                                PlaygileSprint sprint = playgileSprints.iterator().next(); //first
+                                startDate = sprint.getStartDate();
+                                //also get the sprint length
+                                sprintLength = ProjectProgress.Days(sprint.getStartDate(), sprint.getEndDate()) + 1;
+                                WriteToStatus(false,"Detected start date " + startDate);
+                                WriteToStatus(false,"Detected sprint length " + sprintLength);
+                                //set to AO entity
+                                maor = mao.SetProjectStartedFlag(currentProject.getKey(), true);
+                                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                                {
+                                    WriteToStatus(false,"Project start flag is set to true. Setting start date");
+                                    maor = mao.SetProjectStartDate(currentProject.getKey(), startDate);
+                                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                                    {
+                                        projectStarted = true;
+                                        WriteToStatus(false,"Project start date is set to " + startDate);
+                                    }
+                                    else
+                                    {
+                                        WriteToStatus(false, "Failed to set project start date " + maor.Message);
+                                        bAllisOk = false;
+                                        messageToDisplay = "General failure - AO problem - failed to set project start date. Report to Ed";
+                                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                    }
+                                    maor = mao.SetSprintLength(currentProject.getKey(), sprintLength);
+                                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                                    {
+                                        projectStarted = true;
+                                        WriteToStatus(false,"Project sprint length is set " + sprintLength);
+                                    }
+                                    else
+                                    {
+                                        WriteToStatus(false, "Failed to set project sprint length " + maor.Message);
+                                        bAllisOk = false;
+                                        messageToDisplay = "General failure - AO problem - failed to set project sprint length. Report to Ed";
+                                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                    }
+                                }
+                                else
+                                {
+                                    WriteToStatus(false, "Failed to set project start flag " + maor.Message);
+                                    bAllisOk = false;
+                                    messageToDisplay = "General failure - AO problem - failed to set project start flag. Report to Ed";
+                                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                }
+                            }
+                            else //no active or closed sprints at all - not started yet
+                            {
+                                WriteToStatus(false, "No valid sprints found for any issues");
+                                bAllisOk = false;
+                                messageToDisplay = "The project has not started yet. Please start a sprint";
+                                maor = mao.SetProjectStartedFlag(currentProject.getKey(), false);
+                                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                                {
+                                    WriteToStatus(false,"Set false project start flag");
+                                }
+                                else
+                                {
+                                    WriteToStatus(false,"Failed to set project flag to false " + maor.Message);
+                                }
+                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                            }
+                        }
+                        if (projectStarted)
+                        {
+                            WriteToStatus(false,"Project start flag is true");
+                            //now let's calculate the remaining story points
+                            double currentEstimation = 0;
+                            for (Issue issue : foundIssues)
+                            {
+                                com.atlassian.jira.issue.status.Status issueStatus = issue.getStatus();
+                                if (issueStatus != null)
+                                {
+                                    StatusCategory statusCategory = issueStatus.getStatusCategory();
+                                    WriteToStatus(false,"Issue status " + statusCategory);
+                                    if (statusCategory.getKey() == StatusCategory.IN_PROGRESS || statusCategory.getKey() == StatusCategory.TO_DO)
+                                    {
+                                        WriteToStatus(false,"Issue status is one of ours " + statusCategory);
+                                        double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                                        currentEstimation += storyPointValue;
+                                    }
+                                }
+                                else
+                                {
+                                    WriteToStatus(false,"Failed to get status for issue " + issue.getKey());
+                                }
+                            }
+                            WriteToStatus(false,"Calculated estimation " + currentEstimation);
+                            //after calculation
+                            //1. set initial estimation if previousProjectStartFlag is false
+                            if (!previousProjectStartedFlag) //first time so store the initial estimations
+                            {
+                                WriteToStatus(false,"Setting initial estimation " + currentEstimation);
+                                maor = mao.SetProjectInitialEstimation(currentProject.getKey(), startDate, currentEstimation);
+                                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                                    WriteToStatus(false, "initial estimation set for project");
+                                }
+                                else
+                                {
+                                    WriteToStatus(false, "Failed to set initial project estimation " + maor.Message);
+                                    bAllisOk = false;
+                                    messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
+                                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                }
+
+                            }
+
+                            //2. add current estimation to the list of estimations
+                            //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
+                            Date timeStamp = Calendar.getInstance().getTime();
+                            WriteToStatus(false,"Current time to add to list " + timeStamp);
+                            maor = mao.AddRemainingEstimationsRecord(currentProject.getKey(), timeStamp, currentEstimation);
+                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                                WriteToStatus(false, "Last estimation added to the list " + timeStamp + " " + currentEstimation);
+                            }
+                            else {
+                                WriteToStatus(false, "Failed to add Last estimation " + maor.Message);
+                                bAllisOk = false;
+                                messageToDisplay = "General failure - Failed to add last estimation to the list. Report to Ed";
+                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                            }
+                        }
+                    }
+                    else //not retrieved start flag
+                    {
+                        WriteToStatus(false, "Failed to read project start flag " + maor.Message);
+                        bAllisOk = false;
+                        messageToDisplay = "General failure - AO problem. Report to Ed";
+                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                    }
+                }
+                else
+                {
+                    if (atLeastOneStoryWithEstimations) {
+                        WriteToStatus(false, "Didn't find any issue with selected version, not COMPLETED");
+                        bAllisOk = false;
+                        messageToDisplay = "The backlog does not contain any issue matching version " +
+                            selectedVersion + " or not completed";
+                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                    }
+                    else
+                    {
+                        WriteToStatus(false, "Didn't find any issue with story points estimation");
+                        bAllisOk = false;
+                        messageToDisplay = "The backlog does not contain any issue with story points estimations";
                         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                     }
                 }
             }
             else
             {
-                WriteToStatus(false, "Failed to retrieve project settings");
-                bAllisOk = false;
-                messageToDisplay = "Failed to retrieve project's issues";
-                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                if (selectedVersion == null) {
+                    WriteToStatus(false, "Failed to retrieve any project issues - no selected version");
+                    bAllisOk = false;
+                    messageToDisplay = "Please select a release version from the list and press Recalculate (also check if the Team's velocity is not 0)";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
+                else //version selected
+                {
+                    WriteToStatus(false, "Failed to retrieve any project issues with fixed version " + selectedVersion);
+                    bAllisOk = false;
+                    messageToDisplay = "Failed to retrieve any project's issues with release version set to " + selectedVersion +
+                        ". Please set the release version to each issue included in release and select the appropriate version from the list";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
             }
 
             maor = mao.GetSprintLength(currentProject.getKey());

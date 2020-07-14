@@ -1,6 +1,6 @@
 package com.playgileplayground.jira.jiraissues;
 
-/*
+
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
@@ -17,31 +17,6 @@ import com.atlassian.jira.project.version.VersionManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
-*/
-
-import com.atlassian.jira.bc.issue.IssueService;
-import com.atlassian.jira.bc.issue.search.SearchService;
-import com.atlassian.jira.bc.project.ProjectService;
-import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.config.ConstantsManager;
-import com.atlassian.jira.issue.*;
-import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.issue.issuetype.IssueType;
-import com.atlassian.jira.issue.search.SearchException;
-import com.atlassian.jira.issue.search.SearchResults;
-import com.atlassian.jira.project.version.Version;
-import com.atlassian.jira.project.version.VersionManager;
-import com.atlassian.jira.web.bean.Page;
-import com.atlassian.jira.web.bean.PagerFilter;
-import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
-import com.atlassian.query.Query;
-import com.atlassian.jira.jql.builder.JqlClauseBuilder;
-import com.atlassian.jira.jql.builder.JqlQueryBuilder;
-import com.atlassian.jira.project.Project;
-import com.atlassian.jira.security.JiraAuthenticationContext;
-import com.atlassian.jira.user.ApplicationUser;
-
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import org.ofbiz.core.entity.GenericEntityException;
 
@@ -79,8 +54,10 @@ public class JiraInterface {
     }
 
     public List<Issue> getIssues(ApplicationUser applicationUser, Project currentProject, String fixVersion) {
-        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
+        //if the version is not defined return null. no query
+        if (fixVersion == null) return null;
 
+        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
         Query query = jqlClauseBuilder.project(currentProject.getKey()).and().fixVersion(fixVersion).buildQuery();
         PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
         SearchResults searchResults = null;
