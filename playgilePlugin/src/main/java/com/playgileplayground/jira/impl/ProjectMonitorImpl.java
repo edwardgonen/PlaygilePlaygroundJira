@@ -151,7 +151,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 WriteToStatus(false, "Found versions total " + versions.size());
                 contextMap.put(PROJECTVERSIONS, versions);
             }
-            this.issues = jiraInterface.getIssues(applicationUser, currentProject, selectedVersion);
+            this.issues = jiraInterface.getIssuesByFixVersion(applicationUser, currentProject, selectedVersion);
             //this.issues = jiraInterface.getAllIssues(currentProject);
             if (null != this.issues)
             {

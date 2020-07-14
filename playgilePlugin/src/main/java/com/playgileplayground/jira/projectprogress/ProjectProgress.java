@@ -117,7 +117,7 @@ public class ProjectProgress
         int differenceInDays = ProjectProgress.Days(predictedProjectEnd, idealProjectEnd);
         if (differenceInDays <= 7) result.progressDataColor = Color.GREEN;
         else
-        if (differenceInDays > 7 && differenceInDays < 30) result.progressDataColor = Color.YELLOW;
+        if (differenceInDays > 7 && differenceInDays < 30) result.progressDataColor = Color.ORANGE;
         else result.progressDataColor = Color.RED;
 
         return result;

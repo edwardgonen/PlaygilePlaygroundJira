@@ -53,7 +53,26 @@ public class JiraInterface {
         return allIssues;
     }
 
-    public List<Issue> getIssues(ApplicationUser applicationUser, Project currentProject, String fixVersion) {
+    public List<Issue> getFeatures(ApplicationUser applicationUser, Project currentProject)
+    {
+        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
+        Query query = jqlClauseBuilder.project(currentProject.getKey()).and().issueType("Feature").buildQuery();
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        if (searchResults == null)
+        {
+            return null;
+        }
+        else {
+            return this.AccessVersionIndependentListOfIssues(searchResults);
+        }
+    }
+    public List<Issue> getIssuesByFixVersion(ApplicationUser applicationUser, Project currentProject, String fixVersion) {
         //if the version is not defined return null. no query
         if (fixVersion == null) return null;
 
