@@ -43,7 +43,7 @@ public class activeObjectsAccess extends HttpServlet{
             {
                 //nothing
             }
-            String releaseVersion = Optional.ofNullable(req.getParameter("releaseVersion")).orElse("");
+            String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapfeature")).orElse("");
 
             if (projectKey.isEmpty())
             {
@@ -57,8 +57,8 @@ public class activeObjectsAccess extends HttpServlet{
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
             ManageActiveObjectsResult maor = mao.CreateProjectEntity(projectKey); //will not create if exists
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                //set both velocity and releaseversion
-                maor = mao.AddVelocityAndReleaseVersion(projectKey, releaseVersion, teamVelocityValue);
+                //set both velocity and roadmapfeature
+                maor = mao.AddVelocityAndRoadmapFeature(projectKey, roadmapFeature, teamVelocityValue);
                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                 {
                     try {

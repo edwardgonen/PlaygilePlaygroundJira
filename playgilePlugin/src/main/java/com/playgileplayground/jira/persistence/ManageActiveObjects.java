@@ -85,6 +85,23 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
+    public ManageActiveObjectsResult GetProjectRoadmapFeature(String projectKey)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+            String roadmapFeature = prjStatEntity.getRoadmapFeature();
+            result.Result = roadmapFeature;
+            result.Message = "Version: " + roadmapFeature;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    @Transactional
     public ManageActiveObjectsResult GetProjectReleaseVersion(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -242,6 +259,24 @@ public final class ManageActiveObjects{
         if(prjStatEntity != null) {
             prjStatEntity.setProjectTeamVelocity(teamVelocity);
             prjStatEntity.setProjectVersionLabel(releaseVersion);
+            prjStatEntity.save();
+            result.Message = "Data added";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + projectKey;
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult AddVelocityAndRoadmapFeature(String projectKey, String roadmapFeature, double teamVelocity)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        if(prjStatEntity != null) {
+            prjStatEntity.setProjectTeamVelocity(teamVelocity);
+            prjStatEntity.setRoadmapFeature(roadmapFeature);
             prjStatEntity.save();
             result.Message = "Data added";
         }

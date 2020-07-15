@@ -73,12 +73,12 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         Map<String, Object> contextMap = new HashMap<>();
 
         double teamVelocity = 0;
-        String selectedVersion = "";
+        String selectedRoadmapFeature = "";
+        List<Issue> roadmapFeatures;
         String messageToDisplay = "";
         boolean bAllisOk = false;
         Date startDate = null;
         double sprintLength;
-        boolean atLeastOneStoryWithEstimations = false;
         ManageActiveObjectsResult maor;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
@@ -87,14 +87,19 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         ApplicationUser applicationUser = jac.getLoggedInUser();
         Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
         WriteToStatus(false,"After getting current project " + (currentProject != null));
-
         contextMap.put(MAINJAVACLASS, this);
         JiraInterface jiraInterface = new JiraInterface(this, applicationUser,  searchService);
+
+        //////////////////////// TEST
+        //List<Issue> features = jiraInterface.getRoadmapFeatures(applicationUser, currentProject, ROADMAPFEATUREKEY);
+
+        //List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, features.get(0)); //first as we have only one
+        //////////////////////// TEST
         if(null != currentProject) {
             WriteToStatus(false,"Got current project " + currentProject.getName() + " key " + currentProject.getKey());
             contextMap.put(PROJECT, currentProject);
 
-            //get velocity and release version
+            //get velocity and roadmap feature
             maor = mao.CreateProjectEntity(currentProject.getKey()); //will not create if exists
             WriteToStatus(false, "Tried to create new entry in AO");
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
@@ -110,16 +115,16 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     WriteToStatus(false, "Team velocity not found " + maor.Code);
                     contextMap.put(TEAMVELOCITY, maor.Message);
                 }
-                maor = mao.GetProjectReleaseVersion(currentProject.getKey());
+                maor = mao.GetProjectRoadmapFeature(currentProject.getKey());
                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                    selectedVersion = (String)maor.Result;
-                    WriteToStatus(false, "Release version found " + maor.Result);
-                    contextMap.put(SELECTEDPROJECTVERSION, maor.Result);
+                    WriteToStatus(false, "Roadmap feature found " + maor.Result);
+                    selectedRoadmapFeature = (String)maor.Result;
+                    contextMap.put(SELECTEDROADMAPFEATURE, maor.Result);
                 }
                 else
                 {
-                    WriteToStatus(false, "Release version not found " + maor.Code);
-                    contextMap.put(SELECTEDPROJECTVERSION, maor.Message);
+                    WriteToStatus(false, "Roadmap feature not found " + maor.Code);
+                    contextMap.put(SELECTEDROADMAPFEATURE, maor.Message);
                 }
             }
             else
@@ -131,28 +136,39 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
-            //do we have any versions defined?
-            ArrayList<String> versions = jiraInterface.getAllVersionsForProject(currentProject);
-            if (versions == null)
+            //do we have any roadmap defined?
+            roadmapFeatures = jiraInterface.getAllRoadmapFeatures(applicationUser, currentProject, ROADMAPFEATUREKEY);
+            if (roadmapFeatures != null && roadmapFeatures.size() > 0)
             {
-                WriteToStatus(false, "No versions found for project");
-                bAllisOk = false;
-                messageToDisplay = "Failed to retrieve a list of versions for the project. Please add release versions";
-                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                //convert to string list
+                ArrayList<String> roadmapFeaturesNames = new ArrayList<>();
+                for (Issue feature : roadmapFeatures)
+                {
+                    roadmapFeaturesNames.add(feature.getSummary());
+                }
+                Collections.sort(roadmapFeaturesNames);//sort alphabetically for better user experience
+                WriteToStatus(false, "Found roadmap features total " + roadmapFeaturesNames.size());
+                contextMap.put(ROADMAPFEATURESLIST, roadmapFeaturesNames);
             }
             else
             {
-                if (versions.size() <= 0) {
-                    WriteToStatus(false, "No versions found for project");
-                    messageToDisplay = "The list of versions for the project is empty. Please add release versions";
-                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
-                Collections.sort(versions);//sort alphabetically for better user experience
-                WriteToStatus(false, "Found versions total " + versions.size());
-                contextMap.put(PROJECTVERSIONS, versions);
+                WriteToStatus(false, "No roadmap feature found for project");
+                bAllisOk = false;
+                messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please creaet Roadmap Features";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-            this.issues = jiraInterface.getIssuesByFixVersion(applicationUser, currentProject, selectedVersion);
-            //this.issues = jiraInterface.getAllIssues(currentProject);
+
+            //find issue in the list of all roadmap features
+            Issue selectedRoadmapFeatureIssue = null;
+            for (Issue tmpFeature : roadmapFeatures)
+            {
+                if (selectedRoadmapFeature.equals(tmpFeature.getSummary()))
+                {
+                    selectedRoadmapFeatureIssue = tmpFeature;
+                    break;
+                }
+            }
+            this.issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, selectedRoadmapFeatureIssue);
             if (null != this.issues)
             {
                 WriteToStatus(false, "Got issues " + this.issues.size());
@@ -166,7 +182,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
 
 
-                //if no version selected yet - give a message to select an recalculate
+                //if no roadmap features selected yet - give a message to select an recalculate
                 //also check if no velocity stored yet - also give a message
                 // if one of above is correct display a message to the user
                 if (teamVelocity <= 0)
@@ -176,23 +192,29 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     messageToDisplay = "Please specify team's velocity and press Recalculate";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
-                if (selectedVersion.isEmpty())
+                if (selectedRoadmapFeature.isEmpty())
                 {
-                    WriteToStatus(false, "Team velocity is not specified");
+                    WriteToStatus(false, "Roadmap feature is not selected");
                     bAllisOk = false;
-                    messageToDisplay = "Please select the Release Version and press Recalculate";
+                    messageToDisplay = "Please select the Roadmap Feature and press Recalculate";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
 
-                WriteToStatus(false, "We have version and team's velocity " + selectedVersion + " " + teamVelocity);
-                //from the issues find all those which have the selected version
-                //find all User stories of the issues and only those that are not completed
+                WriteToStatus(false, "We have roadmap feature and team's velocity " + selectedRoadmapFeature + " " + teamVelocity);
+                //find all User stories Task and bugs of the issues and only those that are not completed
                 ArrayList<Issue> foundIssues = new ArrayList<>();
                 ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
                 for (Issue issue : issues)
                 {
                     Status issueStatus = issue.getStatus();
                     StatusCategory statusCategory = issueStatus.getStatusCategory();
+                    IssueType issueType = issue.getIssueType();
+
+                    boolean bOurIssueType =
+                        issueType.getName().equals(STORY) ||
+                        issueType.getName().equals(TASK) ||
+                        issueType.getName().equals(BUG);
+
                     if (statusCategory == null)
                     {
                         WriteToStatus(false, "Failed to retrieve issue status for issue " + issue.getId());
@@ -200,30 +222,13 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         continue;
                     }
 
-                    Collection<Version> fixedVersions = issue.getFixVersions();
-                    if (fixedVersions == null)
-                    {
-                        WriteToStatus(false, "Failed to retrieve versions for issue " + issue.getId());
-                        //go to next issue
-                        continue;
-                    }
-                    boolean versionFound = false;
-                    for (Version version : fixedVersions)
-                    {
-                        if (version.getName().equals(selectedVersion))
-                        {
-                            versionFound = true;
-                            break;
-                        }
-                    }
                     //is story points field?
                     double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
                     WriteToStatus(false, "Story points " + issue.getId() + " " + storyPointValue);
-                    if (storyPointValue >= 0)
-                    {
-                        atLeastOneStoryWithEstimations = true;
-                    }
-                    if (statusCategory.getKey() != StatusCategory.COMPLETE && versionFound && storyPointValue >= 0)
+                    if (statusCategory.getKey() != StatusCategory.COMPLETE
+                        /*&& storyPointValue >= 0*/ //we don't mind not set story points. I'll set them to 21
+                        && (bOurIssueType)
+                        )
                     {
                         foundIssues.add(issue);
 
@@ -246,10 +251,9 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     }
                     else
                     {
-                        WriteToStatus(false, "Issue version does not match selected or status is COMPLETE " +
+                        WriteToStatus(false, "Issue status is COMPLETE " +
                             statusCategory.getKey() + " " +
                             storyPointValue + " " +
-                            selectedVersion + " " +
                             issue.getId());
                         //go to the next issue
                         continue;
@@ -355,6 +359,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                     {
                                         WriteToStatus(false,"Issue status is one of ours " + statusCategory);
                                         double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                                        //not estimated? set to max
+                                        if (storyPointValue <= 0) storyPointValue = MAX_STORY_ESTIMATION;
                                         currentEstimation += storyPointValue;
                                     }
                                 }
@@ -409,36 +415,26 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 }
                 else
                 {
-                    if (atLeastOneStoryWithEstimations) {
-                        WriteToStatus(false, "Didn't find any issue with selected version, not COMPLETED");
-                        bAllisOk = false;
-                        messageToDisplay = "The backlog does not contain any issue matching version " +
-                            selectedVersion + " or not completed";
-                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                    }
-                    else
-                    {
-                        WriteToStatus(false, "Didn't find any issue with story points estimation");
-                        bAllisOk = false;
-                        messageToDisplay = "The backlog does not contain any issue with story points estimations";
-                        return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                    }
+                    WriteToStatus(false, "Didn't find any issue not COMPLETED");
+                    bAllisOk = false;
+                    messageToDisplay = "The backlog does not contain any issue not completed";
+                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
             }
             else
             {
-                if (selectedVersion == null) {
-                    WriteToStatus(false, "Failed to retrieve any project issues - no selected version");
+                if (selectedRoadmapFeature == null) {
+                    WriteToStatus(false, "Failed to retrieve any project issues - no selected roadmap feature");
                     bAllisOk = false;
-                    messageToDisplay = "Please select a release version from the list and press Recalculate (also check if the Team's velocity is not 0)";
+                    messageToDisplay = "Please select a Roadmap Feature from the list and press Recalculate (also check if the Team's velocity is not 0)";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
-                else //version selected
+                else // selected
                 {
-                    WriteToStatus(false, "Failed to retrieve any project issues with fixed version " + selectedVersion);
+                    WriteToStatus(false, "Failed to retrieve any project issues for " + selectedRoadmapFeature);
                     bAllisOk = false;
-                    messageToDisplay = "Failed to retrieve any project's issues with release version set to " + selectedVersion +
-                        ". Please set the release version to each issue included in release and select the appropriate version from the list";
+                    messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
+                        ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
             }
