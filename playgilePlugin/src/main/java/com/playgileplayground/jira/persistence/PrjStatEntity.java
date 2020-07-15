@@ -26,4 +26,6 @@ public interface PrjStatEntity extends Entity {
     void setProjectStartedFlag(boolean flag);
     String getProjectVersionLabel();
     void setProjectVersionLabel(String label);
+    String getRoadmapFeature();
+    void setRoadmapFeature(String name);
 }

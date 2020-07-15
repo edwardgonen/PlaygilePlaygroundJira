@@ -77,14 +77,14 @@
             function OnRecalculateClick()
             {
                 var velocity = document.getElementById("velocity").value;
-                var releaseversion = document.getElementById("releaseversion").value;
+                var roadmapfeature = document.getElementById("roadmapfeature").value;
 
 
                 jQuery.ajax({
                     type: "GET",
                     async: false,
                     url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
-                        + "&teamVelocity=" + velocity + "&releaseVersion=" + releaseversion,
+                        + "&teamVelocity=" + velocity + "&roadmapfeature=" + roadmapfeature,
                     success: function(data) {
                         //alert(data);
                         location.reload();
@@ -116,17 +116,17 @@
                 <h1 style="color:red">$messagetodisplay</h1>
             #end
 
-            #if ($projectversions.size()> 0)
+            #if ($roadmapfeatureslist.size()> 0)
                 <form id="admin" class="aui">
                     <tr>
                     <tr class="field-group">
-                        <label for="versionlabel">Release version</label>
-                        <select id="releaseversion" name="releaseversion">
-                            #foreach( $version in $projectversions )
-                                #if ($version == $selectedprojectversion)
-                                    <option value="$version" selected="selected">$version</option>
+                        <label for="roadmapfeaturelabel">Roadmap Feature</label>
+                        <select id="roadmapfeature" name="roadmapfeature">
+                            #foreach( $item in $roadmapfeatureslist )
+                                #if ($item == $selectedroadmapfeature)
+                                    <option value="$item" selected="selected">$item</option>
                                 #else
-                                    <option value="$version">$version</option>
+                                    <option value="$item">$item</option>
                                 #end
                             #end
                         </select>
