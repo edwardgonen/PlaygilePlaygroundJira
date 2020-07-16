@@ -221,8 +221,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         //go to next issue
                         continue;
                     }
-
-                    //is story points field?
                     double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
                     WriteToStatus(false, "Story points " + issue.getId() + " " + storyPointValue);
                     if (statusCategory.getKey() != StatusCategory.COMPLETE
@@ -232,7 +230,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     {
                         foundIssues.add(issue);
 
-                        Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issues.get(0));
+                        Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issue);
                         if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
                             WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
                             for (PlaygileSprint playgileSprint : sprintsForIssue)

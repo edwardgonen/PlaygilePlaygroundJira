@@ -264,11 +264,10 @@ public class JiraInterface {
         }
         return result;
     }
-    private String getAllCustomFieldsForIssue(Issue issue)
+    public String getAllCustomFieldsForIssue(Issue issue)
     {
         StringBuilder result = new StringBuilder("Custom objects: ");
         CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
-        Collection<CustomField> test = customFieldManager.getCustomFieldObjectsByName("Epic");
         List<CustomField> customFields = customFieldManager.getCustomFieldObjects(issue);
         for (CustomField tmpField : customFields)
         {
