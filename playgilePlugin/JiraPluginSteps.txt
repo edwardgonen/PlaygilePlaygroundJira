@@ -2673,3 +2673,8 @@ http://localhost:2990/jira/plugins/servlet/activeobjectsdelete?projectKey=BKM&ro
 
 
 http://localhost:2990/jira/plugins/servlet/activeobjectslist
+
+List all users:
+http://localhost:2990/jira/plugins/servlet/activeobjectsuserlist
+Delete user
+http://localhost:2990/jira/plugins/servlet/activeobjectsuserdelete?user=<>

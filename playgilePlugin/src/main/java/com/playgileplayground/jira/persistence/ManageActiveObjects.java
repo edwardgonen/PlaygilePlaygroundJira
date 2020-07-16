@@ -442,6 +442,28 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
+    public ManageActiveObjectsResult ListAllUsers()
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        ArrayList<String> allEntities = new ArrayList<>();
+        try {
+            UserEntity[] userEntities = ao.find(UserEntity.class);
+            if (userEntities.length > 0) {
+                for (UserEntity entity : userEntities)
+                {
+                    allEntities.add(entity.getUserId() + " " + entity.getLastRoadmapFeature() + " " + entity.getLastVelocity());
+                }
+                result.Result = allEntities;
+            }
+        }
+        catch (Exception ex)
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_EXCEPTION;
+            result.Message = ex.toString();
+        }
+        return result;
+    }
+    @Transactional
     public ManageActiveObjectsResult GetUserLastLocations(String userId)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -477,7 +499,23 @@ public final class ManageActiveObjects{
         }
         return result;
     }
+    @Transactional
+    public ManageActiveObjectsResult DeleteUserEntity(String userId)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        UserEntity userEntity = GetUserEntity(userId);
+        if(userEntity != null) {//Check whether optional has element you are looking for
+            ao.delete(userEntity);
+            result.Message = "Deleted";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "User not found " + userId;
+        }
 
+        return result;
+    }
 
     private UserEntity FindUserEntityById(String userId, UserEntity[] userEntities)
     {
