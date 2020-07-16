@@ -2,9 +2,13 @@ package com.playgileplayground.jira.servlet;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.activeobjects.tx.Transactional;
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.security.JiraAuthenticationContext;
+import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +33,13 @@ public class activeObjectsAccess extends HttpServlet{
     }
     @Override
     @Transactional
-
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         ao.executeInTransaction((TransactionCallback<Void>) () -> {
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
             String teamVelocity = Optional.ofNullable(req.getParameter("teamVelocity")).orElse("");
+            String currentUser = Optional.ofNullable(req.getParameter("user")).orElse("");
+            String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapfeature")).orElse("");
             double teamVelocityValue = 0;
             try {
                 teamVelocityValue = Double.parseDouble(teamVelocity);
@@ -43,7 +48,6 @@ public class activeObjectsAccess extends HttpServlet{
             {
                 //nothing
             }
-            String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapfeature")).orElse("");
 
             if (projectKey.isEmpty())
             {
@@ -54,11 +58,12 @@ public class activeObjectsAccess extends HttpServlet{
                 return null;
             }
 
+            ManageActiveObjectsEntityKey key =  new ManageActiveObjectsEntityKey(projectKey, roadmapFeature);
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            ManageActiveObjectsResult maor = mao.CreateProjectEntity(projectKey); //will not create if exists
+            ManageActiveObjectsResult maor = mao.CreateProjectEntity(key); //will not create if exists
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
                 //set both velocity and roadmapfeature
-                maor = mao.AddVelocityAndRoadmapFeature(projectKey, roadmapFeature, teamVelocityValue);
+                maor = mao.AddVelocityAndRoadmapFeature(key, teamVelocityValue);
                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                 {
                     try {

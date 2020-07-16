@@ -2667,4 +2667,9 @@ Show Advanced Setup? (Y/y/N/n) N: :
 Access it by http://localhost:2990/jira/plugins/servlet/activeobjectsaccess
 
 
-http://localhost:2990/jira/plugins/servlet/activeobjectsdelete?projectKey=
+http://localhost:2990/jira/plugins/servlet/activeobjectsdelete?projectKey=<key>&roadmapFeature=<>
+For example
+http://localhost:2990/jira/plugins/servlet/activeobjectsdelete?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM
+
+
+http://localhost:2990/jira/plugins/servlet/activeobjectslist

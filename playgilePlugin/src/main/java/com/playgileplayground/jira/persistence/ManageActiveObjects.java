@@ -28,8 +28,31 @@ public final class ManageActiveObjects{
     {
         this.ao = ao;
     }
+
     @Transactional
-    public ManageActiveObjectsResult CreateProjectEntity(String projectKey)
+    public ManageActiveObjectsResult ListAllEntities()
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        ArrayList<String> allEntities = new ArrayList<>();
+        try {
+            PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
+            if (projectStatusEntities.length > 0) {
+                for (PrjStatEntity entity : projectStatusEntities)
+                {
+                    allEntities.add(entity.getProjectKey() + " " + entity.getRoadmapFeature());
+                }
+                result.Result = allEntities;
+            }
+        }
+        catch (Exception ex)
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_EXCEPTION;
+            result.Message = ex.toString();
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult CreateProjectEntity(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         //see if it already there
@@ -37,25 +60,30 @@ public final class ManageActiveObjects{
             PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
             if (projectStatusEntities.length > 0) {
 
-                PrjStatEntity prjStatEntity = FindEntityByProjectKey(projectKey, projectStatusEntities);
+                PrjStatEntity prjStatEntity = FindEntityByKey(key, projectStatusEntities);
                 if(prjStatEntity != null) {//Check whether optional has element you are looking for
+                    prjStatEntity.setProjectKey(key.projectKey);
+                    prjStatEntity.setRoadmapFeature(key.roadmapFeature);
+                    prjStatEntity.save();
                     result.Code = ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS;
-                    result.Message = "Entry already exists -- " + projectKey + " " + projectStatusEntities.length;
+                    result.Message = "Entry already exists -- " + key.projectKey + " " + key.roadmapFeature + " " + projectStatusEntities.length;
                     return result;
                 }
                 else //not found - create it
                 {
-                    PrjStatEntity prjCreatedStatEntity = ao.create(PrjStatEntity.class);
-                    prjCreatedStatEntity.setProjectKey(projectKey);
-                    prjCreatedStatEntity.save();
-                    result.Message = "Created";
+                    prjStatEntity = ao.create(PrjStatEntity.class);
+                    prjStatEntity.setProjectKey(key.projectKey);
+                    prjStatEntity.setRoadmapFeature(key.roadmapFeature);
+                    prjStatEntity.save();
+                    result.Message = "Added";
                 }
             }
             else //no entity at all
             {
                 //create
                 PrjStatEntity prjCreatedStatEntity = ao.create(PrjStatEntity.class);
-                prjCreatedStatEntity.setProjectKey(projectKey);
+                prjCreatedStatEntity.setProjectKey(key.projectKey);
+                prjCreatedStatEntity.setRoadmapFeature(key.roadmapFeature);
                 prjCreatedStatEntity.save();
                 result.Message = "Created";
             }
@@ -68,10 +96,10 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult DeleteProjectEntity(String projectKey)
+    public ManageActiveObjectsResult DeleteProjectEntity(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {//Check whether optional has element you are looking for
             ao.delete(prjStatEntity);
             result.Message = "Deleted";
@@ -79,50 +107,16 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
 
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetProjectRoadmapFeature(String projectKey)
+    public ManageActiveObjectsResult GetSprintLength(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
-        if(prjStatEntity != null) {//Check whether optional has element you are looking for
-            String roadmapFeature = prjStatEntity.getRoadmapFeature();
-            result.Result = roadmapFeature;
-            result.Message = "Version: " + roadmapFeature;
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
-        }
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult GetProjectReleaseVersion(String projectKey)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
-        if(prjStatEntity != null) {//Check whether optional has element you are looking for
-            String releaseVersion = prjStatEntity.getProjectVersionLabel();
-            result.Result = releaseVersion;
-            result.Message = "Version: " + releaseVersion;
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
-        }
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult GetSprintLength(String projectKey)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             result.Result = prjStatEntity.getSprintLength();
             result.Message = "Sprint length : " + result.Result;
@@ -130,15 +124,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult SetSprintLength(String projectKey, double sprintLength)
+    public ManageActiveObjectsResult SetSprintLength(ManageActiveObjectsEntityKey key, double sprintLength)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             prjStatEntity.setSprintLength(sprintLength);
             prjStatEntity.save();
@@ -146,15 +140,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetProjectStartedFlag(String projectKey)
+    public ManageActiveObjectsResult GetProjectStartedFlag(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             result.Result = prjStatEntity.getProjectStartedFlag();
             result.Message = "Started flag: " + result.Result;
@@ -162,15 +156,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult SetProjectStartedFlag(String projectKey, boolean startedFlag)
+    public ManageActiveObjectsResult SetProjectStartedFlag(ManageActiveObjectsEntityKey key, boolean startedFlag)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             prjStatEntity.setProjectStartedFlag(startedFlag);
             prjStatEntity.save();
@@ -178,15 +172,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetProjectStartDate(String projectKey)
+    public ManageActiveObjectsResult GetProjectStartDate(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             result.Result = prjStatEntity.getProjectStartDate();
             result.Message = "Started date: " + result.Result;
@@ -194,15 +188,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult SetProjectStartDate(String projectKey, Date startedDate)
+    public ManageActiveObjectsResult SetProjectStartDate(ManageActiveObjectsEntityKey key, Date startedDate)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             prjStatEntity.setProjectStartDate(startedDate);
             prjStatEntity.save();
@@ -210,15 +204,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult SetProjectInitialEstimation(String projectKey, Date startDate, double initialEstimation)
+    public ManageActiveObjectsResult SetProjectInitialEstimation(ManageActiveObjectsEntityKey key, Date startDate, double initialEstimation)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             prjStatEntity.setInitialEstimation(initialEstimation);
             prjStatEntity.save();
@@ -230,15 +224,15 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetTeamVelocity(String projectKey)
+    public ManageActiveObjectsResult GetTeamVelocity(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {//Check whether optional has element you are looking for
             double teamVelocity = prjStatEntity.getProjectTeamVelocity();
             result.Result = teamVelocity;
@@ -247,51 +241,32 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult AddVelocityAndReleaseVersion(String projectKey, String releaseVersion, double teamVelocity)
+    public ManageActiveObjectsResult AddVelocityAndRoadmapFeature(ManageActiveObjectsEntityKey key, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             prjStatEntity.setProjectTeamVelocity(teamVelocity);
-            prjStatEntity.setProjectVersionLabel(releaseVersion);
             prjStatEntity.save();
             result.Message = "Data added";
         }
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult AddVelocityAndRoadmapFeature(String projectKey, String roadmapFeature, double teamVelocity)
+    public ManageActiveObjectsResult GetProgressDataList(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
-        if(prjStatEntity != null) {
-            prjStatEntity.setProjectTeamVelocity(teamVelocity);
-            prjStatEntity.setRoadmapFeature(roadmapFeature);
-            prjStatEntity.save();
-            result.Message = "Data added";
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
-        }
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult GetProgressDataList(String projectKey)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
             result.Result = GetDataRemainingEstimationsList(prjStatEntity);
@@ -300,16 +275,16 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
 
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult AddRemainingEstimationsRecord(String projectKey, Date date, double remainingEstimations)
+    public ManageActiveObjectsResult AddRemainingEstimationsRecord(ManageActiveObjectsEntityKey key, Date date, double remainingEstimations)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
             ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
@@ -330,60 +305,50 @@ public final class ManageActiveObjects{
         else
         {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
 
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetRemainingEstimationsForDate(String projectKey, Date date)
+    public ManageActiveObjectsResult GetFirstProjectEntity(String projectKey)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
-        if(prjStatEntity != null) {
-            //read the data
-            ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
-            for (DataPair dataPair : existingData)
-                if (dataPair.Date == date) {
-                    result.Result = dataPair;
-                    result.Message = "Retrieved data " + result.Result.toString();
-                    return result;
+        ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey();
+        key.projectKey = projectKey;
+        PrjStatEntity entity =  GetProjectEntity(key);
+        if (entity != null)
+        {
+            result.Result = entity;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey;
+        }
+        return result;
+    }
+
+    private PrjStatEntity FindEntityByKey(ManageActiveObjectsEntityKey key, PrjStatEntity[] projectStatusEntities)
+    {
+        PrjStatEntity result = null;
+        for (PrjStatEntity entity : projectStatusEntities)
+        {
+            if (!key.roadmapFeature.isEmpty()) {
+                if (key.projectKey.equals(entity.getProjectKey()) && key.roadmapFeature.equals(entity.getRoadmapFeature())) {
+                    result = entity;
+                    break;
                 }
-            result.Result = null;
-            result.Message = "No remaining estimation for date found";
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_REMAINING_ESTIMATIONS_FOR_DATE_NOT_FOUND;
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
-        }
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult GetProjectKey(String projectKey)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(projectKey);
-        if(prjStatEntity != null) {
-            result.Result = prjStatEntity.getProjectKey();
-            result.Message = "Retrieved data " + result.Result.toString();
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + projectKey;
+            }
+            else
+            {
+                if (key.projectKey.equals(entity.getProjectKey())) {
+                    result = entity;
+                    break;
+                }
+            }
         }
         return result;
-    }
-
-    private PrjStatEntity FindEntityByProjectKey(String projectKey, PrjStatEntity[] projectStatusEntities)
-    {
-        Optional<PrjStatEntity> optional = Arrays.stream(projectStatusEntities).filter(x -> projectKey.equals(x.getProjectKey())).findFirst();
-        if(optional.isPresent()) {//Check whether optional has element you are looking for
-            return optional.get();
-        }
-        else return null;
     }
     @Transactional
     public ArrayList<DataPair> GetDataRemainingEstimationsList(PrjStatEntity entity)
@@ -424,14 +389,14 @@ public final class ManageActiveObjects{
         entity.save();
     }
     @Transactional
-    private PrjStatEntity GetProjectEntity(String projectKey)
+    private PrjStatEntity GetProjectEntity(ManageActiveObjectsEntityKey key)
     {
         PrjStatEntity result = null;
         PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
         if (projectStatusEntities.length <= 0) {
             return result;
         }
-        return FindEntityByProjectKey(projectKey, projectStatusEntities);
+        return FindEntityByKey(key, projectStatusEntities);
     }
 }
 

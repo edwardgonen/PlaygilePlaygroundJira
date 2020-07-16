@@ -12,7 +12,6 @@
 
             function drawChart() {
                 if (!$allisok) return; //no need to execute
-
                 const LINE_SEPARATOR = ",";
                 const PAIR_SEPARATOR = "|";
                 const DATE_FORMAT = "MM/dd/yyyy";
@@ -84,7 +83,7 @@
                     type: "GET",
                     async: false,
                     url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
-                        + "&teamVelocity=" + velocity + "&roadmapfeature=" + roadmapfeature,
+                        + "&teamVelocity=" + velocity + "&roadmapfeature=" + roadmapfeature + "&user=" + '$currentuser',
                     success: function(data) {
                         //alert(data);
                         location.reload();

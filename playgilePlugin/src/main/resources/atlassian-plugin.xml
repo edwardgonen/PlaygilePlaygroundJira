@@ -43,4 +43,8 @@
     <description key="active-objects-delete.description">The active Objects Delete Plugin</description>  
     <url-pattern>/activeobjectsdelete</url-pattern> 
   </servlet>
+ <servlet name="active Objects Delete" i18n-name-key="active-objects-list.name" key="active-objects-list" class="com.playgileplayground.jira.servlet.activeObjectsList">
+   <description key="active-objects-list.description">The active Objects List Plugin</description>
+   <url-pattern>/activeobjectslist</url-pattern>
+ </servlet>
 </atlassian-plugin>

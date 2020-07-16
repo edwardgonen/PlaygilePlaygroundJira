@@ -27,6 +27,7 @@ public interface ProjectMonitor {
     String PREDICTIONCOLOR = "predictioncolor";
     String SELECTEDROADMAPFEATURE = "selectedroadmapfeature";
     String ROADMAPFEATURESLIST = "roadmapfeatureslist";
+    String CURRENTUSER = "currentuser";
 
 
 
