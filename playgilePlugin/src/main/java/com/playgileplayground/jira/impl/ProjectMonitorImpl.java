@@ -200,6 +200,35 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         //go to next issue
                         continue;
                     }
+
+                    //get all sprints
+                    Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issue);
+                    if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
+                        WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
+                        for (PlaygileSprint playgileSprint : sprintsForIssue)
+                        {
+                            //do we have such sprint already
+                            boolean bSprintAlredyAdded = false;
+                            for (PlaygileSprint tmpSprint : playgileSprints)
+                            {
+                                if (tmpSprint.getId() == playgileSprint.getId())
+                                {
+                                    bSprintAlredyAdded = true;
+                                    break;
+                                }
+                            }
+                            if (!bSprintAlredyAdded && playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
+                            {
+                                WriteToStatus(false,"Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
+                                playgileSprints.add(playgileSprint);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        WriteToStatus(false, "No sprints for " + issue.getId());
+                    }
+
                     double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
                     WriteToStatus(false, "Story points " + issue.getId() + " " + storyPointValue);
                     if (statusCategory.getKey() != StatusCategory.COMPLETE
@@ -208,33 +237,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         )
                     {
                         foundIssues.add(issue);
-
-                        Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issue);
-                        if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
-                            WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
-                            for (PlaygileSprint playgileSprint : sprintsForIssue)
-                            {
-                                //do we have such sprint already
-                                boolean bSprintAlredyAdded = false;
-                                for (PlaygileSprint tmpSprint : playgileSprints)
-                                {
-                                    if (tmpSprint.getId() == playgileSprint.getId())
-                                    {
-                                        bSprintAlredyAdded = true;
-                                        break;
-                                    }
-                                }
-                                if (!bSprintAlredyAdded && playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
-                                {
-                                    WriteToStatus(false,"Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
-                                    playgileSprints.add(playgileSprint);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            WriteToStatus(false, "No sprints for " + issue.getId());
-                        }
                     }
                     else
                     {
