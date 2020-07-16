@@ -40,7 +40,7 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
 
         if (input != null && !input.isEmpty())
         {
-            System.out.println("input = " + input);
+            //System.out.println("input = " + input);
             //find second "["
             int beginIndex = input.lastIndexOf("[");
             if (beginIndex >= 0) {

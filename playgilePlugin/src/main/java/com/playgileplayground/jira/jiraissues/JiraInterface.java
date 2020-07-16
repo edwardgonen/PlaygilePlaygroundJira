@@ -53,7 +53,7 @@ public class JiraInterface {
             allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
         } catch (GenericEntityException e) {
             //mainClass.WriteToStatus(false, "Failed to get all issues " + e.toString());
-            System.out.println("Failed to get issue ids " + e.toString());
+            //System.out.println("Failed to get issue ids " + e.toString());
         }
         List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
         return allIssues;
