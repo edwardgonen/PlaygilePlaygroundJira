@@ -36,26 +36,7 @@ public class activeObjectsList extends HttpServlet{
 
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsResult maor = mao.ListAllEntities();
-            StringBuffer output = new StringBuffer();
-            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-            {
-                ArrayList<String> allEntities = (ArrayList<String>) maor.Result;
-                for (String entity : allEntities)
-                {
-                    output.append(entity + "<br>");
-                }
-                try {
-                    resp.getWriter().write(output.toString());
-                } catch (IOException e) {
-                }
-            } else
-
-            {
-                try {
-                    resp.getWriter().write("Failure " + maor.Message);
-                } catch (IOException e) {
-                }
-            }
+            servletMisc.responseListToWeb(maor, resp);
             return null;
         });
     }

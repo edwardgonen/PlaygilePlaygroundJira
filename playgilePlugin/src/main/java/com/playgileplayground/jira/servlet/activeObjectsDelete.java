@@ -30,7 +30,7 @@ public class activeObjectsDelete extends HttpServlet{
     }
 
     @Override
-    protected void doGet (HttpServletRequest req, HttpServletResponse resp)throws ServletException, IOException
+    protected void doGet (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         ao.executeInTransaction((TransactionCallback<Void>) () -> {
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
@@ -46,21 +46,7 @@ public class activeObjectsDelete extends HttpServlet{
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeature);
             ManageActiveObjectsResult maor = mao.DeleteProjectEntity(key); //will not create if exists
-            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-
-            {
-                try {
-                    resp.getWriter().write("Deleted");
-                } catch (IOException e) {
-                }
-            } else
-
-            {
-                try {
-                    resp.getWriter().write("Failure " + maor.Message);
-                } catch (IOException e) {
-                }
-            }
+            servletMisc.responseToWeb(maor, resp);
             return null;
         });
     }

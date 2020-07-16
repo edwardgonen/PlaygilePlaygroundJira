@@ -39,20 +39,7 @@ public class activeObjectsUserDelete extends HttpServlet{
             }
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsResult maor = mao.DeleteUserEntity(user); //will not create if exists
-            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
-            {
-                try {
-                    resp.getWriter().write("Deleted");
-                } catch (IOException e) {
-                }
-            } else
-
-            {
-                try {
-                    resp.getWriter().write("Failure " + maor.Message);
-                } catch (IOException e) {
-                }
-            }
+            servletMisc.responseToWeb(maor, resp);
             return null;
         });
     }
