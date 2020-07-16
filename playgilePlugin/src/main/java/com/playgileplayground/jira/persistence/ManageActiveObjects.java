@@ -398,5 +398,110 @@ public final class ManageActiveObjects{
         }
         return FindEntityByKey(key, projectStatusEntities);
     }
+
+
+    ///////////////////////////////////////// Users //////////////////////////////////////
+    @Transactional
+    public ManageActiveObjectsResult CreateUserEntity(String userId)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        UserEntity userEntity;
+        //see if it already there
+        try {
+            UserEntity[] userEntities = ao.find(UserEntity.class);
+            if (userEntities.length > 0) {
+
+                userEntity = FindUserEntityById(userId, userEntities);
+                if(userEntity != null) {
+                    result.Code = ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS;
+                    result.Message = "Entry already exists -- " + userId + " " + userEntities.length;
+                    return result;
+                }
+                else //not found - create it
+                {
+                    userEntity = ao.create(UserEntity.class);
+                    userEntity.setUserId(userId);
+                    userEntity.save();
+                    result.Message = "Added";
+                }
+            }
+            else //no entity at all
+            {
+                //create
+                userEntity = ao.create(UserEntity.class);
+                userEntity.setUserId(userId);
+                userEntity.save();
+                result.Message = "Created";
+            }
+        }
+        catch (Exception ex)
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_EXCEPTION;
+            result.Message = ex.toString();
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult GetUserLastLocations(String userId)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        UserEntity userEntity = GetUserEntity(userId);
+        if(userEntity != null) {
+            UserLastLocations usl = new UserLastLocations(userEntity.getLastProjectId(),userEntity.getLastRoadmapFeature(), userEntity.getLastVelocity() );
+            result.Result = usl;
+            result.Message = "Found";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "User not found " + userId;
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult SetUserLastLocations(String userId, UserLastLocations usl)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        UserEntity userEntity = GetUserEntity(userId);
+        if(userEntity != null) {
+            userEntity.setLastProjectID(usl.lastProjectId);
+            userEntity.setLastRoadmapFeature(usl.lastRoadmapFeature);
+            userEntity.setLastVelocity(usl.lastTeamVelocity);
+            userEntity.save();
+            result.Message = "Found";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "User not found " + userId;
+        }
+        return result;
+    }
+
+
+    private UserEntity FindUserEntityById(String userId, UserEntity[] userEntities)
+    {
+        UserEntity result = null;
+        for (UserEntity entity : userEntities)
+        {
+            if (!userId.isEmpty()) {
+                if (userId.equals(entity.getUserId())) {
+                    result = entity;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+    @Transactional
+    private UserEntity GetUserEntity(String userId)
+    {
+        UserEntity result = null;
+        UserEntity[] userEntities = ao.find(UserEntity.class);
+        if (userEntities.length <= 0) {
+            return result;
+        }
+        return FindUserEntityById(userId, userEntities);
+    }
 }
 

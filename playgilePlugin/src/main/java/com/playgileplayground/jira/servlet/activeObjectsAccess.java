@@ -10,6 +10,7 @@ import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
+import com.playgileplayground.jira.persistence.UserLastLocations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,9 +67,15 @@ public class activeObjectsAccess extends HttpServlet{
                 maor = mao.AddVelocityAndRoadmapFeature(key, teamVelocityValue);
                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                 {
-                    try {
-                        resp.getWriter().write("Success");
-                    } catch (IOException e) {
+                    //add last locations for user
+                    maor = mao.CreateUserEntity(currentUser); //will not create if exists
+                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                        UserLastLocations ulc = new UserLastLocations(projectKey, roadmapFeature, teamVelocityValue);
+                        mao.SetUserLastLocations(currentUser, ulc);
+                        try {
+                            resp.getWriter().write("Success");
+                        } catch (IOException e) {
+                        }
                     }
                 }
                 else

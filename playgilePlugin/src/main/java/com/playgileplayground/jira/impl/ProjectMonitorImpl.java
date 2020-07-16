@@ -23,10 +23,7 @@ import com.atlassian.plugin.web.ContextProvider;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
-import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
-import com.playgileplayground.jira.persistence.PrjStatEntity;
+import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.projectprogress.DataPair;
 import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
@@ -118,8 +115,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
-            //get first entity from the AO
-            maor = mao.GetFirstProjectEntity(currentProject.getKey());
+            //try to read from AO for this user
+            maor = mao.GetUserLastLocations(applicationUser.getKey());
             if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS) //not found
             {
                 //give a message and ask to recalculate
@@ -129,13 +126,14 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
-            //found
+            //user found
             WriteToStatus(false, "First AO that matches project is found");
-            //get selected roadmap feature and velocity
-            PrjStatEntity foundEnity = (PrjStatEntity) maor.Result;
-            selectedRoadmapFeature = foundEnity.getRoadmapFeature();
+            //get selected roadmap feature and velocity and project?
+
+            UserLastLocations userLastLocations = (UserLastLocations)maor.Result;
+            selectedRoadmapFeature = userLastLocations.lastRoadmapFeature;
             contextMap.put(SELECTEDROADMAPFEATURE, selectedRoadmapFeature);
-            teamVelocity = foundEnity.getProjectTeamVelocity();
+            teamVelocity = userLastLocations.lastTeamVelocity;
             contextMap.put(TEAMVELOCITY, teamVelocity);
 
             //find issue in the list of all roadmap features

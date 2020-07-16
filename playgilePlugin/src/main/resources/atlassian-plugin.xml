@@ -33,9 +33,10 @@
   </web-panel>  
   <ao key="ao-module"> 
     <description>The configuration of the Active Objects service</description>  
-    <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity> 
-  </ao>  
-  <servlet name="active Objects Access" i18n-name-key="active-objects-access.name" key="active-objects-access" class="com.playgileplayground.jira.servlet.activeObjectsAccess"> 
+    <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity>
+    <entity>com.playgileplayground.jira.persistence.UserEntity</entity>
+  </ao>
+    <servlet name="active Objects Access" i18n-name-key="active-objects-access.name" key="active-objects-access" class="com.playgileplayground.jira.servlet.activeObjectsAccess">
     <description key="active-objects-access.description">The active Objects Access Plugin</description>  
     <url-pattern>/activeobjectsaccess</url-pattern> 
   </servlet>  
