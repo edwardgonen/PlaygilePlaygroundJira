@@ -138,6 +138,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
             //do we have any roadmap defined?
             roadmapFeatures = jiraInterface.getAllRoadmapFeatures(applicationUser, currentProject, ROADMAPFEATUREKEY);
+
             if (roadmapFeatures != null && roadmapFeatures.size() > 0)
             {
                 //convert to string list
@@ -154,10 +155,16 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             {
                 WriteToStatus(false, "No roadmap feature found for project");
                 bAllisOk = false;
-                messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please creaet Roadmap Features";
+                messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please create the  Roadmap Features";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-
+            //make sure we have selected feature
+            if (selectedRoadmapFeature == null) {
+                WriteToStatus(false, "Failed to retrieve any project issues - no selected roadmap feature");
+                bAllisOk = false;
+                messageToDisplay = "Please select a Roadmap Feature from the list and press Recalculate (also check if the Team's velocity is not 0)";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
             //find issue in the list of all roadmap features
             Issue selectedRoadmapFeatureIssue = null;
             for (Issue tmpFeature : roadmapFeatures)
@@ -168,6 +175,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     break;
                 }
             }
+
             this.issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, selectedRoadmapFeatureIssue);
             if (null != this.issues)
             {
@@ -421,20 +429,12 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             }
             else
             {
-                if (selectedRoadmapFeature == null) {
-                    WriteToStatus(false, "Failed to retrieve any project issues - no selected roadmap feature");
-                    bAllisOk = false;
-                    messageToDisplay = "Please select a Roadmap Feature from the list and press Recalculate (also check if the Team's velocity is not 0)";
-                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
-                else // selected
-                {
-                    WriteToStatus(false, "Failed to retrieve any project issues for " + selectedRoadmapFeature);
-                    bAllisOk = false;
-                    messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
-                        ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
-                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
+                WriteToStatus(false, "Failed to retrieve any project issues for " + selectedRoadmapFeature);
+                bAllisOk = false;
+                messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
+                    ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+
             }
 
             maor = mao.GetSprintLength(currentProject.getKey());
