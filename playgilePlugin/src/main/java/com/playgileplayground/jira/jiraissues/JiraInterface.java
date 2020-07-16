@@ -6,7 +6,6 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
-import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.link.IssueLink;
 import com.atlassian.jira.issue.link.IssueLinkManager;
@@ -23,6 +22,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
+import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -38,6 +38,7 @@ public class JiraInterface {
     ProjectMonitorImpl mainClass;
     ApplicationUser applicationUser;
     SearchService searchService;
+    ProjectMonitoringMisc projectMonitoringMisc;
     public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
     {
         this.mainClass = mainClass;
@@ -45,13 +46,13 @@ public class JiraInterface {
         this.searchService = searchService;
     }
     public List<Issue> getAllIssues(Project currentProject) {
-        mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
+        //mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
         IssueManager issueManager = ComponentAccessor.getIssueManager();
         Collection<Long> allIssueIds = null;
         try {
             allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
         } catch (GenericEntityException e) {
-            mainClass.WriteToStatus(false, "Failed to get all issues " + e.toString());
+            //mainClass.WriteToStatus(false, "Failed to get all issues " + e.toString());
             System.out.println("Failed to get issue ids " + e.toString());
         }
         List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
@@ -67,7 +68,7 @@ public class JiraInterface {
         try {
             searchResults = searchService.search(applicationUser, query, pagerFilter);
         } catch (SearchException e) {
-            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
         if (searchResults == null)
         {
@@ -95,7 +96,7 @@ public class JiraInterface {
         try {
             searchResults = searchService.search(applicationUser, query, pagerFilter);
         } catch (SearchException e) {
-            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
         if (searchResults == null)
         {
@@ -152,7 +153,7 @@ public class JiraInterface {
         try {
             searchResults = searchService.search(applicationUser, query, pagerFilter);
         } catch (SearchException e) {
-            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
         if (searchResults == null)
         {
@@ -170,7 +171,7 @@ public class JiraInterface {
         try {
             searchResults = searchService.search(applicationUser, query, pagerFilter);
         } catch (SearchException e) {
-            mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
         if (searchResults == null)
         {
