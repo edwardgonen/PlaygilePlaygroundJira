@@ -214,7 +214,17 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             WriteToStatus(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
                             for (PlaygileSprint playgileSprint : sprintsForIssue)
                             {
-                                if (playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
+                                //do we have such sprint already
+                                boolean bSprintAlredyAdded = false;
+                                for (PlaygileSprint tmpSprint : playgileSprints)
+                                {
+                                    if (tmpSprint.getId() == playgileSprint.getId())
+                                    {
+                                        bSprintAlredyAdded = true;
+                                        break;
+                                    }
+                                }
+                                if (!bSprintAlredyAdded && playgileSprint.getState() != SprintState.FUTURE && (playgileSprint.getState() != SprintState.UNDEFINED))
                                 {
                                     WriteToStatus(false,"Adding sprint for " + issue.getId() + " " + playgileSprint.getName());
                                     playgileSprints.add(playgileSprint);
