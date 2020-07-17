@@ -7,11 +7,10 @@ import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Ext_EdG on 7/16/2020.
@@ -70,6 +69,22 @@ public class ProjectMonitoringMisc {
             //WriteToStatus(false, "No sprints for " + issue.getId());
         }
     }
+    public Issue SearchSelectedIssue(List<Issue> roadmapFeatures, String selectedRoadmapFeature)
+    {
+        //let's find our selected in the list
+        //find issue in the list of all roadmap features
+        Issue selectedRoadmapFeatureIssue = null;
+        for (Issue tmpFeature : roadmapFeatures)
+        {
+            if (selectedRoadmapFeature.equals(tmpFeature.getSummary()))
+            {
+                selectedRoadmapFeatureIssue = tmpFeature;
+                break;
+            }
+        }
+        return selectedRoadmapFeatureIssue;
+    }
+
     public void WriteToStatus(StringBuilder statusText, boolean debug, String text)
     {
         if (debug) statusText.append(text + "<br>");

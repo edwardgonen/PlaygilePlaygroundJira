@@ -6,6 +6,8 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.issue.link.IssueLink;
+import com.atlassian.jira.issue.link.IssueLinkManager;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
@@ -33,7 +35,6 @@ import org.apache.commons.collections.ArrayStack;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static com.atlassian.jira.security.Permissions.BROWSE;
 
 @Scanned
 public class ProjectMonitorImpl implements com.playgileplayground.jira.api.ProjectMonitor, ContextProvider {
@@ -79,6 +80,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         Date startDate = null;
         double sprintLength;
         ManageActiveObjectsResult maor;
+        Issue selectedRoadmapFeatureIssue = null;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
@@ -132,52 +134,39 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             UserLastLocations userLastLocations = (UserLastLocations)maor.Result;
             selectedRoadmapFeature = userLastLocations.lastRoadmapFeature;
             contextMap.put(SELECTEDROADMAPFEATURE, selectedRoadmapFeature);
+            if (selectedRoadmapFeature.isEmpty())
+            {
+                projectMonitoringMisc.WriteToStatus(statusText, false, "Roadmap feature is not selected");
+                bAllisOk = false;
+                messageToDisplay = "Please select the Roadmap Feature and press Recalculate";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
             teamVelocity = userLastLocations.lastTeamVelocity;
             contextMap.put(TEAMVELOCITY, teamVelocity);
-
-            //find issue in the list of all roadmap features
-            Issue selectedRoadmapFeatureIssue = null;
-            for (Issue tmpFeature : roadmapFeatures)
+            if (teamVelocity <= 0)
             {
-                if (selectedRoadmapFeature.equals(tmpFeature.getSummary()))
-                {
-                    selectedRoadmapFeatureIssue = tmpFeature;
-                    break;
-                }
+                projectMonitoringMisc.WriteToStatus(statusText, false, "Team velocity is not specified");
+                bAllisOk = false;
+                messageToDisplay = "Please specify team's velocity and press Recalculate";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+
+
+            selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, selectedRoadmapFeature);
+            if (selectedRoadmapFeatureIssue == null) //not found
+            {
+                projectMonitoringMisc.WriteToStatus(statusText, false, "our selected feature is not in the list " + selectedRoadmapFeature);
+                bAllisOk = false;
+                messageToDisplay = "Please select a Roadmap Feature and press Recalculate";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
             this.issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, selectedRoadmapFeatureIssue);
-            if (null != this.issues)
+            if (null != issues && issues.size() > 0)
             {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Got issues " + this.issues.size());
-                if (issues.size() <= 0)
-                {
-                    projectMonitoringMisc.WriteToStatus(statusText, false, "No issues found for current project");
-                    bAllisOk = false;
-                    messageToDisplay = "There is none user story/issue defined for this project";
-                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
-
-
-
                 //if no roadmap features selected yet - give a message to select an recalculate
                 //also check if no velocity stored yet - also give a message
                 // if one of above is correct display a message to the user
-                if (teamVelocity <= 0)
-                {
-                    projectMonitoringMisc.WriteToStatus(statusText, false, "Team velocity is not specified");
-                    bAllisOk = false;
-                    messageToDisplay = "Please specify team's velocity and press Recalculate";
-                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
-                if (selectedRoadmapFeature.isEmpty())
-                {
-                    projectMonitoringMisc.WriteToStatus(statusText, false, "Roadmap feature is not selected");
-                    bAllisOk = false;
-                    messageToDisplay = "Please select the Roadmap Feature and press Recalculate";
-                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
-
                 projectMonitoringMisc.WriteToStatus(statusText, false, "We have roadmap feature and team's velocity " + selectedRoadmapFeature + " " + teamVelocity);
                 //find all User stories Task and bugs of the issues and only those that are not completed
                 ArrayList<Issue> foundIssues = new ArrayList<>();
@@ -208,14 +197,18 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         && (bOurIssueType)
                         )
                     {
+                        projectMonitoringMisc.WriteToStatus(statusText, true, "Issue for calculation " +
+                            statusCategory.getKey() + " " +
+                            storyPointValue + " " +
+                            issue.getKey());
                         foundIssues.add(issue);
                     }
                     else
                     {
-                        projectMonitoringMisc.WriteToStatus(statusText, false, "Issue status is COMPLETE " +
+                        projectMonitoringMisc.WriteToStatus(statusText, true, "Issue is not ours " +
                             statusCategory.getKey() + " " +
                             storyPointValue + " " +
-                            issue.getId());
+                            issue.getKey());
                         //go to the next issue
                         continue;
                     }
@@ -247,7 +240,9 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 sprintLength = ProjectProgress.Days(sprint.getStartDate(), sprint.getEndDate()) + 1;
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected start date " + startDate);
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected sprint length " + sprintLength);
-                                //set to AO entity
+
+
+                                //set to AO entity - project started, start date and sprint length
                                 maor = mao.SetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), true);
                                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                 {
@@ -323,6 +318,10 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                         //not estimated? set to max
                                         if (storyPointValue <= 0) storyPointValue = MAX_STORY_ESTIMATION;
                                         currentEstimation += storyPointValue;
+                                        projectMonitoringMisc.WriteToStatus(statusText, true, "Adding story points for issue " +
+                                            statusCategory.getKey() + " " +
+                                            storyPointValue + " " +
+                                            issue.getKey());
                                     }
                                 }
                                 else

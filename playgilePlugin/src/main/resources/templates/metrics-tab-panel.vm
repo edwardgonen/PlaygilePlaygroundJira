@@ -77,13 +77,13 @@
             {
                 var velocity = document.getElementById("velocity").value;
                 var roadmapfeature = document.getElementById("roadmapfeature").value;
-
+                var encodedFeatureName = encodeURIComponent(roadmapfeature);
 
                 jQuery.ajax({
                     type: "GET",
                     async: false,
                     url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
-                        + "&teamVelocity=" + velocity + "&roadmapfeature=" + roadmapfeature + "&user=" + '$currentuser',
+                        + "&teamVelocity=" + velocity + "&roadmapfeature=" + encodedFeatureName + "&user=" + '$currentuser',
                     success: function(data) {
                         //alert(data);
                         location.reload();

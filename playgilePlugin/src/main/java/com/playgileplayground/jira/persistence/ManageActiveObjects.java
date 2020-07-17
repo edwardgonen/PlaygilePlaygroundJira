@@ -331,6 +331,7 @@ public final class ManageActiveObjects{
 
     private PrjStatEntity FindEntityByKey(ManageActiveObjectsEntityKey key, PrjStatEntity[] projectStatusEntities)
     {
+        //TODO make it strict search once old records are removed from all our Jira servers
         PrjStatEntity result = null;
         for (PrjStatEntity entity : projectStatusEntities)
         {
