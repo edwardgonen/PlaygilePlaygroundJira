@@ -86,7 +86,8 @@
                         + "&teamVelocity=" + velocity + "&roadmapfeature=" + encodedFeatureName + "&user=" + '$currentuser',
                     success: function(data) {
                         //alert(data);
-                        location.reload();
+                        //location.reload();
+                        //JIRA.trigger(JIRA.Events.REFRESH_ISSUE_PAGE, [JIRA.Issue.getIssueId()]);
                     },
                     error: function() {
                         alert("error");

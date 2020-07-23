@@ -36,7 +36,7 @@ public class ProjectProgress
         Date lastDateInProjectData =
             _progressData.GetEstimationDatesList().get(_progressData.GetEstimationDatesList().size() - 1);
         DataPair tmpPair;
-        int daysLeftSinceLastUpdateTillEndOfSprint = SprintLength - 1 - Days(lastDateInProjectData, startProjectDate) % SprintLength;
+        int daysLeftSinceLastUpdateTillEndOfSprint = SprintLength - 1 - AbsDays(lastDateInProjectData, startProjectDate) % SprintLength;
         Date closestSprintEnd =
             AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
 
@@ -136,7 +136,7 @@ public class ProjectProgress
     }
     private Double CalculateIdealEstimationByDate(Date projectStartDate, Date currentDate, double initialProjectEstimation, double dailyVelocity)
     {
-        long distanceDays = ProjectProgress.Days(currentDate, projectStartDate);
+        long distanceDays = ProjectProgress.AbsDays(currentDate, projectStartDate);
         return Math.max(initialProjectEstimation - distanceDays * dailyVelocity, 0);
     }
     public Date AddDays(Date date, int addDays)
@@ -146,10 +146,18 @@ public class ProjectProgress
         c.add(Calendar.DATE, addDays);
         return c.getTime();
     }
-    public static int Days(Date secondDate, Date firstDate)
+    public static int AbsDays(Date secondDate, Date firstDate)
     {
         long diffInMillies = Math.abs(secondDate.getTime() - firstDate.getTime());
         return (int)TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+    }
+    public static int Days(Date secondDate, Date firstDate)
+    {
+        int sign = 1;
+        long diffInMillies = secondDate.getTime() - firstDate.getTime();
+        if (diffInMillies >= 0) sign = 1;
+        else sign = -1;
+        return sign * (int)TimeUnit.DAYS.convert(Math.abs(diffInMillies), TimeUnit.MILLISECONDS);
     }
     public static String convertColorToHexadeimal(Color color)
     {

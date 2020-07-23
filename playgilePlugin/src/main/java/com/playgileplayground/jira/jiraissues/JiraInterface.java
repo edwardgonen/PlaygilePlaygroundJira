@@ -107,20 +107,36 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getIssuesForRoadmapFeature(ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
+    public List<Issue> getIssuesForRoadmapFeature(StringBuilder statusText, ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
     {
         //get all linked epics for Feature
         if (roadmapFeature == null) return null;
+
+        //TEST
+        statusText.append("In getIssuesForRoadmapFeature " + roadmapFeature.getSummary());
+
         IssueLinkManager ilm = ComponentAccessor.getComponent(IssueLinkManager.class);
         Collection<IssueLink> issueLinks = ilm.getInwardLinks(roadmapFeature.getId());
+
+        //TEST
+        statusText.append("Got issue links " + issueLinks == null);
+        if (issueLinks != null) statusText.append("Got issue links number " + issueLinks.size());
+
         List<Issue> issues = new ArrayList<>();
         if (issueLinks != null && issueLinks.size() > 0)
         {
             for (IssueLink issueLink : issueLinks) {
+
+                //TEST
+                statusText.append("Issue link id " + issueLink.getId());
+
                 //get all issues with epics from all issueLinks
                 List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, currentProject, issueLink.getSourceObject());
                 if (nextEpicIssues != null && nextEpicIssues.size() > 0)
                 {
+                    //TEST
+                    statusText.append("for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
+
                     //add to initial array
                     issues.addAll(nextEpicIssues);
                 }
@@ -140,7 +156,9 @@ public class JiraInterface {
         //project="BKM" and ("Epic Link" = BKM-2)
 
         Query query;
-        String searchString = "project = \"" + currentProject.getKey() + "\" AND (\"Epic Link\"=" + epic.getKey() + ")";
+        //String searchString = "project = \"" + currentProject.getKey() + "\" AND (\"Epic Link\"=" + epic.getKey() + ")";
+        //TEST
+        String searchString = "(\"Epic Link\"=" + epic.getKey() + ")";
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
             query = jqlQueryParser.parseQuery(searchString);

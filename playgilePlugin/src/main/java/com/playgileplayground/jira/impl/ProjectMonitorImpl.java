@@ -6,15 +6,11 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.issuetype.IssueType;
-import com.atlassian.jira.issue.link.IssueLink;
-import com.atlassian.jira.issue.link.IssueLinkManager;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
-import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectManager;
-import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserProjectHistoryManager;
@@ -24,13 +20,11 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
-import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.projectprogress.DataPair;
 import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
-import org.apache.commons.collections.ArrayStack;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -71,7 +65,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
     @Override
     public Map getContextMap(Map<String, Object> map) {
         Map<String, Object> contextMap = new HashMap<>();
-
+        statusText = new StringBuilder();
         double teamVelocity = 0;
         String selectedRoadmapFeature = "";
         List<Issue> roadmapFeatures;
@@ -161,7 +155,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
-            this.issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, selectedRoadmapFeatureIssue);
+            this.issues = jiraInterface.getIssuesForRoadmapFeature(statusText, applicationUser, currentProject, selectedRoadmapFeatureIssue);
             if (null != issues && issues.size() > 0)
             {
                 //if no roadmap features selected yet - give a message to select an recalculate
@@ -237,7 +231,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                 startDate = sprint.getStartDate();
                                 //also get the sprint length
-                                sprintLength = ProjectProgress.Days(sprint.getStartDate(), sprint.getEndDate()) + 1;
+                                sprintLength = ProjectProgress.AbsDays(sprint.getStartDate(), sprint.getEndDate()) + 1;
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected start date " + startDate);
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected sprint length " + sprintLength);
 
@@ -383,7 +377,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             }
             else
             {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to retrieve any project issues for " + selectedRoadmapFeature);
+                projectMonitoringMisc.WriteToStatus(statusText, true, "Failed to retrieve any project issues for " + selectedRoadmapFeature);
                 bAllisOk = false;
                 messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
                     ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
