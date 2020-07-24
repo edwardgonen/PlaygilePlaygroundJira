@@ -112,40 +112,56 @@ public class JiraInterface {
         //get all linked epics for Feature
         if (roadmapFeature == null) return null;
 
-        //TEST
-        statusText.append("In getIssuesForRoadmapFeature " + roadmapFeature.getSummary());
+        Query query;
+        String searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
 
-        IssueLinkManager ilm = ComponentAccessor.getComponent(IssueLinkManager.class);
-        Collection<IssueLink> issueLinks = ilm.getInwardLinks(roadmapFeature.getId());
-
-        //TEST
-        statusText.append("Got issue links " + issueLinks == null);
-        if (issueLinks != null) statusText.append("Got issue links number " + issueLinks.size());
-
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
         List<Issue> issues = new ArrayList<>();
-        if (issueLinks != null && issueLinks.size() > 0)
+        List<Issue> issueLinks;
+        if (searchResults != null)
         {
-            for (IssueLink issueLink : issueLinks) {
+            issueLinks = this.AccessVersionIndependentListOfIssues(searchResults);
+            if (issueLinks != null && issueLinks.size() > 0)
+            {
+                for (Issue issueLink : issueLinks) {
 
-                //TEST
-                statusText.append("Issue link id " + issueLink.getId());
-
-                //get all issues with epics from all issueLinks
-                List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, currentProject, issueLink.getSourceObject());
-                if (nextEpicIssues != null && nextEpicIssues.size() > 0)
-                {
                     //TEST
-                    statusText.append("for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
+                    statusText.append("Issue link id " + issueLink.getKey());
 
-                    //add to initial array
-                    issues.addAll(nextEpicIssues);
+                    //get all issues with epics from all issueLinks
+                    List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, currentProject, issueLink);
+                    if (nextEpicIssues != null && nextEpicIssues.size() > 0)
+                    {
+                        //TEST
+                        statusText.append("for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
+
+                        //add to initial array
+                        issues.addAll(nextEpicIssues);
+                    }
                 }
+            }
+            else
+            {
+                issues = null;
             }
         }
         else
         {
             issues = null;
         }
+
         return issues;
     }
 
