@@ -163,52 +163,12 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 // if one of above is correct display a message to the user
                 projectMonitoringMisc.WriteToStatus(statusText, false, "We have roadmap feature and team's velocity " + selectedRoadmapFeature + " " + teamVelocity);
                 //find all User stories Task and bugs of the issues and only those that are not completed
+
                 ArrayList<Issue> foundIssues = new ArrayList<>();
                 ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
-                for (Issue issue : issues)
-                {
-                    Status issueStatus = issue.getStatus();
-                    StatusCategory statusCategory = issueStatus.getStatusCategory();
-                    IssueType issueType = issue.getIssueType();
-
-                    boolean bOurIssueType =
-                        issueType.getName().equals(STORY) ||
-                        issueType.getName().equals(TASK) ||
-                        issueType.getName().equals(BUG);
-
-                    if (statusCategory == null)
-                    {
-                        projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to retrieve issue status for issue " + issue.getId());
-                        //go to next issue
-                        continue;
-                    }
-
-                    projectMonitoringMisc.addIssueSprintsToList(issue, playgileSprints);
-                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                    projectMonitoringMisc.WriteToStatus(statusText, false, "Story points " + issue.getId() + " " + storyPointValue);
-                    if (statusCategory.getKey() != StatusCategory.COMPLETE
-                        /*&& storyPointValue >= 0*/ //we don't mind not set story points. I'll set them to 21
-                        && (bOurIssueType)
-                        )
-                    {
-                        projectMonitoringMisc.WriteToStatus(statusText, true, "Issue for calculation " +
-                            statusCategory.getKey() + " " +
-                            storyPointValue + " " +
-                            issue.getKey());
-                        foundIssues.add(issue);
-                    }
-                    else
-                    {
-                        projectMonitoringMisc.WriteToStatus(statusText, true, "Issue is not ours " +
-                            statusCategory.getKey() + " " +
-                            storyPointValue + " " +
-                            issue.getKey());
-                        //go to the next issue
-                        continue;
-                    }
-                }
 
                 //get list of sprints out of user stories.
+                projectMonitoringMisc.getNotCompletedIssuesAndAndSprints(issues, foundIssues, playgileSprints, statusText);
                 //did we find any matching issues?
                 if (foundIssues.size() > 0)
                 {
@@ -328,8 +288,13 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //1. set initial estimation if previousProjectStartFlag is false
                             if (!previousProjectStartedFlag) //first time so store the initial estimations
                             {
-                                projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + currentEstimation);
-                                maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, currentEstimation);
+
+                                //get the initial estimations
+                                double initialEstimation = currentEstimation;
+                                //let's try to get initial estimation in the right way. Comment it out if not working
+                                initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText);
+                                projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + initialEstimation);
+                                maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, initialEstimation);
                                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                                     projectMonitoringMisc.WriteToStatus(statusText, false, "initial estimation set for project");
                                 }
@@ -340,7 +305,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                     messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
                                     return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                                 }
-
                             }
 
                             //2. add current estimation to the list of estimations

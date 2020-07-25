@@ -35,9 +35,7 @@ public interface ProjectMonitor {
     String ROADMAPFEATUREKEY = "Roadmap Feature";
 
     double MAX_STORY_ESTIMATION = 21.0;
-    String TASK = "Task";
-    String STORY = "Story";
-    String BUG = "Bug";
+
 
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);
