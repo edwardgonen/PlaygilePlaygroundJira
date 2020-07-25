@@ -177,7 +177,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     maor = mao.GetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
                     if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                     {
-                        boolean previousProjectStartedFlag = (boolean)maor.Result;
                         boolean projectStarted = (boolean)maor.Result;
                         if (!projectStarted) //not started
                         {
@@ -197,14 +196,14 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
 
                                 //set to AO entity - project started, start date and sprint length
-                                maor = mao.SetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), true);
+                                projectStarted = true;
+                                maor = mao.SetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), projectStarted);
                                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                 {
                                     projectMonitoringMisc.WriteToStatus(statusText, false,"Project start flag is set to true. Setting start date");
                                     maor = mao.SetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate);
                                     if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                     {
-                                        projectStarted = true;
                                         projectMonitoringMisc.WriteToStatus(statusText, false,"Project start date is set to " + startDate);
                                     }
                                     else
@@ -217,7 +216,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                     maor = mao.SetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), sprintLength);
                                     if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                     {
-                                        projectStarted = true;
                                         projectMonitoringMisc.WriteToStatus(statusText, false,"Project sprint length is set " + sprintLength);
                                     }
                                     else
@@ -256,6 +254,16 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         if (projectStarted)
                         {
                             projectMonitoringMisc.WriteToStatus(statusText, false,"Project start flag is true");
+
+                            maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+                            if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                            {
+                                projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to get project start date " + maor.Message);
+                                bAllisOk = false;
+                                messageToDisplay = "General failure - AO problem - failed to get project start date. Report to Ed";
+                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                            }
+                            startDate = (Date)maor.Result;
                             //now let's calculate the remaining story points
                             double currentEstimation = 0;
                             for (Issue issue : foundIssues)
@@ -286,25 +294,21 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             projectMonitoringMisc.WriteToStatus(statusText, false,"Calculated estimation " + currentEstimation);
                             //after calculation
                             //1. set initial estimation if previousProjectStartFlag is false
-                            if (!previousProjectStartedFlag) //first time so store the initial estimations
+                            //get the initial estimations
+                            double initialEstimation = currentEstimation;
+                            //let's try to get initial estimation in the right way. Comment it out if not working
+                            initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText);
+                            projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + initialEstimation);
+                            maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, initialEstimation);
+                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                                projectMonitoringMisc.WriteToStatus(statusText, false, "initial estimation set for project");
+                            }
+                            else
                             {
-
-                                //get the initial estimations
-                                double initialEstimation = currentEstimation;
-                                //let's try to get initial estimation in the right way. Comment it out if not working
-                                initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText);
-                                projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + initialEstimation);
-                                maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, initialEstimation);
-                                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                    projectMonitoringMisc.WriteToStatus(statusText, false, "initial estimation set for project");
-                                }
-                                else
-                                {
-                                    projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to set initial project estimation " + maor.Message);
-                                    bAllisOk = false;
-                                    messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
-                                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                                }
+                                projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to set initial project estimation " + maor.Message);
+                                bAllisOk = false;
+                                messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
+                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                             }
 
                             //2. add current estimation to the list of estimations
