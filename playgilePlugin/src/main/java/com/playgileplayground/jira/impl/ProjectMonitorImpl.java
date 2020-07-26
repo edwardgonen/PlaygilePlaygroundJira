@@ -480,6 +480,15 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
 */
 
+            //analyze stories for roadmap feature
+            AnalyzedStories analysis = projectMonitoringMisc.getStoriesAnalyzed(issues);
+            //fill the stories analyze
+            contextMap.put(NOTESTIMATEDSTORIES, analysis.NotEstimatedStoriesNumber);
+            contextMap.put(LARGESTORIES, analysis.LargeStoriesNumber);
+            contextMap.put(VERYLARGESTORIES, analysis.VeryLargeStoriesNumber);
+            contextMap.put(ESTIMATEDSTORIES, analysis.EstimatedStoriesNumber);
+
+
             contextMap.put(AORESULT, maor.Message);
 
         }

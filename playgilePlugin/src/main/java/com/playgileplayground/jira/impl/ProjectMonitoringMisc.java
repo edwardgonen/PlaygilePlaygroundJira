@@ -175,6 +175,30 @@ public class ProjectMonitoringMisc {
         return result;
     }
 
+    public AnalyzedStories getStoriesAnalyzed(Collection<Issue> issues) {
+        AnalyzedStories result = new AnalyzedStories();
+        if (issues == null) return result;
+        for (Issue issue : issues)
+        {
+            IssueType issueType = issue.getIssueType();
+
+            boolean bOurIssueType =
+                issueType.getName().equals(STORY) ||
+                    issueType.getName().equals(TASK) ||
+                    issueType.getName().equals(BUG);
+
+            if (bOurIssueType) //our issue and created before project started
+            {
+                double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                if (storyPointValue > 0 && storyPointValue < 13) result.EstimatedStoriesNumber++;
+                if (storyPointValue == 13) result.LargeStoriesNumber++;
+                if (storyPointValue > 13) result.VeryLargeStoriesNumber++;
+                if (storyPointValue <= 0) result.NotEstimatedStoriesNumber++;
+            }
+        }
+        return result;
+    }
+
     public void WriteToStatus(StringBuilder statusText, boolean debug, String text)
     {
         if (debug) statusText.append(text + "<br>");

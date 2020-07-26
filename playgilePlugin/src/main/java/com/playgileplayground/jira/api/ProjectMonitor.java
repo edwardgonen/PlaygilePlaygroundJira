@@ -29,6 +29,12 @@ public interface ProjectMonitor {
     String ROADMAPFEATURESLIST = "roadmapfeatureslist";
     String CURRENTUSER = "currentuser";
 
+    //Stories related
+    String NOTESTIMATEDSTORIES = "notestimatedstories";
+    String LARGESTORIES  = "largestories";
+    String VERYLARGESTORIES  = "verylargestories";
+    String ESTIMATEDSTORIES  = "estimatedstories";
+
 
 
     ///////////////////// our pre-defined keys /////////////////

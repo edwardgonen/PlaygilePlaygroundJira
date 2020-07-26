@@ -12,6 +12,7 @@
 
             function drawChart() {
                 if (!$allisok) return; //no need to execute
+                /////////// project predictions
                 const LINE_SEPARATOR = ",";
                 const PAIR_SEPARATOR = "|";
                 const DATE_FORMAT = "MM/dd/yyyy";
@@ -58,7 +59,7 @@
                     }
                 });
                 var options = {
-                    title: 'Project Monitor ',
+                    title: 'Project Monitor. Predicted completion ' + '$predictedendofproject',
                     lineWidth: 3,
                     series: {
                         0: {lineDashStyle: [0, 0]},
@@ -71,6 +72,41 @@
                 var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
 
                 chart.draw(data, options);
+
+                ////////////////////// issues pie
+                var dataIssueDistribution = new google.visualization.DataTable();
+
+                dataIssueDistribution.addColumn('string', 'Category');
+                dataIssueDistribution.addColumn('number', 'Value');
+
+
+                var notEstimatedNumber = parseFloat('$notestimatedstories');
+                if (isNaN(notEstimatedNumber)) notEstimatedNumber = 0;
+
+                var largeStoriesNumber =  parseFloat('$largestories');
+                if (isNaN(largeStoriesNumber)) largeStoriesNumber = 0;
+
+                var veryLargeStoriesNumber =  parseFloat('$verylargestories');
+                if (isNaN(veryLargeStoriesNumber)) veryLargeStoriesNumber = 0;
+
+                var estimatedStoriesNumber =  parseFloat('$estimatedstories');
+                if (isNaN(estimatedStoriesNumber)) estimatedStoriesNumber = 0;
+
+                dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
+                dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
+                dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
+                dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
+
+                var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
+
+                var optionsIssueDistribution = {
+                    title: 'Project Issues Analysis. Total ' + totalStories + ' issues'
+                };
+
+                var chartIssueDistribution = new google.visualization.PieChart(document.getElementById('piechart'));
+
+                chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+
 
             }
             function OnRecalculateClick()
@@ -145,8 +181,9 @@
                 <table>
                     <tr>
                         <td><div id="curve_chart" style="width: 600px; height: 500px"></div></td>
-                        <td>Initial end of project<br>Predicted end of project</td>
-                        <td>$idealendofproject<br>$predictedendofproject</td>
+                        <td><div id="piechart" style="width: 600px; height: 500px;"></div></td>
+                        <!--td>Initial end of project<br>Predicted end of project</td>
+                        <td>$idealendofproject<br>$predictedendofproject</td-->
                     </tr>
                 </table>
 
