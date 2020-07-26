@@ -5,9 +5,6 @@ import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.issuetype.IssueType;
-import com.atlassian.jira.issue.status.Status;
-import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectManager;
@@ -26,7 +23,6 @@ import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -67,14 +63,15 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         Map<String, Object> contextMap = new HashMap<>();
         statusText = new StringBuilder();
         double teamVelocity = 0;
-        String selectedRoadmapFeature = "";
+        double projectVelocity = 0;
+        String selectedRoadmapFeature;
         List<Issue> roadmapFeatures;
         String messageToDisplay = "";
-        boolean bAllisOk = false;
-        Date startDate = null;
+        boolean bAllisOk;
+        Date startDate;
         double sprintLength;
         ManageActiveObjectsResult maor;
-        Issue selectedRoadmapFeatureIssue = null;
+        Issue selectedRoadmapFeatureIssue;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
@@ -169,6 +166,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
                 //get list of sprints out of user stories.
                 projectMonitoringMisc.getNotCompletedIssuesAndAndSprints(issues, foundIssues, playgileSprints, statusText);
+                //sort sprints
+                Collections.sort(playgileSprints); //sort by dates
                 //did we find any matching issues?
                 if (foundIssues.size() > 0)
                 {
@@ -185,7 +184,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //we should have a list of sprints
                             if (playgileSprints.size() > 0) {
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Valid sprints " + playgileSprints.size());
-                                Collections.sort(playgileSprints); //sort by dates
                                 //the first sprint startDate would be the project start date
                                 PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                 startDate = sprint.getStartDate();
@@ -193,7 +191,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 sprintLength = ProjectProgress.AbsDays(sprint.getStartDate(), sprint.getEndDate()) + 1;
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected start date " + startDate);
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected sprint length " + sprintLength);
-
 
                                 //set to AO entity - project started, start date and sprint length
                                 projectStarted = true;
@@ -264,31 +261,26 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                             }
                             startDate = (Date)maor.Result;
+                            //get the sprint length
+                            sprintLength = getSprintLength(mao, currentProject, selectedRoadmapFeature);
                             //now let's calculate the remaining story points
                             double currentEstimation = 0;
                             for (Issue issue : foundIssues)
                             {
-                                com.atlassian.jira.issue.status.Status issueStatus = issue.getStatus();
-                                if (issueStatus != null)
+                                if (!projectMonitoringMisc.isIssueCompleted(issue))
                                 {
-                                    StatusCategory statusCategory = issueStatus.getStatusCategory();
-                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Issue status " + statusCategory);
-                                    if (statusCategory.getKey() == StatusCategory.IN_PROGRESS || statusCategory.getKey() == StatusCategory.TO_DO)
-                                    {
-                                        projectMonitoringMisc.WriteToStatus(statusText, false,"Issue status is one of ours " + statusCategory);
-                                        double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                                        //not estimated? set to max
-                                        if (storyPointValue <= 0) storyPointValue = MAX_STORY_ESTIMATION;
-                                        currentEstimation += storyPointValue;
-                                        projectMonitoringMisc.WriteToStatus(statusText, true, "Adding story points for issue " +
-                                            statusCategory.getKey() + " " +
-                                            storyPointValue + " " +
-                                            issue.getKey());
-                                    }
+                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Issue status is Complete");
+                                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                                    storyPointValue = projectMonitoringMisc.adjustStoryPointsIfNotEstimated(storyPointValue,
+                                        projectMonitoringMisc.isIssueBug(issue));
+                                    currentEstimation += storyPointValue;
+                                    projectMonitoringMisc.WriteToStatus(statusText, true, "Adding story points for issue " +
+                                        storyPointValue + " " +
+                                        issue.getKey());
                                 }
                                 else
                                 {
-                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Failed to get status for issue " + issue.getKey());
+                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Issue status Complete");
                                 }
                             }
                             projectMonitoringMisc.WriteToStatus(statusText, false,"Calculated estimation " + currentEstimation);
@@ -325,6 +317,26 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 messageToDisplay = "General failure - Failed to add last estimation to the list. Report to Ed";
                                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                             }
+
+                            //get real velocities
+                            //fill real sprint velocity
+
+                            Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints, startDate, teamVelocity, (int)sprintLength, statusText);
+                            //convert to strings
+                            StringBuilder resultRows = new StringBuilder();
+                            for (PlaygileSprint sprintToConvert : allRealSprints)
+                            {
+                                resultRows.append(
+                                    projectMonitoringMisc.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
+                                        sprintToConvert.sprintVelocity + ManageActiveObjects.LINE_SEPARATOR
+                                );
+                            }
+
+                            contextMap.put(REALVELOCITIES, resultRows);
+                            //and the average is
+                            projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
+                            contextMap.put(AVERAGEREALVELOCITY, projectVelocity);
+
                         }
                     }
                     else //not retrieved start flag
@@ -353,16 +365,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
             }
 
-            maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
-            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                projectMonitoringMisc.WriteToStatus(statusText, false,"Got sprint length " + maor.Result);
-                sprintLength = (double)maor.Result;
-            }
-            else
-            {
-                projectMonitoringMisc.WriteToStatus(statusText, false,"Failed to retrieve sprint length, using 14");
-                sprintLength = 14;
-            }
+
             maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                 ProjectProgress projectProgress = new ProjectProgress();
@@ -374,7 +377,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 item = new DataPair(new Date("7/15/2020"), 400);
                 ((ArrayList<DataPair>)maor.Result).add(item);
                 ////////////////////////////////*/
-                ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
+                sprintLength = getSprintLength(mao, currentProject, selectedRoadmapFeature);
+                ProjectProgressResult ppr = projectProgress.Initiate(projectVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
                 //what is the longest array?
                 StringBuilder chartRows = new StringBuilder();
                 ProgressData longestList;
@@ -407,7 +411,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     {
                         if (predictedIsLongest) {
                             chartRows.append(
-                                ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                projectMonitoringMisc.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                     "" + ManageActiveObjects.PAIR_SEPARATOR +
                                     tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
                             );
@@ -415,7 +419,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         else
                         {
                             chartRows.append(
-                                ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                projectMonitoringMisc.ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                     tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
                                     "" + ManageActiveObjects.LINE_SEPARATOR
                             );
@@ -424,17 +428,17 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     else //both records available
                     {
                         chartRows.append(
-                            ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                            projectMonitoringMisc.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                 tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
                                 tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
                         );
                     }
                 }
                 contextMap.put(CHARTROWS, chartRows.toString());
-                contextMap.put(IDEALENDOFPROJECT, ConvertDateToOurFormat(ppr.idealProjectEnd));
+                contextMap.put(IDEALENDOFPROJECT, projectMonitoringMisc.ConvertDateToOurFormat(ppr.idealProjectEnd));
                 //make the logic of color
                 contextMap.put(PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(ppr.progressDataColor));
-                contextMap.put(PREDICTEDENDOFPROJECT, ConvertDateToOurFormat(ppr.predictedProjectEnd));
+                contextMap.put(PREDICTEDENDOFPROJECT, projectMonitoringMisc.ConvertDateToOurFormat(ppr.predictedProjectEnd));
             }
             else
             {
@@ -489,6 +493,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             contextMap.put(ESTIMATEDSTORIES, analysis.EstimatedStoriesNumber);
 
 
+
             contextMap.put(AORESULT, maor.Message);
 
         }
@@ -511,10 +516,21 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         return this.userProjectHistoryManager;
     }
 
-    private String ConvertDateToOurFormat(Date dateToConvert)
+
+    private double getSprintLength(ManageActiveObjects mao, Project currentProject, String selectedRoadmapFeature)
     {
-        SimpleDateFormat outputDateFormat = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT);
-        return outputDateFormat.format(dateToConvert);
+        double sprintLength;
+        ManageActiveObjectsResult maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            sprintLength = (double)maor.Result;
+            //round to one week
+            sprintLength = ((int)sprintLength / 7) * 7;
+        }
+        else
+        {
+            sprintLength = 14;
+        }
+        return sprintLength;
     }
     private Map<String, Object> ReturnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
     {

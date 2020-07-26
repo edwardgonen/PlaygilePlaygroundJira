@@ -33,6 +33,8 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
     private long sequence;
     private String goal = "";
 
+    public double sprintVelocity = 0;
+
     //parse the string
     public PlaygileSprint parse(String input)
     {
@@ -74,11 +76,11 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
     }
     @Override
     public int compareTo(PlaygileSprint o) {
-        return getStartDate().compareTo(o.getStartDate());
+        return getEndDate().compareTo(o.getEndDate());
     }
     @Override
     public int compare(PlaygileSprint o1, PlaygileSprint o2) {
-        return o1.getStartDate().compareTo(o2.getStartDate());
+        return o1.getEndDate().compareTo(o2.getEndDate());
     }
 
     public String toString()
@@ -105,6 +107,7 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
     public SprintState getState() {
         return state;
     }
+    public void setState(SprintState newState) { state = newState; }
 
     public String getName() {
         return name;
@@ -117,6 +120,7 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
     public Date getEndDate() {
         return endDate;
     }
+    public void setEndDate(Date date) { endDate = date; }
 
     public Date getCompleteDate() {
         return completeDate;

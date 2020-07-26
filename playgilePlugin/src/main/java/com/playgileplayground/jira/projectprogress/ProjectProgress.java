@@ -38,7 +38,7 @@ public class ProjectProgress
         DataPair tmpPair;
         int daysLeftSinceLastUpdateTillEndOfSprint = SprintLength - 1 - AbsDays(lastDateInProjectData, startProjectDate) % SprintLength;
         Date closestSprintEnd =
-            AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
+            ProjectProgress.AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
 
         double endSprintExpectation = 0;
         double idealEstimation = 0;
@@ -80,7 +80,7 @@ public class ProjectProgress
         boolean continueAddingProgressPoints = true;
         while (endSprintExpectation > 0 || idealEstimation > 0)
         {
-            pointDate = AddDays(pointDate, SprintLength);
+            pointDate = ProjectProgress.AddDays(pointDate, SprintLength);
             endSprintExpectation = CalculateIdealEstimationByDate(lastSprintEnd, pointDate, lastFullSprintEndValue, dailyVelocity);
             continueAddingProgressPoints = AddDataPairToList(continueAddingProgressPoints, pointDate, endSprintExpectation, _progressData);
             idealEstimation = CalculateIdealEstimationByDate(startProjectDate, pointDate, initialProjectEstimation, dailyVelocity);
@@ -139,7 +139,7 @@ public class ProjectProgress
         long distanceDays = ProjectProgress.AbsDays(currentDate, projectStartDate);
         return Math.max(initialProjectEstimation - distanceDays * dailyVelocity, 0);
     }
-    public Date AddDays(Date date, int addDays)
+    public static Date AddDays(Date date, int addDays)
     {
         Calendar c = Calendar.getInstance();
         c.setTime(date);

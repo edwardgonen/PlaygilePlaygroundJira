@@ -35,12 +35,16 @@ public interface ProjectMonitor {
     String VERYLARGESTORIES  = "verylargestories";
     String ESTIMATEDSTORIES  = "estimatedstories";
 
+    //real velocity
+    String REALVELOCITIES = "realvelocities";
+    String AVERAGEREALVELOCITY = "averagerealvelocity";
 
 
     ///////////////////// our pre-defined keys /////////////////
     String ROADMAPFEATUREKEY = "Roadmap Feature";
 
     double MAX_STORY_ESTIMATION = 21.0;
+    double MAX_BUG_ESTIMATION = 13.0;
 
 
 
