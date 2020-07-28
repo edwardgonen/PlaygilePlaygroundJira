@@ -48,7 +48,7 @@ public class ProjectMonitoringMisc {
         }
         return roadmapFeaturesNames;
     }
-    public void addIssueSprintsToList(Issue issue,ArrayList<PlaygileSprint> playgileSprints)
+    public void addIssueSprintsToList(Issue issue, ArrayList<PlaygileSprint> playgileSprints)
     {
         //get all sprints
         Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issue);
