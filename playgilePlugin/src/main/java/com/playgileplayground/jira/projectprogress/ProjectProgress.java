@@ -13,26 +13,31 @@ public class ProjectProgress
 {
     public int SprintLength;
     private double _teamVelocity;
+    private double _projectVelocity;
     private ProgressData _progressData;
     private ProgressData _idealData;
 
-    public ProjectProgressResult Initiate(double teamVelocity, int sprintLength, ArrayList<DataPair> remainingEstimations)
+    public ProjectProgressResult Initiate(double teamVelocity, double projectVelocity, int sprintLength, ArrayList<DataPair> remainingEstimations)
     {
         ProjectProgressResult result = new ProjectProgressResult();
+
         SprintLength = sprintLength;
+        _projectVelocity = projectVelocity;
         _teamVelocity = teamVelocity;
         _idealData = new ProgressData();
+        _idealData.SetData(remainingEstimations);
 
         _progressData = new ProgressData();
         _progressData.SetData(remainingEstimations);
+
+
 
         //adjust data to time line in dates
 
 
         Date startProjectDate = _progressData.GetEstimationDatesList().get(0);
-        double initialProjectEstimation =
-            _progressData.GetEstimationValuesList().get(0);
-        double dailyVelocity = _teamVelocity / (double)SprintLength;
+        double dailyVelocity = _projectVelocity / (double)SprintLength;
+        double dailyIdealVelocity = _teamVelocity / (double)SprintLength;
         Date lastDateInProjectData =
             _progressData.GetEstimationDatesList().get(_progressData.GetEstimationDatesList().size() - 1);
         DataPair tmpPair;
@@ -41,31 +46,25 @@ public class ProjectProgress
             ProjectProgress.AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
 
         double endSprintExpectation = 0;
-        double idealEstimation = 0;
+        double endSprintExpectatonIdeal = 0;
 
         if (daysLeftSinceLastUpdateTillEndOfSprint > 0)
         {
             //add predicted closest sprint end
             double remainingWorkInRecentSprint = dailyVelocity * ((double)(daysLeftSinceLastUpdateTillEndOfSprint));
+            double remainingWorkIRecentSprintIdeal = dailyIdealVelocity * ((double)(daysLeftSinceLastUpdateTillEndOfSprint));
             endSprintExpectation = Math.max(_progressData.GetEstimationValuesList().get(_progressData.GetEstimationValuesList().size() -1 ) - remainingWorkInRecentSprint, 0);
-
+            endSprintExpectatonIdeal = Math.max(_idealData.GetEstimationValuesList().get(_idealData.GetEstimationValuesList().size() -1 ) - remainingWorkIRecentSprintIdeal, 0);
             tmpPair = new DataPair(closestSprintEnd, endSprintExpectation);
             _progressData.AddDataPair(tmpPair);
-        }
-        //to this point the predicted array contains real data from the past.
-        //The dates of those estimations may not be on the sprint end
-        //so we need to add those points to the ideal line to make both lines parallel in sense of dates
-        //it is easy since the ideal is linear y = initial estimation -(DailyVelocity) * NumberOfDaysSinceProjectStarts
-        tmpPair = new DataPair(startProjectDate, initialProjectEstimation);
-        _idealData.AddDataPair(tmpPair);
-        for (int i = 1; i < _progressData.Length(); i++)
-        {
-            //calculate this point distance from the project start
-            idealEstimation = CalculateIdealEstimationByDate(
-                startProjectDate,_progressData.GetElementAtIndex(i).Date, initialProjectEstimation, dailyVelocity);
-            tmpPair = new DataPair(_progressData.GetElementAtIndex(i).Date, idealEstimation);
+
+            tmpPair = new DataPair(closestSprintEnd, endSprintExpectatonIdeal);
             _idealData.AddDataPair(tmpPair);
-            if (idealEstimation <= 0) break; //finished so no more loops
+        }
+        else //we are the last day of sprint - so the sprint ends with the same value as we have the last
+        {
+            endSprintExpectation = Math.max(_progressData.GetEstimationValuesList().get(_progressData.GetEstimationValuesList().size() -1 ), 0);
+            endSprintExpectatonIdeal = Math.max(_idealData.GetEstimationValuesList().get(_idealData.GetEstimationValuesList().size() -1 ), 0);
         }
 
 
@@ -78,13 +77,13 @@ public class ProjectProgress
         Date pointDate = lastSprintEnd;
         boolean continueAddingIdealPoints = true;
         boolean continueAddingProgressPoints = true;
-        while (endSprintExpectation > 0 || idealEstimation > 0)
+        while (endSprintExpectation > 0 || endSprintExpectatonIdeal > 0)
         {
             pointDate = ProjectProgress.AddDays(pointDate, SprintLength);
             endSprintExpectation = CalculateIdealEstimationByDate(lastSprintEnd, pointDate, lastFullSprintEndValue, dailyVelocity);
             continueAddingProgressPoints = AddDataPairToList(continueAddingProgressPoints, pointDate, endSprintExpectation, _progressData);
-            idealEstimation = CalculateIdealEstimationByDate(startProjectDate, pointDate, initialProjectEstimation, dailyVelocity);
-            continueAddingIdealPoints = AddDataPairToList(continueAddingIdealPoints, pointDate, idealEstimation, _idealData);
+            endSprintExpectatonIdeal = CalculateIdealEstimationByDate(lastSprintEnd, pointDate, lastFullSprintEndValue, dailyIdealVelocity);
+            continueAddingIdealPoints = AddDataPairToList(continueAddingIdealPoints, pointDate, endSprintExpectatonIdeal, _idealData);
         }
 
         Date idealProjectEnd = null;

@@ -365,7 +365,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
             }
 
-
             maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                 ProjectProgress projectProgress = new ProjectProgress();
@@ -378,7 +377,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 ((ArrayList<DataPair>)maor.Result).add(item);
                 ////////////////////////////////*/
                 sprintLength = getSprintLength(mao, currentProject, selectedRoadmapFeature);
-                ProjectProgressResult ppr = projectProgress.Initiate(projectVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
+                ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, projectVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
                 //what is the longest array?
                 StringBuilder chartRows = new StringBuilder();
                 ProgressData longestList;
