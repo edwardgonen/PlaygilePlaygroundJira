@@ -65,6 +65,14 @@
                         0: {lineDashStyle: [0, 0]},
                         1: {lineDashStyle: [2, 2], color: '$predictioncolor'}
                     },
+                    vAxes: {
+                        0: {
+                            title: 'Story Points',
+                            viewWindow: {
+                                min: 0
+                            }
+                        }
+                    },
                     curveType: 'function',
                     legend: { position: 'bottom' }
                 };
@@ -159,6 +167,14 @@
                     series: {
                         0: {lineDashStyle: [0, 0]},
                         1: {lineDashStyle: [2, 2], color: 'green'}
+                    },
+                    vAxes: {
+                        0: {
+                            title: 'Story Points per Sprint',
+                            viewWindow: {
+                                min: 0
+                            }
+                        }
                     },
                     curveType: 'function',
                     legend: { position: 'bottom' }
