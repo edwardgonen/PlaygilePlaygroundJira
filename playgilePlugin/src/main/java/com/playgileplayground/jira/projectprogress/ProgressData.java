@@ -37,6 +37,8 @@ public class ProgressData {
     }
 
     public void SetData(ArrayList<DataPair> progressData) {
-        this._progressData = progressData;
+        for (DataPair dataPair : progressData) {
+            this._progressData.add(dataPair);
+        }
     }
 }

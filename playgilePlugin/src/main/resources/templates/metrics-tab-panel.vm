@@ -19,7 +19,7 @@
 
                 var data = new google.visualization.DataTable();
                 data.addColumn('date', 'Date');
-                //data.addColumn('number', 'Ideal');
+                data.addColumn('number', 'Simulated');
                 data.addColumn('number', 'Predicted');
 
                 var chartRows = '$chartrows';
@@ -54,7 +54,7 @@
                         var predicted = parseFloat(items[2]);
                         if (isNaN(predicted)) predicted = null;
 
-                        data.addRow([date, /*ideal,*/ predicted]);
+                        data.addRow([date, ideal, predicted]);
                         //data.addRow([new Date(2010, 1, 1),  37.8, 80.8]);
                     }
                 });
