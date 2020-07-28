@@ -239,13 +239,13 @@
             #if ($allisok)
                 <table>
                     <tr>
-                        <td><div id="curve_chart" style="width: 600px; height: 400px"></div></td>
-                        <td><div id="piechart" style="width: 600px; height: 400px;"></div></td>
+                        <td><div id="curve_chart" style="width: 600px; height: 400px; border: 1px solid #ccc"></div></td>
+                        <td><div id="piechart" style="width: 600px; height: 400px; border: 1px solid #ccc"></div></td>
                         <!--td>Initial end of project<br>Predicted end of project</td>
                         <td>$idealendofproject<br>$predictedendofproject</td-->
                     </tr>
                     <tr>
-                        <td><div id="velocity_chart" style="width: 600px; height: 400px"></div></td>
+                        <td><div id="velocity_chart" style="width: 600px; height: 400px; border: 1px solid #ccc"></div></td>
                     </tr>
                 </table>
 
