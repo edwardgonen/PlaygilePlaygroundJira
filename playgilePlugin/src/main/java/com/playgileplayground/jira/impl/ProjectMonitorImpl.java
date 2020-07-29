@@ -15,6 +15,7 @@ import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
+import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.*;
@@ -70,6 +71,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         boolean bAllisOk;
         Date startDate;
         double sprintLength;
+        double[] overallIssuesDistributionInSprint = new double[ProjectMonitor.DISTRIBUTION_SIZE];
         ManageActiveObjectsResult maor;
         Issue selectedRoadmapFeatureIssue;
         ManageActiveObjects mao = new ManageActiveObjects(this.ao);
@@ -168,6 +170,30 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 projectMonitoringMisc.getNotCompletedIssuesAndAndSprints(issues, foundIssues, playgileSprints, statusText);
                 //sort sprints
                 Collections.sort(playgileSprints); //sort by dates
+                //here we have in playgileSprints all closed and active sprints
+                //so we can get our issues distribution statistics
+
+                for (PlaygileSprint notFutureSprint : playgileSprints)
+                {
+                    double[] sprintIssuesDistribution = notFutureSprint.getIssuesTimeDistribution();
+                    //update main counters
+                    for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
+                        overallIssuesDistributionInSprint[i] += sprintIssuesDistribution[i];
+                    }
+                }
+                //lets' get average
+                StringBuilder issuesDistributionString = new StringBuilder();
+                double sumOfClosed = 0;
+                if (playgileSprints.size() > 0) {
+                    for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
+                        overallIssuesDistributionInSprint[i] /= (double) playgileSprints.size();
+                        double roundTo2Digits = 100.0 * Math.round(overallIssuesDistributionInSprint[i] * 100.0) / 100.0;
+                        sumOfClosed += roundTo2Digits;
+                        issuesDistributionString.append(roundTo2Digits + ManageActiveObjects.PAIR_SEPARATOR);
+                    }
+                }
+                contextMap.put(ISSUESDISTRIBUTION, issuesDistributionString.toString());
+
                 //did we find any matching issues?
                 if (foundIssues.size() > 0)
                 {

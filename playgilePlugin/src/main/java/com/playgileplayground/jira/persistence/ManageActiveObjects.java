@@ -5,6 +5,7 @@ import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import org.apache.commons.lang.time.DateUtils;
 
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ public final class ManageActiveObjects{
             if (projectStatusEntities.length > 0) {
                 for (PrjStatEntity entity : projectStatusEntities)
                 {
-                    allEntities.add(entity.getProjectKey() + " " + entity.getRoadmapFeature());
+                    allEntities.add(entity.getProjectKey() + " " + entity.getRoadmapFeature() + " Estimations " + entity.getRemainingStoriesEstimations());
                 }
                 result.Result = allEntities;
             }
@@ -214,12 +215,9 @@ public final class ManageActiveObjects{
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
+            prjStatEntity.setProjectStartDate(startDate);
             prjStatEntity.setInitialEstimation(initialEstimation);
             prjStatEntity.save();
-            //also add it as the first element in the list
-            ArrayList<DataPair> tmpList = new ArrayList<>();
-            tmpList.add(new DataPair(startDate, initialEstimation));
-            SetDateRemainingEstimationsList(tmpList, prjStatEntity);
         }
         else
         {
@@ -269,7 +267,11 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
-            result.Result = GetDataRemainingEstimationsList(prjStatEntity);
+            ArrayList<DataPair> remainingEstimations = GetDataRemainingEstimationsList(prjStatEntity);
+            //add the initial estimation
+            DataPair initialDatePair = new DataPair(prjStatEntity.getProjectStartDate(), prjStatEntity.getInitialEstimation());
+            remainingEstimations.add(0, initialDatePair); //add as the first element
+            result.Result = remainingEstimations;
             result.Message = "List returned";
         }
         else
