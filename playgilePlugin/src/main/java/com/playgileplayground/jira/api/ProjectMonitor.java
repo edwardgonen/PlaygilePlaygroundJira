@@ -43,8 +43,12 @@ public interface ProjectMonitor {
     ///////////////////// our pre-defined keys /////////////////
     String ROADMAPFEATUREKEY = "Roadmap Feature";
 
+    String ISSUESDISTRIBUTION = "issuedistribution";
+
     double MAX_STORY_ESTIMATION = 21.0;
     double MAX_BUG_ESTIMATION = 13.0;
+
+    int DISTRIBUTION_SIZE = 4;
 
 
 

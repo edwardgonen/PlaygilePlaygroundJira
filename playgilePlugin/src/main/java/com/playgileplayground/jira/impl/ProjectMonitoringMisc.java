@@ -84,6 +84,7 @@ public class ProjectMonitoringMisc {
                             double tmpVelocity = jiraInterface.getStoryPointsForIssue(issue);
                             if (tmpVelocity <= 0) tmpVelocity = 0;
                             foundSprint.sprintVelocity += tmpVelocity;
+                            foundSprint.updateIssuesTimeDistribution(issue); //update distribution statistics
                         }
                     }
                 }
@@ -109,6 +110,7 @@ public class ProjectMonitoringMisc {
         }
         return selectedRoadmapFeatureIssue;
     }
+
     public void getNotCompletedIssuesAndAndSprints(Collection<Issue> issues,
                                                    ArrayList<Issue> foundIssues,
                                                    ArrayList<PlaygileSprint> playgileSprints,

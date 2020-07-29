@@ -121,7 +121,7 @@
                 dataVelocity.addColumn('number', 'Real Velocity');
                 dataVelocity.addColumn('number', 'Average Real Velocity');
 
-                velocityChartRows = '$realvelocities';
+                var velocityChartRows = '$realvelocities';
                 //split and parse
                 if (typeof velocityChartRows === 'undefined' || velocityChartRows === null)
                 {
@@ -183,6 +183,86 @@
                 var chartVelocity = new google.visualization.LineChart(document.getElementById('velocity_chart'));
 
                 chartVelocity.draw(dataVelocity, optionsVelocityChart);
+
+                ////////// issues distribution
+                var distributionResult = '$issuedistribution';
+                //split and parse
+                if (typeof distributionResult === 'undefined' || distributionResult === null)
+                {
+                    alert("No distribution data for chart");
+                    return;
+                }
+
+                var firstQ, secondQ, thirdQ, fourthQ, nonCompleted;
+                if (distributionResult.length > 0)//non empty line
+                {
+                    //split by pair separator
+                    var items = distributionResult.split(PAIR_SEPARATOR);
+                    if (items.length < 5)
+                    {
+                        alert("Wrong real velocity line format " + distributionResult);
+                    }
+
+                    var distributionValue = parseFloat(items[0]);
+                    if (isNaN(distributionValue)) {
+                        alert('Wrong distribution data format ' + items[0]);
+                        firstQ = 0;
+                    }
+                    else {
+                        firstQ = distributionValue;
+                    };
+
+                    distributionValue = parseFloat(items[1]);
+                    if (isNaN(distributionValue)) {
+                        alert('Wrong distribution data format ' + items[1]);
+                        secondQ = 0;
+                    }
+                    else {
+                        secondQ = distributionValue;
+                    };
+
+                    distributionValue = parseFloat(items[2]);
+                    if (isNaN(distributionValue)) {
+                        alert('Wrong distribution data format ' + items[2]);
+                        thirdQ = 0;
+                    }
+                    else {
+                        thirdQ = distributionValue;
+                    };
+
+                    distributionValue = parseFloat(items[3]);
+                    if (isNaN(distributionValue)) {
+                        alert('Wrong distribution data format ' + items[3]);
+                        fourthQ = 0;
+                    }
+                    else {
+                        fourthQ = distributionValue;
+                    };
+                };
+
+                var dataIssueDistribution = google.visualization.arrayToDataTable([
+                    ["Segment", "Distribution", { role: "style" } ],
+                    ["1/4 of sprint", firstQ, "#3366CC"],
+                    ["2/4 of sprint", secondQ, "#3366CC"],
+                    ["3/4 of sprint", thirdQ, "#3366CC"],
+                    ["End of sprint", fourthQ, "#3366CC"]
+                ]);
+
+                var optionsIssueDistribution = {
+                    title: "Average Issue Closure Distribution (%) in a typical sprint",
+                    bar: {groupWidth: "90%"},
+                    legend: { position: "bottom" },
+                    vAxes: {
+                        0: {
+                            title: 'Percentage of closed issues',
+                            viewWindow: {
+                                min: 0
+                            }
+                        }
+                    }
+                };
+                var chartIssueDistribution = new google.visualization.ColumnChart(document.getElementById("issue_distribution"));
+                chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
             }
             function OnRecalculateClick()
             {
@@ -256,12 +336,11 @@
                 <table>
                     <tr>
                         <td><div id="curve_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
-                        <td><div id="piechart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
-                        <!--td>Initial end of project<br>Predicted end of project</td>
-                        <td>$idealendofproject<br>$predictedendofproject</td-->
+                        <td><div id="velocity_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
                     </tr>
                     <tr>
-                        <td><div id="velocity_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
+                        <td><div id="piechart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
+                        <td><div id="issue_distribution" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
                     </tr>
                 </table>
 

@@ -1,5 +1,8 @@
 package com.playgileplayground.jira.jiraissues;
 
+import com.atlassian.jira.issue.Issue;
+import com.playgileplayground.jira.api.ProjectMonitor;
+import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import org.joda.time.DateTime;
 
 import java.text.DateFormat;
@@ -32,6 +35,8 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
     private Date completeDate = new Date();
     private long sequence;
     private String goal = "";
+
+    private double[] storiesTimeDistribution = new double[ProjectMonitor.DISTRIBUTION_SIZE];
 
     public double sprintVelocity = 0;
 
@@ -228,6 +233,40 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
             default:
                 result = false;
                 break;
+        }
+        return result;
+    }
+
+    public void updateIssuesTimeDistribution(Issue issue) {
+        //supposed to be completed
+        Date resolutionDate = new Date(issue.getResolutionDate().getTime());
+        int daysSinceBeginOfSprints = ProjectProgress.Days(resolutionDate, startDate);
+
+        int sprintLength = ProjectProgress.Days(endDate, startDate);
+        if (daysSinceBeginOfSprints >= 0 && sprintLength > 0)
+        {
+            double percentage = (double)daysSinceBeginOfSprints / (double)sprintLength;
+            if (percentage >= 0.00 && percentage < 0.25) storiesTimeDistribution[0]++;
+            if (percentage >= 0.25 && percentage < 0.50) storiesTimeDistribution[1]++;
+            if (percentage >= 0.50 && percentage < 0.75) storiesTimeDistribution[2]++;
+            if (percentage >= 0.75 /*&& percentage <= 1.00*/) storiesTimeDistribution[3]++;
+        }
+    }
+
+    public double[] getIssuesTimeDistribution()
+    {
+        double[] result = new double[4];
+        double sum = 0;
+
+        for (int i = 0; i < storiesTimeDistribution.length; i++)
+        {
+            sum += storiesTimeDistribution[i];
+        }
+
+        if (sum != 0) {
+            for (int i = 0; i < storiesTimeDistribution.length; i++) {
+                result[i] = storiesTimeDistribution[i] / sum;
+            }
         }
         return result;
     }
