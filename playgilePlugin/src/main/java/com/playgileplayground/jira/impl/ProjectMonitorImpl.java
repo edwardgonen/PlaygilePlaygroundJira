@@ -348,19 +348,23 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //fill real sprint velocity
 
                             Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints, startDate, teamVelocity, (int)sprintLength, statusText);
+                            ArrayList<Double> linearRegression = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, startDate, statusText);
                             //convert to strings
                             StringBuilder resultRows = new StringBuilder();
+                            int index = 0;
                             for (PlaygileSprint sprintToConvert : allRealSprints)
                             {
                                 resultRows.append(
                                     projectMonitoringMisc.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
-                                        sprintToConvert.sprintVelocity + ManageActiveObjects.LINE_SEPARATOR
+                                        sprintToConvert.sprintVelocity  + ManageActiveObjects.PAIR_SEPARATOR +
+                                        linearRegression.get(index++) + ManageActiveObjects.LINE_SEPARATOR
                                 );
                             }
 
                             contextMap.put(REALVELOCITIES, resultRows);
                             //and the average is
-                            projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
+                            //projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
+                            projectVelocity = (int)Math.round(linearRegression.get(linearRegression.size() - 1));
                             contextMap.put(AVERAGEREALVELOCITY, projectVelocity);
 
                         }

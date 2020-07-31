@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.playgileplayground.jira</groupId>
     <artifactId>playgilePlugin</artifactId>
-    <version>1.8.0</version>
+    <version>1.9.0</version>
     <organization>
         <name>Ed Gonen Playgile</name>
         <url>https://www.linkedin.com/in/edgonen/</url>

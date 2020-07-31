@@ -135,14 +135,12 @@
                     return;
                 }
 
-                var countForAverage = 0;
-                var sumForAverage = 0;
                 lines.forEach(function (line, index) {
                     if (line.length > 0)//non empty line
                     {
                         //split by pair separator
                         var items = line.split(PAIR_SEPARATOR);
-                        if (items.length < 2)
+                        if (items.length < 3)
                         {
                             alert("Wrong real velocity line format " + line);
                         }
@@ -153,11 +151,12 @@
                             alert('Wrong velocity format ' + items[1]);
                             realVelocity = 0;
                         }
-                        else {
-                            countForAverage++;
-                            sumForAverage += realVelocity;
-                            dataVelocity.addRow([date, realVelocity, sumForAverage / countForAverage]);
+                        var linearVelocity = parseFloat(items[2]);
+                        if (isNaN(linearVelocity)) {
+                            alert('Wrong velocity format ' + items[2]);
+                            linearVelocity = 0;
                         }
+                        dataVelocity.addRow([date, realVelocity, linearVelocity]);
                     }
                 });
 
