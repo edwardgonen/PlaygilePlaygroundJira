@@ -365,6 +365,10 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //and the average is
                             //projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
                             projectVelocity = (int)Math.round(linearRegression.get(linearRegression.size() - 1));
+                            if (projectVelocity <= 0) {
+                                projectVelocity = teamVelocity;
+                                projectMonitoringMisc.WriteToStatus(statusText, true,"Project velocity is 0, setting to team velocity " + teamVelocity);
+                            }
                             contextMap.put(AVERAGEREALVELOCITY, projectVelocity);
 
                         }

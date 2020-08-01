@@ -12,6 +12,8 @@ public class LinearRegression {
         if (x.length != y.length) {
             return false;
         }
+        if (x.length <= 0) return false;
+
         int n = x.length;
 
         // first pass
@@ -30,7 +32,10 @@ public class LinearRegression {
             xybar += (x[i] - xbar) * (y[i] - ybar);
         }
 
-        slope  = xybar / xxbar;
+        if (xxbar == 0) {
+            return false;
+        }
+        slope = xybar / xxbar;
         intercept = ybar - slope * xbar;
         return true;
     }

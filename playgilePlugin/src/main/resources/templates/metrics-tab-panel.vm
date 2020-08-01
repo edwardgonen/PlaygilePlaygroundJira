@@ -161,7 +161,7 @@
                 });
 
                 var optionsVelocityChart = {
-                    title: 'Real Velocity Chart. Average real velocity ' + '$averagerealvelocity',
+                    title: 'Real Velocity Chart. Linear regression predicted velocity ' + '$averagerealvelocity',
                     lineWidth: 3,
                     series: {
                         0: {lineDashStyle: [0, 0]},
