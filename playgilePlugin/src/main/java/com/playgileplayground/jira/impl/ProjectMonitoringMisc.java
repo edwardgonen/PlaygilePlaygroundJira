@@ -191,6 +191,26 @@ public class ProjectMonitoringMisc {
         return result;
     }
 
+    public ArrayList<Double> getAverageForRealSprintVelocities(Collection<PlaygileSprint> allRealSprints, Date startDate, StringBuilder statusText)
+    {
+        ArrayList<Double> result = new ArrayList<>();
+        if (allRealSprints.size() <= 0) {
+            return result;
+        }
+
+        double countForAverage = 0;
+        double  sumForAverage = 0;
+
+
+        for (PlaygileSprint realSprint : allRealSprints)
+        {
+            countForAverage++;
+            sumForAverage += realSprint.sprintVelocity;
+            result.add(sumForAverage / countForAverage);
+        }
+        return result;
+    }
+
     public ArrayList<Double> getLinearRegressionForRealSprintVelocities(Collection<PlaygileSprint> allRealSprints, Date startDate, StringBuilder statusText)
     {
         ArrayList<Double> result = new ArrayList<>();

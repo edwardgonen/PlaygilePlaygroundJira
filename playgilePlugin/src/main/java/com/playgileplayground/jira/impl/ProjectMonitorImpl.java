@@ -348,7 +348,13 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //fill real sprint velocity
 
                             Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints, startDate, teamVelocity, (int)sprintLength, statusText);
-                            ArrayList<Double> linearRegression = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, startDate, statusText);
+                            //linear regression
+                            ArrayList<Double> predictedVelocities;
+                            predictedVelocities = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, startDate, statusText);
+
+                            //averaging
+                            //predictedVelocities = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, startDate, statusText);
+
                             //convert to strings
                             StringBuilder resultRows = new StringBuilder();
                             int index = 0;
@@ -357,14 +363,14 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 resultRows.append(
                                     projectMonitoringMisc.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
                                         sprintToConvert.sprintVelocity  + ManageActiveObjects.PAIR_SEPARATOR +
-                                        linearRegression.get(index++) + ManageActiveObjects.LINE_SEPARATOR
+                                        predictedVelocities.get(index++) + ManageActiveObjects.LINE_SEPARATOR
                                 );
                             }
 
                             contextMap.put(REALVELOCITIES, resultRows);
                             //and the average is
                             //projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
-                            projectVelocity = (int)Math.round(linearRegression.get(linearRegression.size() - 1));
+                            projectVelocity = (int)Math.round(predictedVelocities.get(predictedVelocities.size() - 1));
                             if (projectVelocity <= 0) {
                                 projectVelocity = teamVelocity;
                                 projectMonitoringMisc.WriteToStatus(statusText, true,"Project velocity is 0, setting to team velocity " + teamVelocity);
