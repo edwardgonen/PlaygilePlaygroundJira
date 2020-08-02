@@ -6,6 +6,7 @@ import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.util.lang.Pair;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
@@ -190,7 +191,53 @@ public class ProjectMonitoringMisc {
         return result;
     }
 
+    public ArrayList<Double> getAverageForRealSprintVelocities(Collection<PlaygileSprint> allRealSprints, Date startDate, StringBuilder statusText)
+    {
+        ArrayList<Double> result = new ArrayList<>();
+        if (allRealSprints.size() <= 0) {
+            return result;
+        }
 
+        double countForAverage = 0;
+        double  sumForAverage = 0;
+
+
+        for (PlaygileSprint realSprint : allRealSprints)
+        {
+            countForAverage++;
+            sumForAverage += realSprint.sprintVelocity;
+            result.add(sumForAverage / countForAverage);
+        }
+        return result;
+    }
+
+    public ArrayList<Double> getLinearRegressionForRealSprintVelocities(Collection<PlaygileSprint> allRealSprints, Date startDate, StringBuilder statusText)
+    {
+        ArrayList<Double> result = new ArrayList<>();
+        if (allRealSprints.size() <= 0) {
+            return result;
+        }
+
+        double[] x = new double[allRealSprints.size()];
+        double[] y = new double[allRealSprints.size()];
+        int index = 0;
+        for (PlaygileSprint realSprint : allRealSprints)
+        {
+            x[index] = ProjectProgress.AbsDays(realSprint.getEndDate(), startDate);
+            y[index] = realSprint.sprintVelocity;
+            index++;
+        }
+        //y = k*x + b
+        LinearRegression lr = new LinearRegression();
+        lr.getRegressionSlopeAndIntercept(x, y);
+        double slope = lr.slope; double intercept = lr.intercept;
+        for (PlaygileSprint realSprint : allRealSprints)
+        {
+            result.add(ProjectProgress.AbsDays(realSprint.getEndDate(), startDate) * slope + intercept);
+        }
+
+        return result;
+    }
     public Collection<PlaygileSprint> getAllRealSprintsVelocities(Collection<PlaygileSprint> playgileSprints, Date startDate, double teamVelocity, int sprintLength, StringBuilder statusText)
     {
         ArrayList<PlaygileSprint> result = new ArrayList<>();
@@ -350,4 +397,5 @@ public class ProjectMonitoringMisc {
         StatusCategory statusCategory = issueStatus.getStatusCategory();
         return (statusCategory.getKey() == StatusCategory.COMPLETE);
     }
+
 }

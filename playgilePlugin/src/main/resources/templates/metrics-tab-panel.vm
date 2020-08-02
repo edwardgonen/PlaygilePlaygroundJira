@@ -74,7 +74,8 @@
                         }
                     },
                     curveType: 'function',
-                    legend: { position: 'bottom' }
+                    legend: { position: 'bottom' },
+                    backgroundColor: '#ecedf0'
                 };
 
                 var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
@@ -108,7 +109,8 @@
                 var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
 
                 var optionsIssueDistribution = {
-                    title: 'Project Issues Analysis. Total ' + totalStories + ' issues'
+                    title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
+                    backgroundColor: '#ecedf0'
                 };
 
                 var chartIssueDistribution = new google.visualization.PieChart(document.getElementById('piechart'));
@@ -135,14 +137,12 @@
                     return;
                 }
 
-                var countForAverage = 0;
-                var sumForAverage = 0;
                 lines.forEach(function (line, index) {
                     if (line.length > 0)//non empty line
                     {
                         //split by pair separator
                         var items = line.split(PAIR_SEPARATOR);
-                        if (items.length < 2)
+                        if (items.length < 3)
                         {
                             alert("Wrong real velocity line format " + line);
                         }
@@ -153,16 +153,17 @@
                             alert('Wrong velocity format ' + items[1]);
                             realVelocity = 0;
                         }
-                        else {
-                            countForAverage++;
-                            sumForAverage += realVelocity;
-                            dataVelocity.addRow([date, realVelocity, sumForAverage / countForAverage]);
+                        var linearVelocity = parseFloat(items[2]);
+                        if (isNaN(linearVelocity)) {
+                            alert('Wrong velocity format ' + items[2]);
+                            linearVelocity = 0;
                         }
+                        dataVelocity.addRow([date, realVelocity, linearVelocity]);
                     }
                 });
 
                 var optionsVelocityChart = {
-                    title: 'Real Velocity Chart. Average real velocity ' + '$averagerealvelocity',
+                    title: 'Real Velocity Chart. Linear regression predicted velocity ' + '$averagerealvelocity',
                     lineWidth: 3,
                     series: {
                         0: {lineDashStyle: [0, 0]},
@@ -177,7 +178,8 @@
                         }
                     },
                     curveType: 'function',
-                    legend: { position: 'bottom' }
+                    legend: { position: 'bottom' },
+                    backgroundColor: '#ecedf0'
                 };
 
                 var chartVelocity = new google.visualization.LineChart(document.getElementById('velocity_chart'));
@@ -259,7 +261,8 @@
                                 min: 0
                             }
                         }
-                    }
+                    },
+                    backgroundColor: '#ecedf0'
                 };
                 var chartIssueDistribution = new google.visualization.ColumnChart(document.getElementById("issue_distribution"));
                 chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
@@ -348,7 +351,7 @@
         </body>
     </html>
     <table>
-        <div style="height:120px;width:500px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
+        <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
             $statustext
         </div>
     </table>

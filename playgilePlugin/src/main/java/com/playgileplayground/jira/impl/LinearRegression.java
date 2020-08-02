@@ -12,13 +12,14 @@ public class LinearRegression {
         if (x.length != y.length) {
             return false;
         }
+        if (x.length <= 0) return false;
+
         int n = x.length;
 
         // first pass
-        double sumx = 0.0, sumy = 0.0, sumx2 = 0.0;
+        double sumx = 0.0, sumy = 0.0;
         for (int i = 0; i < n; i++) {
             sumx  += x[i];
-            sumx2 += x[i]*x[i];
             sumy  += y[i];
         }
         double xbar = sumx / n;
@@ -31,7 +32,10 @@ public class LinearRegression {
             xybar += (x[i] - xbar) * (y[i] - ybar);
         }
 
-        slope  = xybar / xxbar;
+        if (xxbar == 0) {
+            return false;
+        }
+        slope = xybar / xxbar;
         intercept = ybar - slope * xbar;
         return true;
     }
