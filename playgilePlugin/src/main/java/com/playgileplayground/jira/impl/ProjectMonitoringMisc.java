@@ -6,7 +6,6 @@ import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.jira.util.lang.Pair;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
@@ -257,13 +256,16 @@ public class ProjectMonitoringMisc {
         //2. Do a loop with period of sprint length by (14 days) till the calculated date is beyond all sprint ends
         //3. For each sprint that overlap or match the start and end dates sum up the velocities
 
-        //add first record as team velocity
+        //add first record as team velocity if less than 3 sprints
         PlaygileSprint sprintToAdd = new PlaygileSprint();
-        sprintToAdd.setEndDate(startDate);
-        sprintToAdd.sprintVelocity = teamVelocity;
-        sprintToAdd.setState(SprintState.CLOSED);
-        result.add(sprintToAdd);
-
+        if (playgileSprints.size() < 3) //for mathematical purposed we count the team velocity if less than 3 sprints
+        {
+            WriteToStatus(statusText, true, "Getting real sprints velocity - less than 3 sprints. Using team velocity as first value");
+            sprintToAdd.setEndDate(startDate);
+            sprintToAdd.sprintVelocity = teamVelocity;
+            sprintToAdd.setState(SprintState.CLOSED);
+            result.add(sprintToAdd);
+        }
         Date correctSprintStart = startDate;
         Date correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
 
