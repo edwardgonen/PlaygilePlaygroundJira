@@ -239,17 +239,25 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
 
     public void updateIssuesTimeDistribution(Issue issue) {
         //supposed to be completed
-        Date resolutionDate = new Date(issue.getResolutionDate().getTime());
-        int daysSinceBeginOfSprints = ProjectProgress.Days(resolutionDate, startDate);
+        Date resolutionDate;
 
-        int sprintLength = ProjectProgress.Days(endDate, startDate);
-        if (daysSinceBeginOfSprints >= 0 && sprintLength > 0)
+        try { //maybe resolution date does not exists for the issue - don't count it
+            resolutionDate = new Date(issue.getResolutionDate().getTime());
+            int daysSinceBeginOfSprints = ProjectProgress.Days(resolutionDate, startDate);
+
+            int sprintLength = ProjectProgress.Days(endDate, startDate);
+            if (daysSinceBeginOfSprints >= 0 && sprintLength > 0)
+            {
+                double percentage = (double)daysSinceBeginOfSprints / (double)sprintLength;
+                if (percentage >= 0.00 && percentage < 0.25) storiesTimeDistribution[0]++;
+                if (percentage >= 0.25 && percentage < 0.50) storiesTimeDistribution[1]++;
+                if (percentage >= 0.50 && percentage < 0.75) storiesTimeDistribution[2]++;
+                if (percentage >= 0.75 /*&& percentage <= 1.00*/) storiesTimeDistribution[3]++;
+            }
+        }
+        catch (Exception e)
         {
-            double percentage = (double)daysSinceBeginOfSprints / (double)sprintLength;
-            if (percentage >= 0.00 && percentage < 0.25) storiesTimeDistribution[0]++;
-            if (percentage >= 0.25 && percentage < 0.50) storiesTimeDistribution[1]++;
-            if (percentage >= 0.50 && percentage < 0.75) storiesTimeDistribution[2]++;
-            if (percentage >= 0.75 /*&& percentage <= 1.00*/) storiesTimeDistribution[3]++;
+            //nothing to update for this issue
         }
     }
 
