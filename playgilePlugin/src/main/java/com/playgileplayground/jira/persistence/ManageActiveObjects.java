@@ -227,6 +227,22 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
+    public ManageActiveObjectsResult SetTeamVelocity(ManageActiveObjectsEntityKey key, double teamVelocity)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if (prjStatEntity != null) {//Check whether optional has element you are looking for
+            prjStatEntity.setProjectTeamVelocity(teamVelocity);
+            prjStatEntity.save();
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+    @Transactional
     public ManageActiveObjectsResult GetTeamVelocity(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
