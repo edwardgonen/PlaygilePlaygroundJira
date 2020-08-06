@@ -5,8 +5,31 @@
     <html>
     <head>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-        <script type="text/javascript">
+        <script>
+            $(document).ready(function(){
 
+                $("#roadmapfeature").on("change",function(){
+                    var roadmapfeature = document.getElementById("roadmapfeature").value;
+                    var encodedFeatureName = encodeURIComponent(roadmapfeature);
+                    jQuery.ajax({
+                        type: "GET",
+                        async: false,
+                        url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
+                        + "&roadmapfeature=" + encodedFeatureName + "&user=" + '$currentuser',
+                        success: function(data) {
+                            //alert('222');
+                            location.reload();
+                            //JIRA.trigger(JIRA.Events.REFRESH_ISSUE_PAGE, [JIRA.Issue.getIssueId()]);
+                        },
+                        error: function() {
+                            alert("error");
+                            //console.log('error', arguments);
+                        }
+                    });
+                });
+            });
+        </script>
+        <script type="text/javascript">
             google.charts.load('current', {'packages':['corechart']});
             google.charts.setOnLoadCallback(drawChart);
 

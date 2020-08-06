@@ -132,10 +132,19 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             {
                 projectMonitoringMisc.WriteToStatus(statusText, false, "Roadmap feature is not selected");
                 bAllisOk = false;
-                messageToDisplay = "Please select the Roadmap Feature and press Recalculate";
+                messageToDisplay = "Please select the Roadmap Feature";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-            teamVelocity = userLastLocations.lastTeamVelocity;
+
+            maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+            if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                projectMonitoringMisc.WriteToStatus(statusText, false, "Velocity is not set");
+                bAllisOk = false;
+                messageToDisplay = "Please set the correct velocity and press Recalculate";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+
+            teamVelocity = (double)maor.Result;
             contextMap.put(TEAMVELOCITY, teamVelocity);
             if (teamVelocity <= 0)
             {

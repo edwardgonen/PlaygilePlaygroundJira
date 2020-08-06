@@ -14,6 +14,4 @@ public interface UserEntity extends Entity{
     void setLastProjectID(String projectId);
     String getLastRoadmapFeature();
     void setLastRoadmapFeature(String roadmapFeature);
-    double getLastVelocity();
-    void setLastVelocity(double lastVelocity);
 }
