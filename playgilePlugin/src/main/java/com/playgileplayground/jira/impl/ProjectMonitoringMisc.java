@@ -177,8 +177,9 @@ public class ProjectMonitoringMisc {
         if (issues == null) return result;
         for (Issue issue : issues)
         {
+            //count stories, tasks. don't count bugs
             boolean bOurIssueType = isIssueOneOfOurs(issue) && !isIssueCompleted(issue);
-            if (bOurIssueType) //our issue and created before project started
+            if (bOurIssueType) //it is user story, task or bug and not completed and not a bug
             {
                 double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
                 if (storyPointValue > 0 && storyPointValue < 13) result.EstimatedStoriesNumber++;
@@ -372,9 +373,10 @@ public class ProjectMonitoringMisc {
     public boolean isIssueOneOfOurs(Issue issue)
     {
         IssueType issueType = issue.getIssueType();
-        return (issueType.getName().equals(STORY) ||
-            issueType.getName().equals(TASK) ||
-            issueType.getName().equals(BUG));
+        return (
+            issueType.getName().equals(STORY) ||
+            //issueType.getName().equals(BUG) || //don't count bugs in the issues
+            issueType.getName().equals(TASK));
     }
 
     public boolean isIssueBug(Issue issue)

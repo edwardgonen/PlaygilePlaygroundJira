@@ -94,7 +94,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
             //first set the list
             //do we have any roadmap defined?
-            roadmapFeatures = jiraInterface.getAllRoadmapFeatures(applicationUser, currentProject, ROADMAPFEATUREKEY);
+            //roadmapFeatures = jiraInterface.getAllRoadmapFeatures(applicationUser, currentProject, ROADMAPFEATUREKEY);
+            roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLive(applicationUser, currentProject, ROADMAPFEATUREKEY);
             ArrayList<String> roadmapFeaturesNames = projectMonitoringMisc.getAllRoadmapFeatureNames(roadmapFeatures);
             if (roadmapFeatures.size() > 0)
             {

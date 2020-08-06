@@ -165,6 +165,34 @@ public class JiraInterface {
         return issues;
     }
 
+    public List<Issue> getRoadmapFeaturesNotCancelledAndNotGoLive(ApplicationUser applicationUser, Project currentProject, String featureKey)
+    {
+        Query query;
+        //query project = "Bingo Blitz 2.0" and issuetype = "Roadmap Feature" and (status !=  Cancelled or status != Go-Live)
+        String searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and status != Cancelled and status != Go-Live";
+
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
+
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        if (searchResults == null)
+        {
+            return null;
+        }
+        else {
+            return this.AccessVersionIndependentListOfIssues(searchResults);
+        }
+    }
     public List<Issue> getIssuesByEpic(ApplicationUser applicationUser, Project currentProject, Issue epic) {
         //if the version is not defined return null. no query
         if (epic == null) return null;
