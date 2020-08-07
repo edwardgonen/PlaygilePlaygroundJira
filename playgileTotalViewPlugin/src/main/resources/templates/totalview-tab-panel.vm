@@ -1,0 +1,73 @@
+<tr class="mod-header">
+    <h3>$i18n.getText('metrics--page--item.label') for $project.name ($project.getKey())</h3>
+    <!--img style="-webkit-user-select: none" src="https://chart.googleapis.com/chart?cht=p&chs=380x200&chd=t:41,55,4&chl=41%|55%|4%&chdl=Cash|Credit_Card|Check&chco=26AD21|1D82C4|F0A016"-->
+
+<html>
+<head>
+
+</head>
+<body>
+#if (!$allisok)
+<script>
+    var dialog = new AJS.Dialog({
+        id: "message-status-dialog",
+        closeOnOutsideClick: false
+    });
+
+    dialog.addHeader("Playgile Project Monitor");
+    dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
+
+    dialog.addButton("OK", function (dialog) {
+        dialog.hide();
+    }, "#");
+    dialog.show();
+</script>
+<h1 style="color:red">$messagetodisplay</h1>
+#end
+
+#if ($roadmapfeatureslist.size()> 0)
+<form id="admin" class="aui">
+<tr>
+<tr class="field-group">
+    <label for="roadmapfeaturelabel">Roadmap Feature</label>
+    <select id="roadmapfeature" name="roadmapfeature">
+        #foreach( $item in $roadmapfeatureslist )
+            #if ($item == $selectedroadmapfeature)
+                <option value="$item" selected="selected">$item</option>
+            #else
+                <option value="$item">$item</option>
+            #end
+        #end
+    </select>
+</tr>
+<tr class="field-group">
+    <label for="velocity">Team's velocity</label>
+    <input type="number" id="velocity" value=$teamvelocity name="velocity" class="text" min="0" max="1000" style="width: 10em;">
+</tr>
+<tr class="field-group">
+    <input type="submit" value="Recalculate" class="button" onClick="OnRecalculateClick()">
+</tr>
+</tr>
+</form>
+#end
+#if ($allisok)
+<table>
+    <tr>
+        <td><div id="curve_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
+        <td><div id="velocity_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
+    </tr>
+    <tr>
+        <td><div id="piechart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
+        <td><div id="issue_distribution" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
+    </tr>
+</table>
+
+#end
+</body>
+</html>
+<table>
+    <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
+        $statustext
+    </div>
+</table>
+</div>
