@@ -6,11 +6,9 @@ package com.playgileplayground.jira.persistence;
 public class UserLastLocations {
     public String lastProjectId;
     public String lastRoadmapFeature;
-    public double lastTeamVelocity;
-    public UserLastLocations(String lastProjectId, String lastRoadmapFeature, double lastTeamVelocity)
+    public UserLastLocations(String lastProjectId, String lastRoadmapFeature)
     {
         this.lastProjectId = lastProjectId;
         this.lastRoadmapFeature = lastRoadmapFeature;
-        this.lastTeamVelocity = lastTeamVelocity;
     }
 }

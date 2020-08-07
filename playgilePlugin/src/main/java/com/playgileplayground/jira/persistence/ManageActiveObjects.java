@@ -227,14 +227,13 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetTeamVelocity(ManageActiveObjectsEntityKey key)
+    public ManageActiveObjectsResult SetTeamVelocity(ManageActiveObjectsEntityKey key, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {//Check whether optional has element you are looking for
-            double teamVelocity = prjStatEntity.getProjectTeamVelocity();
-            result.Result = teamVelocity;
-            result.Message = "Velocity " + teamVelocity;
+        if (prjStatEntity != null) {//Check whether optional has element you are looking for
+            prjStatEntity.setProjectTeamVelocity(teamVelocity);
+            prjStatEntity.save();
         }
         else
         {
@@ -244,7 +243,31 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult AddVelocityAndRoadmapFeature(ManageActiveObjectsEntityKey key, double teamVelocity)
+    public ManageActiveObjectsResult GetTeamVelocity(ManageActiveObjectsEntityKey key)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {//Check whether optional has element you are looking for
+            double teamVelocity = prjStatEntity.getProjectTeamVelocity();
+            if (teamVelocity > 0) {
+                result.Result = teamVelocity;
+                result.Message = "Velocity " + teamVelocity;
+            }
+            else
+            {
+                result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
+                result.Message = "Velocity is not set " + key.projectKey + " " + key.roadmapFeature;
+            }
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult AddRoadmapFeature(ManageActiveObjectsEntityKey key, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
@@ -454,7 +477,7 @@ public final class ManageActiveObjects{
             if (userEntities.length > 0) {
                 for (UserEntity entity : userEntities)
                 {
-                    allEntities.add(entity.getUserId() + " " + entity.getLastRoadmapFeature() + " " + entity.getLastVelocity());
+                    allEntities.add(entity.getUserId() + " " + entity.getLastRoadmapFeature());
                 }
                 result.Result = allEntities;
             }
@@ -472,7 +495,7 @@ public final class ManageActiveObjects{
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         UserEntity userEntity = GetUserEntity(userId);
         if(userEntity != null) {
-            UserLastLocations usl = new UserLastLocations(userEntity.getLastProjectId(),userEntity.getLastRoadmapFeature(), userEntity.getLastVelocity() );
+            UserLastLocations usl = new UserLastLocations(userEntity.getLastProjectId(),userEntity.getLastRoadmapFeature());
             result.Result = usl;
             result.Message = "Found";
         }
@@ -491,7 +514,6 @@ public final class ManageActiveObjects{
         if(userEntity != null) {
             userEntity.setLastProjectID(usl.lastProjectId);
             userEntity.setLastRoadmapFeature(usl.lastRoadmapFeature);
-            userEntity.setLastVelocity(usl.lastTeamVelocity);
             userEntity.save();
             result.Message = "Found";
         }

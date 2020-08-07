@@ -38,17 +38,10 @@ public class activeObjectsAccess extends HttpServlet{
     {
         ao.executeInTransaction((TransactionCallback<Void>) () -> {
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
-            String teamVelocity = Optional.ofNullable(req.getParameter("teamVelocity")).orElse("");
             String currentUser = Optional.ofNullable(req.getParameter("user")).orElse("");
+            String teamVelocity = Optional.ofNullable(req.getParameter("teamVelocity")).orElse("");
             String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapfeature")).orElse("");
-            double teamVelocityValue = 0;
-            try {
-                teamVelocityValue = Double.parseDouble(teamVelocity);
-            }
-            catch (Exception ex)
-            {
-                //nothing
-            }
+
 
             if (projectKey.isEmpty())
             {
@@ -59,29 +52,32 @@ public class activeObjectsAccess extends HttpServlet{
                 return null;
             }
 
+            //set team velocity if exists
+            double teamVelocityValue = 0;
+            try {
+                teamVelocityValue = Double.parseDouble(teamVelocity);
+            }
+            catch (Exception ex)
+            {
+                //nothing
+            }
+
             ManageActiveObjectsEntityKey key =  new ManageActiveObjectsEntityKey(projectKey, roadmapFeature);
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
             ManageActiveObjectsResult maor = mao.CreateProjectEntity(key); //will not create if exists
             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                //set both velocity and roadmapfeature
-                maor = mao.AddVelocityAndRoadmapFeature(key, teamVelocityValue);
-                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
+                //set team velocity if available
+                if (teamVelocityValue > 0)
                 {
-                    //add last locations for user
-                    maor = mao.CreateUserEntity(currentUser); //will not create if exists
-                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                        UserLastLocations ulc = new UserLastLocations(projectKey, roadmapFeature, teamVelocityValue);
-                        mao.SetUserLastLocations(currentUser, ulc);
-                        try {
-                            resp.getWriter().write("Success");
-                        } catch (IOException e) {
-                        }
-                    }
+                    maor = mao.SetTeamVelocity(key, teamVelocityValue);
                 }
-                else
-                {
+                //add last locations for user
+                maor = mao.CreateUserEntity(currentUser); //will not create if exists
+                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maor.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                    UserLastLocations ulc = new UserLastLocations(projectKey, roadmapFeature);
+                    mao.SetUserLastLocations(currentUser, ulc);
                     try {
-                        resp.getWriter().write("Failure " + maor.Message);
+                        resp.getWriter().write("Success");
                     } catch (IOException e) {
                     }
                 }

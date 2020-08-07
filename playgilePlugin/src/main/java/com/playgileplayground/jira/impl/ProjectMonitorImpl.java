@@ -106,7 +106,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             {
                 projectMonitoringMisc.WriteToStatus(statusText, false, "No roadmap feature found for project");
                 bAllisOk = false;
-                messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please create the  Roadmap Features";
+                messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please create the Roadmap Features";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
@@ -132,10 +132,19 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             {
                 projectMonitoringMisc.WriteToStatus(statusText, false, "Roadmap feature is not selected");
                 bAllisOk = false;
-                messageToDisplay = "Please select the Roadmap Feature and press Recalculate";
+                messageToDisplay = "Please select the Roadmap Feature";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-            teamVelocity = userLastLocations.lastTeamVelocity;
+
+            maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+            if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                projectMonitoringMisc.WriteToStatus(statusText, false, "Velocity is not set");
+                bAllisOk = false;
+                messageToDisplay = "Please set the correct velocity and press Recalculate";
+                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+
+            teamVelocity = (double)maor.Result;
             contextMap.put(TEAMVELOCITY, teamVelocity);
             if (teamVelocity <= 0)
             {
@@ -151,7 +160,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             {
                 projectMonitoringMisc.WriteToStatus(statusText, false, "our selected feature is not in the list " + selectedRoadmapFeature);
                 bAllisOk = false;
-                messageToDisplay = "Please select a Roadmap Feature and press Recalculate";
+                messageToDisplay = "Please select a Roadmap Feature";
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
