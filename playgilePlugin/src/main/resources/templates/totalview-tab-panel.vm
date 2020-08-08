@@ -1,0 +1,193 @@
+<tr class="mod-header">
+    <h3>Playgile Studio Total View for $project.name ($project.getKey())</h3>
+
+<html>
+<head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.load('current', {'packages':['gauge']});
+        google.charts.load('current', {'packages':['timeline']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            if (!$allisok) return; //no need to execute
+            /////////// project predictions
+            const LINE_SEPARATOR = "<$>";
+            const PAIR_SEPARATOR = "|";
+            const DATE_FORMAT = "MM/dd/yyyy";
+
+            //split by lines
+            var featureRows = '$featuresrows';
+            //split and parse
+            if (typeof featureRows === 'undefined' || featureRows === null)
+            {
+                alert("No rows for the page");
+                return;
+            }
+
+            var lines = featureRows.split(LINE_SEPARATOR);
+            if (lines.length <= 0)
+            {
+                alert("Wrong rows format " + featureRows);
+                return;
+            }
+            // Find a <table> element with id="myTable":
+            var table = document.getElementById("roadmap-features-table");
+            var rowCounter = 0;
+            var rowHeight = 100;
+            lines.forEach(function (line, index) {
+                if (line.length > 0)//non empty line
+                {
+                    //split by pair separator
+                    var items = line.split(PAIR_SEPARATOR);
+                    if (items.length < 7)
+                    {
+                        alert("Wrong line format " + line);
+                    }
+
+                    //add new row to table
+                    // Create an empty <tr> element and add it to the 1st position of the table:
+                    var row = table.insertRow(rowCounter++);
+
+                    var featureName = items[0];
+                    var featureNameCell = row.insertCell(0);
+                    featureNameCell.width = 100;
+                    featureNameCell.height = rowHeight;
+                    featureNameCell.innerText = featureName;
+                    //////////////////////////////////////////
+
+                    var featureStatus = parseFloat(items[1]);
+                    var featureStatusCell = row.insertCell(1);
+                    featureStatusCell.width = 100;
+                    featureStatusCell.height = rowHeight;
+                    featureStatusCell.id = "feature-status";
+                    var dataStatusGauge = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['Status', featureStatus],
+                    ]);
+
+                    var featureStatusGaugeOptions = {
+                        width: 100, height: rowHeight,
+                        redFrom: 0, redTo: 50,
+                        yellowFrom:50, yellowTo: 70,
+                        greenFrom: 70, greenTo: 100,
+                        minorTicks: 5
+                    };
+
+                    var featureStautsGauge = new google.visualization.Gauge(document.getElementById(featureStatusCell.id));
+
+                    featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
+
+                    /////////////////////////////////////////////////////////////////////////
+
+                    var startDate = new Date(items[2]);
+                    var startDateCell = row.insertCell(2);
+                    startDateCell.width = 100;
+                    startDateCell.height = rowHeight;
+                    startDateCell.innerText = 'Started on ' + startDate.toDateString();
+
+                    ////////////////////////////////////////////////////////////////////////
+
+                    var teamVelocity = parseFloat(items[3]);
+                    var projectVelocity = parseFloat(items[4]);
+                    var velocityCell = row.insertCell(3);
+                    velocityCell.width = 200;
+                    velocityCell.height = rowHeight;
+                    velocityCell.id = "velocities";
+
+                    var dataVelocities = google.visualization.arrayToDataTable([
+                        ['', 'Predicted', 'Real'],
+                        ['', teamVelocity, projectVelocity]
+                    ]);
+
+                    var optionsVelocities = {
+                        title: 'Velocities',
+                        chartArea: {width: '50%'},
+                        colors: ['#b0120a', '#ffab91'],
+                        hAxis: {
+                            title: 'Story Points per Sprint',
+                            minValue: 0
+                        }
+                    };
+                    var chartVelocities = new google.visualization.BarChart(document.getElementById(velocityCell.id));
+                    chartVelocities.draw(dataVelocities, optionsVelocities);
+
+
+                    //////////////////////////////////////////////////////////////////////////
+
+                    var idealEndOfProject = new Date(items[5]);
+                    var predictedEndOfProject = new Date(items[6]);
+                    var projectEndCell = row.insertCell(4);
+                    projectEndCell.width = 300;
+                    projectEndCell.height = rowHeight;
+                    projectEndCell.id = "project-end";
+
+                    var dataProjectEnd = new google.visualization.DataTable();
+                    dataProjectEnd.addColumn('string', '');
+                    dataProjectEnd.addColumn('date', 'Start Date');
+                    dataProjectEnd.addColumn('date', 'End Date');
+
+                    dataProjectEnd.addRows([
+                        ['Predicted', startDate, idealEndOfProject],
+                        ['Real', startDate, predictedEndOfProject],
+                    ]);
+
+                    var optionsProjectEnd = {
+                        height: rowHeight,
+                        timeline: {
+                            groupByRowLabel: true,
+                            rowLabelStyle: { fontSize: 10 },
+                            barLabelStyle: { fontSize: 5 }
+                        }
+                    };
+
+                    var chartProjectEnd = new google.visualization.Timeline(document.getElementById(projectEndCell.id));
+
+                    chartProjectEnd.draw(dataProjectEnd, optionsProjectEnd);
+                }
+            });
+
+        }
+    </script>
+</head>
+<body>
+#if (!$allisok)
+<script>
+    var dialog = new AJS.Dialog({
+        id: "message-status-dialog",
+        closeOnOutsideClick: false
+    });
+
+    dialog.addHeader("Playgile Studio View");
+    dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
+
+    dialog.addButton("OK", function (dialog) {
+        dialog.hide();
+    }, "#");
+    dialog.show();
+</script>
+<h1 style="color:red">$messagetodisplay</h1>
+#end
+
+#if ($allisok)
+<table id="roadmap-features-table">
+    <!--tr>
+        <td><div id="feature_name" style="width: 50px; height: 50px; border: 1px solid #ccc"></div></td>
+        <td><div id="status_gauge" style="width: 50px; height: 50px; border: 1px solid #ccc"></div></td>
+        <td><div id="start_date" style="width: 40px; height: 50px; border: 1px solid #ccc"></div></td>
+        <td><div id="estimated_stories_chart" style="width: 150px; height: 50px; border: 1px solid #ccc"></div></td>
+        <td><div id="predicted_real_velocity_chart" style="width: 150px; height: 50px; border: 1px solid #ccc"></div></td>
+        <td><div id="predicted_real_enddate" style="width: 40px; height: 50px; border: 1px solid #ccc"></div></td>
+    </tr-->
+</table>
+
+#end
+</body>
+</html>
+<table>
+    <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
+        $statustext
+    </div>
+</table>
+</div>

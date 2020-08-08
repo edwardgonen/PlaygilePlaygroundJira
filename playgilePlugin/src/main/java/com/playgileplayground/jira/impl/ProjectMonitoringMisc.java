@@ -11,6 +11,8 @@ import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 
 import java.text.SimpleDateFormat;
@@ -141,6 +143,46 @@ public class ProjectMonitoringMisc {
             }
         }
     }
+
+    public double getSprintLength(ManageActiveObjects mao, Project currentProject, String selectedRoadmapFeature)
+    {
+        double sprintLength;
+        ManageActiveObjectsResult maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            sprintLength = (double)maor.Result;
+            //round to one week
+            sprintLength = ((int)sprintLength / 7) * 7;
+        }
+        else
+        {
+            sprintLength = 14;
+        }
+        return sprintLength;
+    }
+
+    public double getCurrentEstimations(List<Issue> foundIssues, StringBuilder statusText)
+    {
+        double result = 0;
+        for (Issue issue : foundIssues)
+        {
+            if (!isIssueCompleted(issue))
+            {
+                WriteToStatus(statusText, false,"Issue status is Complete");
+                double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue));
+                result += storyPointValue;
+                WriteToStatus(statusText, true, "Adding story points for issue " +
+                    storyPointValue + " " +
+                    issue.getKey());
+            }
+            else
+            {
+                WriteToStatus(statusText, false,"Issue status Complete");
+            }
+        }
+        return result;
+    }
+
     public double getInitialEstimation(Collection<Issue> issues, Date startDate, StringBuilder statusText)
     {
         double result = 0;
@@ -352,6 +394,7 @@ public class ProjectMonitoringMisc {
 
     public void WriteToStatus(StringBuilder statusText, boolean debug, String text)
     {
+        if (statusText == null) return;
         if (debug) statusText.append(text + "<br>");
     }
 
