@@ -23,6 +23,7 @@ import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.TotalViewImpl;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -42,6 +43,11 @@ public class JiraInterface {
     public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
     {
         this.mainClass = mainClass;
+        this.applicationUser = applicationUser;
+        this.searchService = searchService;
+    }
+    public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
+    {
         this.applicationUser = applicationUser;
         this.searchService = searchService;
     }

@@ -1,4 +1,4 @@
-package com.playgileplayground.jira.totalview.impl;
+package com.playgileplayground.jira.impl;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.bc.issue.search.SearchService;
@@ -16,9 +16,9 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
 
-import com.playgileplayground.jira.totalview.api.TotalView;
+import com.playgileplayground.jira.api.ProjectMonitor;
+import com.playgileplayground.jira.api.TotalView;
 import com.playgileplayground.jira.persistence.*;
-/*
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.*;
@@ -26,12 +26,12 @@ import com.playgileplayground.jira.projectprogress.DataPair;
 import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
-*/
+
 import java.util.*;
 
 
 @Scanned
-public class TotalViewImpl implements com.playgileplayground.jira.totalview.api.TotalView, ContextProvider {
+public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView, ContextProvider {
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
     @ComponentImport
@@ -74,6 +74,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.totalview.api.
         boolean bAllisOk;
         Date startDate;
         double sprintLength;
+        ManageActiveObjectsResult maor;
+        ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
 
         Issue selectedRoadmapFeatureIssue;
 
@@ -82,17 +84,42 @@ public class TotalViewImpl implements com.playgileplayground.jira.totalview.api.
         contextMap.put(BASEURL, baseUrl);
         ApplicationUser applicationUser = jac.getLoggedInUser();
         contextMap.put(CURRENTUSER, applicationUser.getKey());
-
-
         contextMap.put(MAINJAVACLASS, this);
 
-        //start the real work
-        //if(null != currentProject) {
-            contextMap.put(PROJECT, "Current project");
-        //}
+        JiraInterface jiraInterface = new JiraInterface(applicationUser,  searchService);
 
-        bAllisOk = true;
-        messageToDisplay = "Ok";
+        ManageActiveObjects mao = new ManageActiveObjects(this.ao);
+
+        //get the current project
+        Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
+        //start the real work
+        if(null != currentProject) {
+            contextMap.put(PROJECT, currentProject);
+            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
+            //get list of roadmap features
+            roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLive(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+
+            if (roadmapFeatures != null && roadmapFeatures.size() > 0)
+            {
+                for (Issue roadmapFeature : roadmapFeatures)
+                {
+
+                }
+
+                bAllisOk = true;
+            }
+            else //no suitable roadmap features found
+            {
+                bAllisOk = false;
+                messageToDisplay = "No suitable Roadmap Features detected";
+            }
+        }
+        else
+        {
+            messageToDisplay = "Failed to retrieve the current project";
+            bAllisOk = false;
+        }
+
         return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
     }
     @Override
