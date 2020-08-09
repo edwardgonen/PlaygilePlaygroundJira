@@ -13,7 +13,7 @@
         function drawChart() {
             if (!$allisok) return; //no need to execute
             /////////// project predictions
-            const LINE_SEPARATOR = "<$>";
+            const LINE_SEPARATOR = "BOBRUISK";
             const PAIR_SEPARATOR = "|";
             const DATE_FORMAT = "MM/dd/yyyy";
 
@@ -41,27 +41,48 @@
                 {
                     //split by pair separator
                     var items = line.split(PAIR_SEPARATOR);
-                    if (items.length < 7)
+                    if (items.length < 11)
                     {
                         alert("Wrong line format " + line);
                     }
 
                     //add new row to table
                     // Create an empty <tr> element and add it to the 1st position of the table:
-                    var row = table.insertRow(rowCounter++);
+                    var row = table.insertRow(rowCounter);
 
-                    var featureName = items[0];
-                    var featureNameCell = row.insertCell(0);
-                    featureNameCell.width = 100;
-                    featureNameCell.height = rowHeight;
-                    featureNameCell.innerText = featureName;
+                    //////////////////////////////////////////
+                    var createClickHandler =
+                            function(row)
+                            {
+                                return function() {
+                                    var cell = row.getElementsByTagName("td")[2];
+                                    var encodedFeatureName = encodeURIComponent(cell.innerText);
+                                    jQuery.ajax({
+                                        type: "GET",
+                                        async: false,
+                                        url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
+                                        + "&roadmapfeature=" + encodedFeatureName + "&user=" + '$currentuser',
+                                        success: function(data) {
+                                            var newUrl = window.location.href.replace('totalview', 'metrics');
+                                            window.location.href = newUrl;
+                                        },
+                                        error: function() {
+                                            alert("error");
+                                            //console.log('error', arguments);
+                                        }
+                                    });
+                                };
+                            };
+
+                    row.onclick = createClickHandler(row);
+
                     //////////////////////////////////////////
 
                     var featureStatus = parseFloat(items[1]);
-                    var featureStatusCell = row.insertCell(1);
+                    var featureStatusCell = row.insertCell(0);
                     featureStatusCell.width = 100;
                     featureStatusCell.height = rowHeight;
-                    featureStatusCell.id = "feature-status";
+                    featureStatusCell.id = "feature-status" + rowCounter;
                     var dataStatusGauge = google.visualization.arrayToDataTable([
                         ['Label', 'Value'],
                         ['Status', featureStatus],
@@ -79,6 +100,16 @@
 
                     featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
 
+                    ///////////////////////////////////////////////////////////////
+
+                    var featureName = items[0];
+                    var featureNameCell = row.insertCell(1);
+                    featureNameCell.width = 100;
+                    featureNameCell.height = rowHeight;
+                    featureNameCell.innerText = featureName;
+                    featureNameCell.id = "feature-name";
+
+
                     /////////////////////////////////////////////////////////////////////////
 
                     var startDate = new Date(items[2]);
@@ -94,7 +125,7 @@
                     var velocityCell = row.insertCell(3);
                     velocityCell.width = 200;
                     velocityCell.height = rowHeight;
-                    velocityCell.id = "velocities";
+                    velocityCell.id = "velocities" + rowCounter;
 
                     var dataVelocities = google.visualization.arrayToDataTable([
                         ['', 'Predicted', 'Real'],
@@ -121,7 +152,7 @@
                     var projectEndCell = row.insertCell(4);
                     projectEndCell.width = 300;
                     projectEndCell.height = rowHeight;
-                    projectEndCell.id = "project-end";
+                    projectEndCell.id = "project-end" + rowCounter;
 
                     var dataProjectEnd = new google.visualization.DataTable();
                     dataProjectEnd.addColumn('string', '');
@@ -143,9 +174,41 @@
                     };
 
                     var chartProjectEnd = new google.visualization.Timeline(document.getElementById(projectEndCell.id));
-
                     chartProjectEnd.draw(dataProjectEnd, optionsProjectEnd);
+
+                    ////////////////////////////////////////////////////////////////////
+                    var notEstimatedNumber = parseFloat(items[7]);
+                    var largeStoriesNumber =  parseFloat(items[8]);
+                    var veryLargeStoriesNumber =  parseFloat(items[9]);
+                    var estimatedStoriesNumber =  parseFloat(items[10]);
+
+                    var issueDistributionCell = row.insertCell(5);
+                    issueDistributionCell.width = 300;
+                    issueDistributionCell.height = rowHeight;
+                    issueDistributionCell.id = "issues-estimation" + rowCounter;
+
+                    var dataIssueDistribution = new google.visualization.DataTable();
+
+                    dataIssueDistribution.addColumn('string', 'Category');
+                    dataIssueDistribution.addColumn('number', 'Value');
+
+                    dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
+                    dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
+                    dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
+                    dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
+
+                    var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
+
+                    var optionsIssueDistribution = {
+                        title: 'Total ' + totalStories + ' issues'
+                    };
+
+                    var chartIssueDistribution = new google.visualization.PieChart(document.getElementById(issueDistributionCell.id));
+
+                    chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
                 }
+
+                rowCounter++;
             });
 
         }
@@ -172,14 +235,6 @@
 
 #if ($allisok)
 <table id="roadmap-features-table">
-    <!--tr>
-        <td><div id="feature_name" style="width: 50px; height: 50px; border: 1px solid #ccc"></div></td>
-        <td><div id="status_gauge" style="width: 50px; height: 50px; border: 1px solid #ccc"></div></td>
-        <td><div id="start_date" style="width: 40px; height: 50px; border: 1px solid #ccc"></div></td>
-        <td><div id="estimated_stories_chart" style="width: 150px; height: 50px; border: 1px solid #ccc"></div></td>
-        <td><div id="predicted_real_velocity_chart" style="width: 150px; height: 50px; border: 1px solid #ccc"></div></td>
-        <td><div id="predicted_real_enddate" style="width: 40px; height: 50px; border: 1px solid #ccc"></div></td>
-    </tr-->
 </table>
 
 #end

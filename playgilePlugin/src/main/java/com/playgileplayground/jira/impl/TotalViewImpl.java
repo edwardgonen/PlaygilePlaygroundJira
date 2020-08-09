@@ -222,7 +222,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                             maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
                             if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                                 ProjectProgress projectProgress = new ProjectProgress();
-                                ProjectProgressResult ppr = projectProgress.Initiate(roadmapFeatureDescriptor.TeamVelocity, projectVelocity,
+                                ProjectProgressResult ppr = projectProgress.Initiate(roadmapFeatureDescriptor.TeamVelocity, roadmapFeatureDescriptor.ProjectVelocity,
                                     (int)roadmapFeatureDescriptor.SprintLength, (ArrayList<DataPair>) maor.Result);
 
                                 roadmapFeatureDescriptor.IdealEndOfProjet = ppr.idealProjectEnd;
@@ -244,27 +244,38 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
 
                 //convert to strings for the web
                 StringBuilder featuresRows = new StringBuilder();
-                for (RoadmapFeatureDescriptor rfd : roadmapFeatureDescriptors)
-                {
-                    featuresRows.append(
+                for (RoadmapFeatureDescriptor rfd : roadmapFeatureDescriptors) {
+                    if (rfd.Status == TotalViewMisc.FeatureStatus.STARTED)
+                    {
+                        featuresRows.append(
+                            //name
+                            rfd.Name + ManageActiveObjects.PAIR_SEPARATOR +
+                                //status
+                                60.0 + ManageActiveObjects.PAIR_SEPARATOR +
+                                //start date
+                                projectMonitoringMisc.ConvertDateToOurFormat(rfd.StartDate) + ManageActiveObjects.PAIR_SEPARATOR +
+                                //predicted velocity
+                                rfd.TeamVelocity + ManageActiveObjects.PAIR_SEPARATOR +
+                                //real project velocity
+                                rfd.ProjectVelocity + ManageActiveObjects.PAIR_SEPARATOR +
+                                //predicted end date
+                                projectMonitoringMisc.ConvertDateToOurFormat(rfd.IdealEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
+                                //real end date
+                                projectMonitoringMisc.ConvertDateToOurFormat(rfd.PredictedEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
 
-                        //name
-                        rfd.Name + ManageActiveObjects.PAIR_SEPARATOR +
-                        //status
-                        60.0 + ManageActiveObjects.PAIR_SEPARATOR +
-                        //start date
-                        projectMonitoringMisc.ConvertDateToOurFormat(rfd.StartDate) + ManageActiveObjects.PAIR_SEPARATOR +
-                        //predicted velocity
-                        rfd.TeamVelocity + ManageActiveObjects.PAIR_SEPARATOR +
-                        //real project velocity
-                        rfd.ProjectVelocity + ManageActiveObjects.PAIR_SEPARATOR +
-                        //predicted end date
-                        projectMonitoringMisc.ConvertDateToOurFormat(rfd.IdealEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
-                        //real end date
-                        projectMonitoringMisc.ConvertDateToOurFormat(rfd.PredictedEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
-                        "<$>"
-                    );
+                                rfd.EstimatedStories.NotEstimatedStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
+                                rfd.EstimatedStories.LargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
+                                rfd.EstimatedStories.VeryLargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
+                                rfd.EstimatedStories.EstimatedStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
+                                "BOBRUISK"
+                        );
+                    }
+                    else
+                    {
+                        projectMonitoringMisc.WriteToStatus(statusText, true, rfd.Name +  " Feature not started or no open issues");
+                    }
                 }
+
                 contextMap.put(FEATURESROWS, featuresRows.toString());
 
                 bAllisOk = true;
