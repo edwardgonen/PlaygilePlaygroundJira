@@ -98,8 +98,8 @@
                     var featureStatusGaugeOptions = {
                         width: 100, height: rowHeight,
                         redFrom: 50, redTo: 100,
-                        yellowFrom:30, yellowTo: 50,
-                        greenFrom: 0, greenTo: 30,
+                        yellowFrom: 25, yellowTo: 50,
+                        greenFrom: 0, greenTo: 25,
                         minorTicks: 0
                     };
 
