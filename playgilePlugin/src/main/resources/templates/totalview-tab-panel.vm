@@ -84,15 +84,23 @@
                     featureStatusCell.id = "feature-status" + index;
                     var dataStatusGauge = google.visualization.arrayToDataTable([
                         ['Label', 'Value'],
-                        ['Risk', featureStatus],
+                        ['Risk', 100 - featureStatus],
                     ]);
-
+/*
                     var featureStatusGaugeOptions = {
                         width: 100, height: rowHeight,
                         redFrom: 0, redTo: 50,
                         yellowFrom:50, yellowTo: 70,
                         greenFrom: 70, greenTo: 100,
                         minorTicks: 5
+                    };
+*/
+                    var featureStatusGaugeOptions = {
+                        width: 100, height: rowHeight,
+                        redFrom: 50, redTo: 100,
+                        yellowFrom:30, yellowTo: 50,
+                        greenFrom: 0, greenTo: 30,
+                        minorTicks: 0
                     };
 
                     var featureStautsGauge = new google.visualization.Gauge(document.getElementById(featureStatusCell.id));
