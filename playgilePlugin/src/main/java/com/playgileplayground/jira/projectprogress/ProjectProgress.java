@@ -86,22 +86,22 @@ public class ProjectProgress
             continueAddingIdealPoints = AddDataPairToList(continueAddingIdealPoints, pointDate, endSprintExpectatonIdeal, _idealData);
         }
 
-        Date idealProjectEnd = null;
+        Date idealProjectEnd = _idealData.GetElementAtIndex(0).Date;
         //end of the project for each set is the first date where the estimation is 0
-        for (int i = 0; i < _idealData.GetEstimationValuesList().size(); i++)
+        for (int i = _idealData.GetEstimationValuesList().size() - 1; i > 0; i--)
         {
-            if (_idealData.GetElementAtIndex(i).RemainingEstimation <= 0)
+            if (_idealData.GetElementAtIndex(i).RemainingEstimation <= 0 && _idealData.GetElementAtIndex(i - 1).RemainingEstimation > 0)
             {
                 idealProjectEnd = _idealData.GetElementAtIndex(i).Date;
                 break;
             }
         }
 
-        Date predictedProjectEnd = null;
+        Date predictedProjectEnd = _progressData.GetElementAtIndex(0).Date;
         //end of the project for each set is the first date where the estimation is 0
-        for (int i = 0; i < _progressData.GetEstimationValuesList().size(); i++)
+        for (int i = _progressData.GetEstimationValuesList().size() - 1; i > 0; i--)
         {
-            if (_progressData.GetElementAtIndex(i).RemainingEstimation <= 0)
+            if (_progressData.GetElementAtIndex(i).RemainingEstimation <= 0 && _progressData.GetElementAtIndex(i - 1).RemainingEstimation > 0)
             {
                 predictedProjectEnd = _progressData.GetElementAtIndex(i).Date;
                 break;
