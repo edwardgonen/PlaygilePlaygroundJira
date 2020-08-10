@@ -243,6 +243,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                     roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
                 }
 
+                //sort alphabetically
+                Collections.sort(roadmapFeatureDescriptors);
                 //convert to strings for the web
                 StringBuilder featuresRows = new StringBuilder();
                 for (RoadmapFeatureDescriptor rfd : roadmapFeatureDescriptors) {
