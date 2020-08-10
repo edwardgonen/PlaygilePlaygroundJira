@@ -227,6 +227,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
 
                                 roadmapFeatureDescriptor.IdealEndOfProjet = ppr.idealProjectEnd;
                                 roadmapFeatureDescriptor.PredictedEndOfProjet = ppr.predictedProjectEnd;
+                                roadmapFeatureDescriptor.ProgressDataColor = ppr.progressDataColor;
                             }
                         }
                         else
@@ -247,11 +248,12 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                 for (RoadmapFeatureDescriptor rfd : roadmapFeatureDescriptors) {
                     if (rfd.Status == TotalViewMisc.FeatureStatus.STARTED)
                     {
+                        double statusScore = getStatusScore(rfd);
                         featuresRows.append(
                             //name
                             rfd.Name + ManageActiveObjects.PAIR_SEPARATOR +
                                 //status
-                                60.0 + ManageActiveObjects.PAIR_SEPARATOR +
+                                statusScore * 100.0 + ManageActiveObjects.PAIR_SEPARATOR +
                                 //start date
                                 projectMonitoringMisc.ConvertDateToOurFormat(rfd.StartDate) + ManageActiveObjects.PAIR_SEPARATOR +
                                 //predicted velocity
@@ -267,6 +269,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                                 rfd.EstimatedStories.LargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
                                 rfd.EstimatedStories.VeryLargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
                                 rfd.EstimatedStories.EstimatedStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
+                                ProjectProgress.convertColorToHexadeimal(rfd.ProgressDataColor) +
                                 "BOBRUISK"
                         );
                     }
@@ -304,5 +307,68 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         contextMap.put(MESSAGETODISPLAY, messageToDisplay);
         contextMap.put(STATUSTEXT, statusText.toString());
         return contextMap;
+    }
+    private double getStatusScore(RoadmapFeatureDescriptor rfd)
+    {
+        double result = 0;
+
+        double VELOCITY_DIFFERENCT_PART = 0.1;
+        double COMPLETION_DATE_DIFFERENCE_PART = 0.50;
+        double ESTIMATED_STORIES_DIFFERENCE_PART = 0.40;
+        //total must be 0 - 1
+
+        /*
+        Estimated percentage 0 - 1
+        0 - <=0.25     0.05
+        >0.25 - <= 0.5 0.15
+        > 0.5 <= 0.8   0.50
+        > 0.8 <= 0.9   0.80
+        >0.9           1.00
+
+
+        (real date - predicted date) / sprint length
+        <= 1,      1.0
+        > 1- <= 2, 0.5
+        > 2-..     0.1
+
+        predicted velocity / real velocity percentage (0  - 1)
+        0 - <=0.25     0.10
+        >0.25 - <= 0.5 0.20
+        > 0.5 <= 0.8   0.50
+        > 0.8 <= 0.9   0.80
+        > 0.9          1
+
+        */
+        //veloctiy difference impact
+        double velocityDifference = rfd.TeamVelocity / rfd.ProjectVelocity;
+        double veloctiyDifferenceImpact = 1.0;
+        if (velocityDifference <= 0.25) veloctiyDifferenceImpact = 0.10;
+        else if (velocityDifference <= 0.5) veloctiyDifferenceImpact = 0.20;
+             else if (velocityDifference <= 0.8) veloctiyDifferenceImpact = 0.50;
+                  else if (velocityDifference <= 0.9) veloctiyDifferenceImpact = 0.80;
+
+        //completion date difference impact
+        int completionDateDifference = ProjectProgress.Days(rfd.PredictedEndOfProjet, rfd.IdealEndOfProjet) / 14;
+        double completionDateDifferenceImpact = 1.0;
+        if (completionDateDifference > 2) completionDateDifferenceImpact = 0.1;
+        else if (completionDateDifference > 1) completionDateDifferenceImpact = 0.5;
+
+        //estimations impact
+        double totalIssues = rfd.EstimatedStories.EstimatedStoriesNumber + rfd.EstimatedStories.NotEstimatedStoriesNumber +
+            rfd.EstimatedStories.VeryLargeStoriesNumber + rfd.EstimatedStories.LargeStoriesNumber;
+        double estimationRatio = rfd.EstimatedStories.EstimatedStoriesNumber / totalIssues;
+        double estimationRatioImpact = 1.0;
+        if (estimationRatio <= 0.25) estimationRatioImpact = 0.05;
+        else if (estimationRatio <= 0.5) estimationRatioImpact = 0.15;
+             else if (estimationRatio <= 0.8) estimationRatioImpact = 0.50;
+                  else if (estimationRatio <= 0.9) estimationRatioImpact = 0.80;
+
+
+        result = VELOCITY_DIFFERENCT_PART * veloctiyDifferenceImpact +
+            COMPLETION_DATE_DIFFERENCE_PART * completionDateDifferenceImpact +
+            ESTIMATED_STORIES_DIFFERENCE_PART * estimationRatioImpact;
+
+
+        return result;
     }
 }
