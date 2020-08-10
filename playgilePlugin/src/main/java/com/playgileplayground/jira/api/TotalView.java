@@ -14,6 +14,10 @@ public interface TotalView {
     String MESSAGETODISPLAY = "messagetodisplay";
     String BASEURL = "baseurl";
     String CURRENTUSER = "currentuser";
+    String FEATURESROWS = "featuresrows";
+
+    double DEFAULT_TEAM_VELOCITY = 50.0;
+
 
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);

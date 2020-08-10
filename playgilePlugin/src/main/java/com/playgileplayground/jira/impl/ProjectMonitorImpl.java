@@ -298,27 +298,9 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             }
                             startDate = (Date)maor.Result;
                             //get the sprint length
-                            sprintLength = getSprintLength(mao, currentProject, selectedRoadmapFeature);
+                            sprintLength = projectMonitoringMisc.getSprintLength(mao, currentProject, selectedRoadmapFeature);
                             //now let's calculate the remaining story points
-                            double currentEstimation = 0;
-                            for (Issue issue : foundIssues)
-                            {
-                                if (!projectMonitoringMisc.isIssueCompleted(issue))
-                                {
-                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Issue status is Complete");
-                                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                                    storyPointValue = projectMonitoringMisc.adjustStoryPointsIfNotEstimated(storyPointValue,
-                                        projectMonitoringMisc.isIssueBug(issue));
-                                    currentEstimation += storyPointValue;
-                                    projectMonitoringMisc.WriteToStatus(statusText, true, "Adding story points for issue " +
-                                        storyPointValue + " " +
-                                        issue.getKey());
-                                }
-                                else
-                                {
-                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Issue status Complete");
-                                }
-                            }
+                            double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues, statusText);
                             projectMonitoringMisc.WriteToStatus(statusText, false,"Calculated estimation " + currentEstimation);
                             //after calculation
                             //1. set initial estimation if previousProjectStartFlag is false
@@ -426,7 +408,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 item = new DataPair(new Date("7/15/2020"), 400);
                 ((ArrayList<DataPair>)maor.Result).add(item);
                 ////////////////////////////////*/
-                sprintLength = getSprintLength(mao, currentProject, selectedRoadmapFeature);
+                sprintLength = projectMonitoringMisc.getSprintLength(mao, currentProject, selectedRoadmapFeature);
                 ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, projectVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
                 //what is the longest array?
                 StringBuilder chartRows = new StringBuilder();
@@ -566,21 +548,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
     }
 
 
-    private double getSprintLength(ManageActiveObjects mao, Project currentProject, String selectedRoadmapFeature)
-    {
-        double sprintLength;
-        ManageActiveObjectsResult maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
-        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            sprintLength = (double)maor.Result;
-            //round to one week
-            sprintLength = ((int)sprintLength / 7) * 7;
-        }
-        else
-        {
-            sprintLength = 14;
-        }
-        return sprintLength;
-    }
+
     private Map<String, Object> ReturnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
     {
         contextMap.put(ALLISOK, bAllisOk);
