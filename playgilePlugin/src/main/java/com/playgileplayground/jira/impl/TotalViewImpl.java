@@ -72,7 +72,6 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         ManageActiveObjectsResult maor;
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
 
-        Issue selectedRoadmapFeatureIssue;
 
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
@@ -159,6 +158,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                                     else //no active or closed sprints at all - not started yet
                                     {
                                         roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.NOT_STARTED;
+                                        projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Not started flag (1)");
+                                        continue; //not started nothing to do
                                     }
                                 }
                                 else //project started - just set the flag to descriptor
@@ -209,35 +210,57 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                                         projectVelocity = roadmapFeatureDescriptor.TeamVelocity;
                                     }
                                     roadmapFeatureDescriptor.ProjectVelocity = projectVelocity;
+
+                                    /// continue calculations //////
+
+                                    //estimated stories
+                                    AnalyzedStories analysis = projectMonitoringMisc.getStoriesAnalyzed(issues);
+                                    roadmapFeatureDescriptor.EstimatedStories = analysis;
+
+
+                                    maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+                                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                                        ProjectProgress projectProgress = new ProjectProgress();
+                                        ProjectProgressResult ppr = projectProgress.Initiate(roadmapFeatureDescriptor.TeamVelocity, roadmapFeatureDescriptor.ProjectVelocity,
+                                            (int)roadmapFeatureDescriptor.SprintLength, (ArrayList<DataPair>) maor.Result);
+
+                                        if (ppr.Code != ProjectProgressResult.STATUS_CODE_SUCCESS)
+                                        {
+                                            projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Bad parameters for prediction " + roadmapFeatureDescriptor.TeamVelocity + " "
+                                                + roadmapFeatureDescriptor.ProjectVelocity + " " +
+                                                roadmapFeatureDescriptor.SprintLength);
+                                            continue;
+                                        }
+                                        roadmapFeatureDescriptor.IdealEndOfProjet = ppr.idealProjectEnd;
+                                        roadmapFeatureDescriptor.PredictedEndOfProjet = ppr.predictedProjectEnd;
+                                        roadmapFeatureDescriptor.ProgressDataColor = ppr.progressDataColor;
+                                    }
+                                }
+                                else
+                                {
+                                    projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Project not started flag");
+                                    continue;
                                 }
                             }
-
-                            /// continue calculations //////
-
-                            //estimated stories
-                            AnalyzedStories analysis = projectMonitoringMisc.getStoriesAnalyzed(issues);
-                            roadmapFeatureDescriptor.EstimatedStories = analysis;
-
-
-                            maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
-                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                ProjectProgress projectProgress = new ProjectProgress();
-                                ProjectProgressResult ppr = projectProgress.Initiate(roadmapFeatureDescriptor.TeamVelocity, roadmapFeatureDescriptor.ProjectVelocity,
-                                    (int)roadmapFeatureDescriptor.SprintLength, (ArrayList<DataPair>) maor.Result);
-
-                                roadmapFeatureDescriptor.IdealEndOfProjet = ppr.idealProjectEnd;
-                                roadmapFeatureDescriptor.PredictedEndOfProjet = ppr.predictedProjectEnd;
-                                roadmapFeatureDescriptor.ProgressDataColor = ppr.progressDataColor;
+                            else //failed to read start flag
+                            {
+                                projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Failed to read project start flag " + maor.Message);
+                                continue;
                             }
+
+
                         }
                         else
                         {
                             roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.NO_OPEN_ISSUES;
+                            projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Feature not started or no open issues");
+                            continue;
                         }
                     }
                     else
                     {
                         //not our structure. Just go to the next one
+                        projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Not our structure");
                         continue;
                     }
                     roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);

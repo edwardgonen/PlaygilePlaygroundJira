@@ -26,4 +26,5 @@ public class ProjectProgressResult {
     /////////// codes
     final static int STATUS_CODE_BASE = 0;
     public static final int STATUS_CODE_SUCCESS = STATUS_CODE_BASE + 0;
+    public static final int STATUS_CODE_BAD_INPUT = STATUS_CODE_BASE + 1;
 }

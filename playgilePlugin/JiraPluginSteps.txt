@@ -423,3 +423,5 @@ List all users:
 http://localhost:2990/jira/plugins/servlet/activeobjectsuserlist
 Delete user
 http://localhost:2990/jira/plugins/servlet/activeobjectsuserdelete?user=<>
+
+/opt/atlassian/jira/bin/stop-jira.sh и start-jira.sh for sandbox

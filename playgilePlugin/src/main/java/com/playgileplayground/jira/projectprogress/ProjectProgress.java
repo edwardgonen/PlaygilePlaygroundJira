@@ -21,6 +21,12 @@ public class ProjectProgress
     {
         ProjectProgressResult result = new ProjectProgressResult();
 
+        if (teamVelocity == 0 || projectVelocity == 0 || sprintLength == 0)
+        {
+            result.Code = ProjectProgressResult.STATUS_CODE_BAD_INPUT;
+            return result;
+        }
+
         SprintLength = sprintLength;
         _projectVelocity = projectVelocity;
         _teamVelocity = teamVelocity;
