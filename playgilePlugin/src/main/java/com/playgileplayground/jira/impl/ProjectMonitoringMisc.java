@@ -150,8 +150,12 @@ public class ProjectMonitoringMisc {
         ManageActiveObjectsResult maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             sprintLength = (double)maor.Result;
-            //round to one week
-            sprintLength = ((int)sprintLength / 7) * 7;
+            //round to one week if needed
+            if (sprintLength <= 0) sprintLength = 14;
+            else {
+                if (sprintLength > 7)
+                    sprintLength = ((int) sprintLength / 7) * 7;
+            }
         }
         else
         {
@@ -285,7 +289,7 @@ public class ProjectMonitoringMisc {
         ArrayList<PlaygileSprint> result = new ArrayList<>();
 
         if (playgileSprints == null) return result;
-
+        if (sprintLength < 2) return result; //otherwise algorithm below will not end
 
         //here is an interesting situation. Two or more teams working on the same feature. They might have sprints
         //that are not starting-ending the same day - ie. overlapping. For example the sprints might be shifted
