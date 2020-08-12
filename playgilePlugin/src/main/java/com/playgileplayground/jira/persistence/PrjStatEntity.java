@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.persistence;
 
 import net.java.ao.Entity;
+import net.java.ao.schema.StringLength;
 
 import java.util.Date;
 
@@ -11,6 +12,7 @@ public interface PrjStatEntity extends Entity {
     String getProjectKey();
     void setProjectKey(String projectKey);
     String getRemainingStoriesEstimations();
+    @StringLength(StringLength.UNLIMITED)
     void setRemainingStoriesEstimations(String data);
     double getProjectTeamVelocity();
     void setProjectTeamVelocity(double velocity);
