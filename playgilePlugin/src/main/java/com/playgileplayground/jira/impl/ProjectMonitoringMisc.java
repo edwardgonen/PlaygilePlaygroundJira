@@ -316,12 +316,11 @@ public class ProjectMonitoringMisc {
         Date correctSprintStart = startDate;
         Date correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
 
-        boolean bLoopNotFinished;
         do
         {
             WriteToStatus(statusText, true, "*** in the loop - correct sprint " + correctSprintStart + " " + correctSprintEnd);
-            bLoopNotFinished = false;
             double correctSprintVelocity = 0;
+            boolean bFoundOverlappingSprints = false;
             for (PlaygileSprint playgileSprint : playgileSprints)
             {
                 if (playgileSprint.getState() == SprintState.CLOSED) {
@@ -343,26 +342,27 @@ public class ProjectMonitoringMisc {
                         // |-----|
                         (CompareDatesOnly(playgileSprint.getStartDate(), correctSprintStart) > 0 && CompareDatesOnly(playgileSprint.getStartDate(), correctSprintEnd) < 0)
                         ;
-
+                    bFoundOverlappingSprints |= bSprintFound;
                     if (bSprintFound) { //overlapping sprint found
                         WriteToStatus(statusText, true, "sprint " + playgileSprint.getName() + " is overlapping ");
                         correctSprintVelocity += playgileSprint.sprintVelocity;
-                        bLoopNotFinished |= bSprintFound;
                     }
                 }
             }
-            if (bLoopNotFinished) {
+
+            if (bFoundOverlappingSprints)
+            {
                 sprintToAdd = new PlaygileSprint();
                 sprintToAdd.setEndDate(correctSprintEnd);
                 sprintToAdd.sprintVelocity = correctSprintVelocity;
                 sprintToAdd.setState(SprintState.CLOSED);
                 result.add(sprintToAdd);
-
-                //next sprint
-                correctSprintStart = ProjectProgress.AddDays(correctSprintStart, sprintLength);
-                correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
             }
-        } while (bLoopNotFinished);
+
+            //next sprint
+            correctSprintStart = ProjectProgress.AddDays(correctSprintStart, sprintLength);
+            correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
+        } while (CompareDatesOnly(correctSprintEnd, getCurrentDate()) < 0);
 
         return result;
     }
@@ -415,6 +415,13 @@ public class ProjectMonitoringMisc {
         calendar.set(Calendar.MILLISECOND, 0);
         date = calendar.getTime();
         return date;
+    }
+
+    private static Date getCurrentDate()
+    {
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0); // same for minutes and seconds
+        return today.getTime();
     }
 
     public boolean isIssueOneOfOurs(Issue issue)
