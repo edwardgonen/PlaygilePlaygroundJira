@@ -227,6 +227,23 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
+    public ManageActiveObjectsResult GetProjectInitialEstimation(ManageActiveObjectsEntityKey key)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {
+            double initialEstimation = prjStatEntity.getInitialEstimation();
+            result.Result = initialEstimation;
+            result.Message = "Initial estimation " + initialEstimation;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+    @Transactional
     public ManageActiveObjectsResult SetTeamVelocity(ManageActiveObjectsEntityKey key, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
