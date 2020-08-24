@@ -305,20 +305,24 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //after calculation
                             //1. set initial estimation if previousProjectStartFlag is false
                             //get the initial estimations
-                            double initialEstimation = currentEstimation;
+                            double initialEstimation;
                             //let's try to get initial estimation in the right way. Comment it out if not working
-                            initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText);
-                            projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + initialEstimation);
-                            maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, initialEstimation);
-                            if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                                projectMonitoringMisc.WriteToStatus(statusText, false, "initial estimation set for project");
-                            }
-                            else
-                            {
-                                projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to set initial project estimation " + maor.Message);
-                                bAllisOk = false;
-                                messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
-                                return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+
+                            maor = mao.GetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+                            if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS || (double)maor.Result <= 0) {
+                                initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText);
+                                projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + initialEstimation);
+                                maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, initialEstimation);
+                                if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+                                    projectMonitoringMisc.WriteToStatus(statusText, false, "initial estimation set for project");
+                                }
+                                else
+                                {
+                                    projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to set initial project estimation " + maor.Message);
+                                    bAllisOk = false;
+                                    messageToDisplay = "General failure - AO problem - failed to set project initial estimation. Report to Ed";
+                                    return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                                }
                             }
 
                             //2. add current estimation to the list of estimations

@@ -97,6 +97,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
             {
                 for (Issue roadmapFeature : roadmapFeatures)
                 {
+long startTime = System.nanoTime();
+
                     RoadmapFeatureDescriptor roadmapFeatureDescriptor = new RoadmapFeatureDescriptor();
                     //set name
                     roadmapFeatureDescriptor.Name = roadmapFeature.getSummary();
@@ -180,9 +182,12 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                                     //1. set initial estimation if previousProjectStartFlag is false
                                     //get the initial estimations
                                     //let's try to get initial estimation in the right way. Comment it out if not working
-                                    double initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, roadmapFeatureDescriptor.StartDate, statusText);
-                                    maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.StartDate, initialEstimation);
-
+                                    //do we have it stored yet?
+                                    maor = mao.GetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+                                    if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS || (double)maor.Result <= 0) {
+                                        double initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, roadmapFeatureDescriptor.StartDate, statusText);
+                                        maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.StartDate, initialEstimation);
+                                    }
                                     //2. add current estimation to the list of estimations
                                     //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
                                     Date timeStamp = Calendar.getInstance().getTime();
@@ -264,8 +269,11 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                         continue;
                     }
                     roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
+                    long endTime = System.nanoTime();
+                    projectMonitoringMisc.WriteToStatus(statusText, true, "&&& Feature " + roadmapFeature.getSummary() + " " + (endTime - startTime)/1000000);
                 }
 
+                long starTime = System.nanoTime();
                 //sort alphabetically
                 Collections.sort(roadmapFeatureDescriptors);
                 //convert to strings for the web
@@ -303,7 +311,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                         projectMonitoringMisc.WriteToStatus(statusText, true, rfd.Name +  " Feature not started or no open issues");
                     }
                 }
-
+                long endTime = System.nanoTime();
+                projectMonitoringMisc.WriteToStatus(statusText, true, " &&& processing took " + (endTime - starTime) / 1000000);
                 contextMap.put(FEATURESROWS, featuresRows.toString());
 
                 bAllisOk = true;
