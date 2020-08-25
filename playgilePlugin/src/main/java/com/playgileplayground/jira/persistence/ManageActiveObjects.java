@@ -330,6 +330,12 @@ public final class ManageActiveObjects{
         if(prjStatEntity != null) {
             //read the existing data
             ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            //sort - just in case
+            Collections.sort(existingData);
+            //now compress - i.e. leave last 2 weeks on a daily basis, rest use only 2 weeks basis
+
+
+
             //do we have such date?
             for (DataPair dataPair : existingData) {
                 if (DateUtils.isSameDay(dataPair.Date, date)) {
