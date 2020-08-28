@@ -325,6 +325,7 @@ public final class ManageActiveObjects{
     @Transactional
     public ManageActiveObjectsResult AddRemainingEstimationsRecord(ManageActiveObjectsEntityKey key, Date date, double remainingEstimations)
     {
+        //this method does not compress data. If we want to compress data please replace this by the method right below this method (..compressed)
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
@@ -348,6 +349,89 @@ public final class ManageActiveObjects{
             }
             existingData.add(new DataPair(date, remainingEstimations));
             SetDateRemainingEstimationsList(existingData, prjStatEntity);
+            result.Message = "Data added";
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult AddRemainingEstimationsRecordCompressed(ManageActiveObjectsEntityKey key, Date date, double remainingEstimations)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {
+            //read the existing data
+            ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            if (existingData.size() == 0)
+            {
+                result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_ESTIMATIONS_YET;
+                result.Message = "No estimation stored yet";
+                return result;
+            }
+            //sort - just in case
+            Collections.sort(existingData);
+            //now compress - i.e. leave last 2 weeks on a daily basis, rest use only 2 weeks basis
+
+            //let's get the first date and the last date
+            ArrayList<DataPair> compressedList = new ArrayList<>();
+            //how many full sprints we have?
+            //we compress every 14 days
+            int segmentSize = 14;
+
+            DataPair firstRecord = existingData.get(0);
+            DataPair lastRecord = existingData.get(existingData.size() - 1);
+            int fullSprints = ProjectProgress.Days(lastRecord.Date, firstRecord.Date) / segmentSize;
+            int partialSprintDays = ProjectProgress.Days(lastRecord.Date, firstRecord.Date) % segmentSize;
+            //find the start of last segment as current date minus 2 weeks
+
+
+            Date startOfLastSegment = ProjectProgress.AddDays(Calendar.getInstance().getTime(), -segmentSize);
+            if (startOfLastSegment.compareTo(firstRecord.Date) < 0)
+            {
+                startOfLastSegment = firstRecord.Date;
+            }
+            //how many compress segments we have?
+            int totalCompressedSegments;
+            if (partialSprintDays > 0) totalCompressedSegments = fullSprints + 1;
+            else totalCompressedSegments = fullSprints;
+
+
+            if (totalCompressedSegments > 0) {
+                DataPair[] segmentsData = new DataPair[totalCompressedSegments];
+                for (DataPair dataPair : existingData) {
+                    if (dataPair.Date.compareTo(startOfLastSegment) < 0) //only compress if we are not yet beyond start of last segment
+                    {
+                        int segmentNumber = ProjectProgress.Days(dataPair.Date, firstRecord.Date) / segmentSize;
+                        segmentsData[segmentNumber] = dataPair;
+                    } else //last segment
+                    {
+                        //first - copy all segments if not copied yet
+                        if (compressedList.size() == 0) {
+                            for (int i = 0; i < totalCompressedSegments; i++) {
+                                if (segmentsData[i] != null) compressedList.add(segmentsData[i]);
+                            }
+                        }
+                        compressedList.add(dataPair);//add all data for the last sprint
+                    }
+                }
+            }
+
+            //do we have such date?
+            for (DataPair dataPair : compressedList) {
+                if (DateUtils.isSameDay(dataPair.Date, date)) {
+                    dataPair.RemainingEstimation = remainingEstimations;
+                    SetDateRemainingEstimationsList(compressedList, prjStatEntity);
+                    result.Message = "Data updated";
+                    return result;
+                }
+            }
+            compressedList.add(new DataPair(date, remainingEstimations));
+            SetDateRemainingEstimationsList(compressedList, prjStatEntity);
             result.Message = "Data added";
         }
         else
