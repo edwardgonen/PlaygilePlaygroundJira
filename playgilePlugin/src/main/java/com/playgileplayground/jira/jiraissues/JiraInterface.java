@@ -171,11 +171,11 @@ public class JiraInterface {
         return issues;
     }
 
-    public List<Issue> getRoadmapFeaturesNotCancelledAndNotGoLive(ApplicationUser applicationUser, Project currentProject, String featureKey)
+    public List<Issue> getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(ApplicationUser applicationUser, Project currentProject, String featureKey)
     {
         Query query;
         //query project = "Bingo Blitz 2.0" and issuetype = "Roadmap Feature" and (status !=  Cancelled or status != Go-Live)
-        String searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and status != Cancelled and status != Go-Live";
+        String searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and status != Cancelled and status != Go-Live and status != \"On Hold\"";
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {

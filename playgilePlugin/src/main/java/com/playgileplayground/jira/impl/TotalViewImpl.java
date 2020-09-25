@@ -17,13 +17,10 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
 
 import com.playgileplayground.jira.api.ProjectMonitor;
-import com.playgileplayground.jira.api.TotalView;
 import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
-import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.projectprogress.DataPair;
-import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
@@ -91,7 +88,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
             contextMap.put(PROJECT, currentProject);
             ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
             //get list of roadmap features
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLive(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
 
             if (roadmapFeatures != null && roadmapFeatures.size() > 0)
             {
