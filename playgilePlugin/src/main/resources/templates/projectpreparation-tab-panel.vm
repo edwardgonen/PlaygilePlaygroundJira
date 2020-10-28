@@ -1,0 +1,114 @@
+<tr class="mod-header">
+    <h3>Playgile Studio Project Preparation Status for $project.name ($project.getKey())</h3>
+
+<html>
+<head>
+    $webResourceManager.requireResourcesForContext("playgileProjectPreparationPlugin")
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['gantt']});
+        google.charts.setOnLoadCallback(drawChart);
+        function daysToMilliseconds(days) {
+            return days * 24 * 60 * 60 * 1000;
+        }
+        function drawChart() {
+            if (!$allisok) return; //no need to execute
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Task ID');
+            data.addColumn('string', 'Task Name');
+            data.addColumn('string', 'Resource');
+            data.addColumn('date', 'Start Date');
+            data.addColumn('date', 'End Date');
+            data.addColumn('number', 'Duration');
+            data.addColumn('number', 'Percent Complete');
+            data.addColumn('string', 'Dependencies');
+
+            data.addRows([
+                ['Research', 'Economy', null,
+                    new Date(2021, 1, 1), new Date(2021, 1, 5), null,  100,  null],
+                ['Write', 'Backlog', 'write',
+                    null, new Date(2021, 1, 9), daysToMilliseconds(3), 25, 'Research,Outline'],
+                ['Cite', 'Art', 'write',
+                    null, new Date(2021, 1, 7), daysToMilliseconds(1), 20, 'Research'],
+                ['Complete', 'Concept Review', 'complete',
+                    null, new Date(2021, 1, 10), daysToMilliseconds(1), 0, 'Cite,Write'],
+                ['Outline', 'Concept Approval', 'write',
+                    null, new Date(2021, 1, 6), daysToMilliseconds(1), 100, 'Research']
+            ]);
+
+            var options = {
+                height: 275
+            };
+
+            var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
+
+            chart.draw(data, options);
+
+        }
+    </script>
+</head>
+<body>
+#if (!$allisok)
+<script>
+    var dialog = new AJS.Dialog({
+        id: "message-status-dialog",
+        closeOnOutsideClick: false
+    });
+
+    dialog.addHeader("Playgile Studio View");
+    dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
+
+    dialog.addButton("OK", function (dialog) {
+        dialog.hide();
+    }, "#");
+    dialog.show();
+</script>
+<h1 style="color:red">$messagetodisplay</h1>
+#end
+
+#if ($allisok)
+<div id="chart_div"></div>
+#end
+<p>A Collapsible:</p>
+<button type="button" class="collapsible">Open Collapsible</button>
+<div class="content">
+    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+</div>
+
+<p>Collapsible Set:</p>
+<button type="button" class="collapsible">Open Section 1</button>
+<div class="content">
+    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+</div>
+<button type="button" class="collapsible">Open Section 2</button>
+<div class="content">
+    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+</div>
+<button type="button" class="collapsible">Open Section 3</button>
+<div class="content">
+    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+</div>
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        });
+    }
+</script>
+</body>
+</html>
+<table>
+    <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
+        $statustext
+    </div>
+</table>
+</div>
