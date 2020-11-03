@@ -37,7 +37,8 @@
             ]);
 
             var options = {
-                height: 275
+                height: 275,
+                width: 1000
             };
 
             var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
@@ -49,26 +50,13 @@
 </head>
 <body>
 #if (!$allisok)
-<script>
-    var dialog = new AJS.Dialog({
-        id: "message-status-dialog",
-        closeOnOutsideClick: false
-    });
-
-    dialog.addHeader("Playgile Studio View");
-    dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
-
-    dialog.addButton("OK", function (dialog) {
-        dialog.hide();
-    }, "#");
-    dialog.show();
-</script>
 <h1 style="color:red">$messagetodisplay</h1>
 #end
 
 #if ($allisok)
-<div id="chart_div"></div>
-#end
+<!--div id="chart_div"></div-->
+
+
 <p>A Collapsible:</p>
 <button type="button" class="collapsible">Open Collapsible</button>
 <div class="content">
@@ -77,8 +65,9 @@
 
 <p>Collapsible Set:</p>
 <button type="button" class="collapsible">Open Section 1</button>
-<div class="content">
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+<!--div class="content" id="chart_div"-->
+<div id="chart_div"></div>
+
 </div>
 <button type="button" class="collapsible">Open Section 2</button>
 <div class="content">
@@ -102,8 +91,10 @@
                 content.style.display = "block";
             }
         });
+        coll[i].nextElementSibling.style.display = "none";
     }
 </script>
+#end
 </body>
 </html>
 <table>
