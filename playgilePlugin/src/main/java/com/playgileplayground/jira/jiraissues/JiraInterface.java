@@ -119,7 +119,10 @@ public class JiraInterface {
         if (roadmapFeature == null) return null;
 
         Query query;
-        String searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
+        //String searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
+        //as asked by Dima Gil - don't count not needed epic links
+        // issueFunction in linkedIssuesOf("issuekey = BINGOBLITZ-119252","Is Parent task of:")
+        String searchString = "issue in linkedIssues(\"" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
             query = jqlQueryParser.parseQuery(searchString);
