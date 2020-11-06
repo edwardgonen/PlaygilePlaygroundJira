@@ -431,7 +431,7 @@ http://localhost:2990/jira/plugins/servlet/activeobjectsuserdelete?user=<>
 1. Get list of roadmap features that not Cancelled and not Go-Live not Closed not done not Resolved (project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved)
 2. for each RF:
    1. Get query issuefunction in linkedIssuesOf('id=PKP-85')
-      This will give a list of product-related linked issues. Monetisation(PKM), BI(BIT), BA(PKBA), Economics (PKEC) tasks - those names should appear in the Key of issue
+      This will give a list of product-related linked issues. Monetization(PKM), BI(BIT), BA(PKBA), Economics (PKEC) tasks - those names should appear in the Key of issue
       i.e. substring("PKM") or something. I'll build array of PKM, PKBA, PKEC, BIT. Each element may contain a list of tasks. For example
       there may be 2 or 3 links that have PKM in the name. I'll group them together.
 

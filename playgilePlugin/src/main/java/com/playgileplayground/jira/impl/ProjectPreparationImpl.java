@@ -4,6 +4,8 @@ import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
+import com.atlassian.jira.datetime.DateTimeFormatter;
+import com.atlassian.jira.datetime.DateTimeFormatterFactory;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
@@ -17,6 +19,7 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
 
 import com.playgileplayground.jira.api.ProjectMonitor;
+import com.playgileplayground.jira.jiraissues.JiraQueryResult;
 import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
@@ -37,18 +40,21 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.T
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
+    @ComponentImport
+    DateTimeFormatterFactory dateTimeFormatter;
 
 
     public StringBuilder statusText = new StringBuilder();
 
     public ProjectPreparationImpl(UserProjectHistoryManager userProjectHistoryManager,
                               ProjectManager projectManager,
-                              ActiveObjects ao,
+                              ActiveObjects ao, DateTimeFormatterFactory dateTimeFormatter,
                               SearchService searchService){
         this.userProjectHistoryManager = userProjectHistoryManager;
         this.ao = ao;
         this.projectManager = projectManager;
         this.searchService = searchService;
+        this.dateTimeFormatter = dateTimeFormatter;
     }
     @Override
     public Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
@@ -67,6 +73,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.T
         boolean bAllisOk;
         ManageActiveObjectsResult maor;
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
+        JiraQueryResult jqr;
 
 
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
@@ -86,8 +93,9 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.T
         if(null != currentProject) {
             contextMap.put(PROJECT, currentProject);
             ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
+            ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
             //get list of roadmap features
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
 
             if (roadmapFeatures != null && roadmapFeatures.size() > 0)
             {
@@ -96,18 +104,34 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.T
                     RoadmapFeatureDescriptor roadmapFeatureDescriptor = new RoadmapFeatureDescriptor();
                     //set name
                     roadmapFeatureDescriptor.Name = roadmapFeature.getSummary();
-                    //get team velocity
-                    maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeatureDescriptor.Name));
-                    if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                        roadmapFeatureDescriptor.TeamVelocity = (double)maor.Result;
-                        if (roadmapFeatureDescriptor.TeamVelocity <= 0) roadmapFeatureDescriptor.TeamVelocity = DEFAULT_TEAM_VELOCITY;
-                    }
-                    else
+                    roadmapFeatureDescriptor.Key = roadmapFeature.getKey();
+
+                    jqr = jiraInterface.getBusinessApprovalDateForIssue(roadmapFeature, dateTimeFormatter.formatter());
+                    if (jqr.Code == JiraQueryResult.STATUS_CODE_SUCCESS)
                     {
-                        projectMonitoringMisc.WriteToStatus(statusText, false, "Velocity is not set");
-                        //team velocity is not set. So use 50. just for fun
-                        roadmapFeatureDescriptor.TeamVelocity = DEFAULT_TEAM_VELOCITY;
+                        roadmapFeatureDescriptor.BusinessApprovalDate = (Date)jqr.Result;
+                        projectMonitoringMisc.WriteToStatus(statusText, true, "Business approval date for " +
+                            roadmapFeature.getKey() + " is " + roadmapFeatureDescriptor.BusinessApprovalDate.toString());
                     }
+                    else //error
+                    {
+                        if (jqr.Code == JiraQueryResult.STATUS_CODE_DATE_PARSE_ERROR)
+                        {
+                            String specifiedDate = (String)jqr.Result;
+                            projectMonitoringMisc.WriteToStatus(statusText, true, "Business approval date for " + roadmapFeature.getKey() + " is invalid " + specifiedDate);
+                        }
+                        else //not found
+                        {
+                            projectMonitoringMisc.WriteToStatus(statusText, true, "Business approval date for " + roadmapFeature.getKey() + " not defined");
+                        }
+                        //continue - no need to analyze the feature as the business approval date is not available
+                        continue;
+                    }
+
+                    //let's fill all the fields
+                    //get the list of our product related issues
+                    List<Issue> productRelatedIssues = jiraInterface.getAllProductRelatedIssues(roadmapFeatureDescriptor);
+
 
                     roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
                 }
