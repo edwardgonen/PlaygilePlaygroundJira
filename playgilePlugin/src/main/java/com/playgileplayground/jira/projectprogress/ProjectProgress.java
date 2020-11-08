@@ -151,10 +151,25 @@ public class ProjectProgress
         c.add(Calendar.DATE, addDays);
         return c.getTime();
     }
+    public static Date AddMonths(Date date, int addMonths)
+    {
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        c.add(Calendar.MONTH, addMonths);
+        return c.getTime();
+    }
     public static int AbsDays(Date secondDate, Date firstDate)
     {
         long diffInMillies = Math.abs(secondDate.getTime() - firstDate.getTime());
         return (int)TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+    }
+    public static boolean CompareDatesByMonthYear(Date firstDate, Date secondDate)
+    {
+        Calendar cFirst = Calendar.getInstance();
+        cFirst.setTime(firstDate);
+        Calendar cSecond = Calendar.getInstance();
+        cSecond.setTime(secondDate);
+        return (cFirst.get(Calendar.MONTH) == cSecond.get(Calendar.MONTH)) && (cFirst.get(Calendar.YEAR) == cSecond.get(Calendar.YEAR));
     }
     public static int Days(Date secondDate, Date firstDate)
     {

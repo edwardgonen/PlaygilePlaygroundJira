@@ -14,9 +14,8 @@ public interface ProjectPreparation {
     String MESSAGETODISPLAY = "messagetodisplay";
     String BASEURL = "baseurl";
     String CURRENTUSER = "currentuser";
-    String FEATURESROWS = "featuresrows";
+    String MONTHSROWS = "monthsrows";
 
-    double DEFAULT_TEAM_VELOCITY = 50.0;
 
 
 

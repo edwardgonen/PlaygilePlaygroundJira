@@ -4,7 +4,6 @@ import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
-import com.atlassian.jira.datetime.DateTimeFormatter;
 import com.atlassian.jira.datetime.DateTimeFormatterFactory;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
@@ -22,16 +21,12 @@ import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraQueryResult;
 import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
-import com.playgileplayground.jira.jiraissues.PlaygileSprint;
-import com.playgileplayground.jira.projectprogress.DataPair;
-import com.playgileplayground.jira.projectprogress.ProjectProgress;
-import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
 import java.util.*;
 
 
 @Scanned
-public class ProjectPreparationImpl implements com.playgileplayground.jira.api.TotalView, ContextProvider {
+public class ProjectPreparationImpl implements com.playgileplayground.jira.api.ProjectPreparation, ContextProvider {
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
     @ComponentImport
@@ -131,13 +126,41 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.T
                     //let's fill all the fields
                     //get the list of our product related issues
                     List<Issue> productRelatedIssues = jiraInterface.getAllProductRelatedIssues(roadmapFeatureDescriptor);
-
-
-                    roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
+                    //let's add them to the roadmap feature descriptor
+                    if (productRelatedIssues != null && productRelatedIssues.size() > 0) {
+                        for (Issue productIssue : productRelatedIssues) {
+                            ProjectPreparationIssue ourIssue = projectPreparationMisc.identifyProductPreparationIssue(productIssue, roadmapFeatureDescriptor);
+                            if (ourIssue != null) {
+                                ourIssue.businessApprovalDate = roadmapFeatureDescriptor.BusinessApprovalDate;
+                                //add to RF
+                                roadmapFeatureDescriptor.PreparationIssues.add(ourIssue);
+                            }
+                            else //not our issue or something
+                            {
+                                projectMonitoringMisc.WriteToStatus(statusText, true, "Not our or invalid issue " + productIssue.getKey());
+                            }
+                        }
+                        //add to the list of our features only if our issues are detected
+                        roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
+                    }
+                    else
+                    {
+                        projectMonitoringMisc.WriteToStatus(statusText, true, "No product issues found for " + roadmapFeature.getKey());
+                    }
                 }
 
-
-                bAllisOk = true;
+                if (roadmapFeatureDescriptors.size() > 0) {
+                    //create presentation data
+                    ProjectPreparationPresentation presentation = new ProjectPreparationPresentation();
+                    presentation.createPresentationData(roadmapFeatureDescriptors);
+                    bAllisOk = true;
+                    String presentationString = presentation.dataForBrowser().toString();
+                    contextMap.put(MONTHSROWS, presentationString);
+                }
+                else {
+                    messageToDisplay = "No roadmap feature with a correct product preparation structure was detected";
+                    bAllisOk = false;
+                }
             }
             else //no suitable roadmap features found
             {

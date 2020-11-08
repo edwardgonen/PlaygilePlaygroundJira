@@ -1,7 +1,8 @@
 package com.playgileplayground.jira.impl;
 
 import com.atlassian.jira.issue.Issue;
-import com.playgileplayground.jira.api.ProjectPreparation;
+import com.atlassian.jira.issue.status.Status;
+import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 
 /**
@@ -16,11 +17,11 @@ public class ProjectPreparationMisc {
     }
 
 
-    public ProductPreparationIssue identifyProductPreparationIssue(Issue issue)
+    public ProjectPreparationIssue identifyProductPreparationIssue(Issue issue, RoadmapFeatureDescriptor roadmapFeatureDescriptor)
     {
-        ProductPreparationIssue result = new ProductPreparationIssue();
+        ProjectPreparationIssue result = new ProjectPreparationIssue();
 
-        if (issue == null) return result; //wrong issue
+        if (issue == null) return null; //wrong issue
 
         //1. get issue key
         String issueKey = issue.getKey();
@@ -30,23 +31,47 @@ public class ProjectPreparationMisc {
         if (issueKey.contains("PKM")) {
             result.issueTypeKey = "PKM";
             result.issueTypeName = "Monetization";
-        }
+        } else
         if (issueKey.contains("BIT")) {
             result.issueTypeKey = "BIT";
             result.issueTypeName = "Business Intelligence";
-        }
+        } else
         if (issueKey.contains("PKBA")) {
             result.issueTypeKey = "PKBA";
             result.issueTypeName = "Business Analytics";
-        }
+        } else
         if (issueKey.contains("PKEC")) {
             result.issueTypeKey = "PKEC";
             result.issueTypeName = "Economy";
         }
+        else //unknown
+        {
+            return null;
+        }
+
+        //get assignee
+        ApplicationUser assignee = issue.getAssignee();
+        if (assignee != null) {
+            result.assigneeName = issue.getAssignee().getName();
+        } else {
+            result.assigneeName = "Unassigned";
+        }
+
         //get start date
-
+        result.createdDate = issue.getCreated();
         //get due date
-
+        result.dueDate = issue.getDueDate();
+        if (result.dueDate == null) //not defined so I use the business approval date as due date
+        {
+            result.dueDate = roadmapFeatureDescriptor.BusinessApprovalDate;
+        }
+        //get status
+        Status issueStatus = issue.getStatus();
+        if (issueStatus != null) {
+            result.statusCategory = issueStatus.getStatusCategory();
+        }
+        result.issueKey = issue.getKey();
+        result.issueName = issue.getSummary();
         return result;
     }
 }

@@ -13,6 +13,54 @@
         }
         function drawChart() {
             if (!$allisok) return; //no need to execute
+
+            const BR1 = "bobruisk1";
+            const BR2 = "bobruisk2";
+            const BR3 = "bobruisk3";
+            const BR4 = "bobruisk4";
+            const BR5 = "bobruisk5";
+            const BR777 = "bobruisk777";
+
+            //split by lines
+
+            var dataContainer = document.getElementById('datacontainer');
+            var monthsRows = dataContainer.innerText;
+
+            //split and parse
+            if (typeof monthsRows === 'undefined' || monthsRows === null)
+            {
+                alert("No months to display");
+                return;
+            }
+            var months = monthsRows.split(BR1);
+
+            if (months.length <= 0)
+            {
+                alert("Wrong rows format " + monthsRows);
+                return;
+            }
+            var monthsDiv = document.getElementById("months-table");
+            months.forEach(function (month, index) {
+                if (month.length > 0)//non empty line
+                {
+                    //split by pair separator
+                    var items = month.split(BR2);
+                    if (items.length <= 0) {
+                        alert("Wrong line format1 " + month);
+                    }
+                    //add new month to table
+
+                    // Now create and append to iDiv
+                    var innerDiv = document.createElement('div');
+                    innerDiv.className = 'month';
+                    innerDiv.id = 'month' + index;
+                    innerDiv.innerHTML += items[0];
+                    monthsDiv.appendChild(innerDiv);
+
+                }
+            });
+
+            alert('before draw gantt');
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Task ID');
             data.addColumn('string', 'Task Name');
@@ -44,7 +92,6 @@
             var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
 
             chart.draw(data, options);
-
         }
     </script>
 </head>
@@ -54,7 +101,44 @@
 #end
 
 #if ($allisok)
-<div id="chart_div"></div>
+
+<div style="display: none;" id="datacontainer">$monthsrows</div>
+<div id="months-table"; width="100%">
+    <!--
+    <div id="month1" class="month">
+        October 2021
+    </div>
+    <div id="month1-feature1" class="feature" style="background-color:red">
+        New tutorial PKP-555 Business approval date 11/3/2021
+    </div>
+    <div id="month1-feature2" class="feature" style="background-color:#fcba03">
+        New tutorial PKP-555 Business approval date 11/3/2021
+    </div>
+    <div id="month2" class="month">
+        November 2020
+    </div>
+    <div id="month2-feature1" class="feature" style="background-color:yellow">
+        New tutorial PKP-555 Business approval date 11/3/2021
+    </div>
+    <div id="month2-feature2" class="feature" style="background-color:red">
+        New tutorial PKP-555 Business approval date 11/3/2021
+    </div>
+    -->
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--div id="chart_div"></div>
 
 
 <p>A Collapsible:</p>
@@ -68,6 +152,8 @@
 <!--div class="content" id="chart_div"></div-->
 <!--div id="chart_div"></div-->
 
+
+<!--
 <button type="button" class="collapsible">Open Section 2</button>
 <div class="content">
     <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
@@ -93,6 +179,7 @@
         coll[i].nextElementSibling.style.display = "none";
     }
 </script>
+-->
 #end
 </body>
 </html>
