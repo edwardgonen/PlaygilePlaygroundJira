@@ -57,6 +57,21 @@
                     innerDiv.innerHTML += items[0];
                     monthsDiv.appendChild(innerDiv);
 
+                    var features = items[1].split(BR3);
+                    if (features.length <= 0) {
+                        alert("Wrong line format2 " + features);
+                    }
+                    features.forEach(function (feature, index) {
+                        if (feature.length > 0)//non empty line
+                        {
+                            // Now create and append to iDiv
+                            var innerDivFeature = document.createElement('div');
+                            innerDivFeature.className = 'feature';
+                            innerDivFeature.id = 'monthfeature' + index;
+                            innerDivFeature.innerHTML += feature;
+                            monthsDiv.appendChild(innerDivFeature);
+                        }
+                    });
                 }
             });
 
