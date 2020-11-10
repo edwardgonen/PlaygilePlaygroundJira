@@ -85,17 +85,59 @@
                             innerDivFeature.innerHTML =
                                     featureProperties[0] + //name and key
                                     " is to be approved by business till " + featureProperties[1];
-                            ;
+
                             innerDivFeature.style.backgroundColor = featureProperties[2];
                             innerDivFeature.style.color = featureProperties[3];
                             monthsDiv.appendChild(innerDivFeature);
+
+                            //now fill the issues
+                            var issuesBulk = featureItems[1];
+
+                            var issues = issuesBulk.split(BR4);
+                            if (issues.length <= 0)
+                            {
+                                alert("Wrong list of issues " + issuesBulk);
+                            }
+
+                            var innerDivIssues = document.createElement('div');
+                            //innerDivFeature.className = 'issue';
+                            innerDivIssues.id = 'issues' + innerDivFeature.id;
+
+
+                            monthsDiv.appendChild(innerDivIssues);
+
+
+                            issues.forEach(function (issue, index) {
+                                if (issue.length > 0)//non empty line
+                                {
+                                    innerDivIssues.innerHTML += issue;
+                                }
+                            });
 
                         }
                     });
                 }
             });
 
-            alert('before draw gantt');
+
+            var coll = document.getElementsByClassName("feature"); //collapsible
+            var i;
+
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+                coll[i].nextElementSibling.style.display = "none";
+            }
+
+
+
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Task ID');
             data.addColumn('string', 'Task Name');
@@ -108,6 +150,16 @@
 
             data.addRows([
                 ['Research', 'Economy', null,
+                    new Date("1/1/2021"), new Date("1/5/2021"), null,  100,  null]
+            ]);
+
+            data.addRows([
+                ['BI', 'BI', null,
+                    new Date("1/5/2021"), new Date("1/15/2021"), null,  100,  null]
+            ]);
+            /*
+            data.addRows([
+                ['Research', 'Economy', null,
                     new Date(2021, 1, 1), new Date(2021, 1, 5), null,  100,  null],
                 ['Write', 'Backlog', 'write',
                     null, new Date(2021, 1, 9), daysToMilliseconds(3), 25, 'Research,Outline'],
@@ -118,7 +170,7 @@
                 ['Outline', 'Concept Approval', 'write',
                     null, new Date(2021, 1, 6), daysToMilliseconds(1), 100, 'Research']
             ]);
-
+            */
             var options = {
                 height: 275,
                 width: 1000
@@ -153,7 +205,7 @@
 
 
 
-<!--div id="chart_div"></div>
+<!--div id="chart_div"></div-->
 
 
 <p>A Collapsible:</p>
@@ -164,11 +216,11 @@
 
 <p>Collapsible Set:</p>
 <button type="button" class="collapsible">Open Section 1</button>
-<!--div class="content" id="chart_div"></div-->
+<div class="content" id="chart_div"></div>
 <!--div id="chart_div"></div-->
 
 
-<!--
+
 <button type="button" class="collapsible">Open Section 2</button>
 <div class="content">
     <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
@@ -178,7 +230,7 @@
     <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
 </div>
 <script>
-    var coll = document.getElementsByClassName("collapsible");
+    var coll = document.getElementsByClassName("collapsible"); //collapsible
     var i;
 
     for (i = 0; i < coll.length; i++) {
@@ -194,7 +246,7 @@
         coll[i].nextElementSibling.style.display = "none";
     }
 </script>
--->
+
 #end
 </body>
 </html>
