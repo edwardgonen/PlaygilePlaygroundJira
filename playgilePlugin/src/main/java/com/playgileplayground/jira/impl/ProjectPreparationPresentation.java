@@ -83,7 +83,7 @@ public class ProjectPreparationPresentation {
                             preparationIssue.issueName + " " + preparationIssue.issueKey + BR777 +
                             ConvertDateToOurFormat(preparationIssue.createdDate) + BR777 +
                             ConvertDateToOurFormat(preparationIssue.dueDate) + BR777 +
-                            preparationIssue.statusCategory + BR777 +
+                            "15.0" + BR777 + //percentage completed
                             preparationIssue.assigneeName + BR777 +
                             ProjectProgress.convertColorToHexadeimal(issueColor)
                     );

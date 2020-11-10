@@ -1,258 +1,203 @@
 <tr class="mod-header">
     <h3>Playgile Studio Project Preparation Status for $project.name ($project.getKey())</h3>
 
-<html>
-<head>
-    $webResourceManager.requireResourcesForContext("playgileProjectPreparationPlugin")
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        google.charts.load('current', {'packages':['gantt']});
-        google.charts.setOnLoadCallback(drawChart);
-        function daysToMilliseconds(days) {
-            return days * 24 * 60 * 60 * 1000;
-        }
-        function drawChart() {
-            if (!$allisok) return; //no need to execute
-
-            const BR1 = "bobruisk1";
-            const BR2 = "bobruisk2";
-            const BR3 = "bobruisk3";
-            const BR4 = "bobruisk4";
-            const BR5 = "bobruisk5";
-            const BR777 = "bobruisk777";
-
-            //split by lines
-
-            var dataContainer = document.getElementById('datacontainer');
-            var monthsRows = dataContainer.innerText;
-
-            //split and parse
-            if (typeof monthsRows === 'undefined' || monthsRows === null)
-            {
-                alert("No months to display");
-                return;
+    <html>
+    <head>
+        $webResourceManager.requireResourcesForContext("playgileProjectPreparationPlugin")
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+            google.charts.load('current', {'packages':['gantt']});
+            google.charts.setOnLoadCallback(drawChart);
+            function daysToMilliseconds(days) {
+                return days * 24 * 60 * 60 * 1000;
             }
-            var months = monthsRows.split(BR1);
+            function drawChart() {
+                if (!$allisok) return; //no need to execute
 
-            if (months.length <= 0)
-            {
-                alert("Wrong rows format " + monthsRows);
-                return;
-            }
-            var monthsDiv = document.getElementById("months-table");
-            months.forEach(function (month, index) {
-                if (month.length > 0)//non empty line
+                const BR1 = "bobruisk1";
+                const BR2 = "bobruisk2";
+                const BR3 = "bobruisk3";
+                const BR4 = "bobruisk4";
+                const BR5 = "bobruisk5";
+                const BR777 = "bobruisk777";
+
+                //split by lines
+
+                var dataContainer = document.getElementById('datacontainer');
+                var monthsRows = dataContainer.innerText;
+
+                //split and parse
+                if (typeof monthsRows === 'undefined' || monthsRows === null)
                 {
-                    //split by pair separator
-                    var items = month.split(BR2);
-                    if (items.length <= 0) {
-                        alert("Wrong line format1 " + month);
-                    }
-                    //add new month to table
-
-                    // Now create and append to iDiv
-                    var innerDiv = document.createElement('div');
-                    innerDiv.className = 'month';
-                    innerDiv.id = 'month' + index;
-                    innerDiv.innerHTML += items[0];
-                    monthsDiv.appendChild(innerDiv);
-
-                    var featuresWithIssues = items[1].split(BR3);
-                    if (featuresWithIssues.length < 2) {
-                        alert("Wrong line format2 " + featuresWithIssues);
-                    }
-
-                    featuresWithIssues.forEach(function (feature, index) {
-                        if (feature.length > 0)//non empty line
-                        {
-                            var featureItems = feature.split(BR5);
-                            if (featureItems.length <= 0) {
-                                alert("Wrong line format3 " + feature);
-                            }
-                            var featureItself = featureItems[0];
-
-                            var featureProperties = featureItself.split(BR777);
-                            if (featureProperties.length < 4)
-                            {
-                                alert("Wrong feature properties line " + featureItself);
-                            }
-
-
-                            // Now create and append to iDiv
-                            var innerDivFeature = document.createElement('button');
-                            innerDivFeature.className = 'feature';
-                            innerDivFeature.id = 'monthfeature' + index;
-                            innerDivFeature.innerHTML =
-                                    featureProperties[0] + //name and key
-                                    " is to be approved by business till " + featureProperties[1];
-
-                            innerDivFeature.style.backgroundColor = featureProperties[2];
-                            innerDivFeature.style.color = featureProperties[3];
-                            monthsDiv.appendChild(innerDivFeature);
-
-                            //now fill the issues
-                            var issuesBulk = featureItems[1];
-
-                            var issues = issuesBulk.split(BR4);
-                            if (issues.length <= 0)
-                            {
-                                alert("Wrong list of issues " + issuesBulk);
-                            }
-
-                            var innerDivIssues = document.createElement('div');
-                            //innerDivFeature.className = 'issue';
-                            innerDivIssues.id = 'issues' + innerDivFeature.id;
-
-
-                            monthsDiv.appendChild(innerDivIssues);
-
-
-                            issues.forEach(function (issue, index) {
-                                if (issue.length > 0)//non empty line
-                                {
-                                    innerDivIssues.innerHTML += issue;
-                                }
-                            });
-
-                        }
-                    });
+                    alert("No months to display");
+                    return;
                 }
-            });
+                var months = monthsRows.split(BR1);
+
+                if (months.length <= 0)
+                {
+                    alert("Wrong rows format " + monthsRows);
+                    return;
+                }
+                var monthsDiv = document.getElementById("months-table");
+                var uniqueCounterForId = 0;
+                months.forEach(function (month, index) {
+                    if (month.length > 0)//non empty line
+                    {
+                        //split by pair separator
+                        var items = month.split(BR2);
+                        if (items.length <= 0) {
+                            alert("Wrong line format1 " + month);
+                        }
+                        //add new month to table
+
+                        // Now create and append to iDiv
+                        var innerDiv = document.createElement('div');
+                        innerDiv.className = 'month';
+                        innerDiv.id = 'month' + index;
+                        innerDiv.innerHTML += items[0];
+                        monthsDiv.appendChild(innerDiv);
+
+                        var featuresWithIssues = items[1].split(BR3);
+                        if (featuresWithIssues.length < 2) {
+                            alert("Wrong line format2 " + featuresWithIssues);
+                        }
 
 
-            var coll = document.getElementsByClassName("feature"); //collapsible
-            var i;
+                        featuresWithIssues.forEach(function (feature, index) {
+                            if (feature.length > 0)//non empty line
+                            {
+                                var featureItems = feature.split(BR5);
+                                if (featureItems.length <= 0) {
+                                    alert("Wrong line format3 " + feature);
+                                }
+                                var featureItself = featureItems[0];
 
-            for (i = 0; i < coll.length; i++) {
-                coll[i].addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    var content = this.nextElementSibling;
-                    if (content.style.display === "block") {
-                        content.style.display = "none";
-                    } else {
-                        content.style.display = "block";
+                                var featureProperties = featureItself.split(BR777);
+                                if (featureProperties.length < 4)
+                                {
+                                    alert("Wrong feature properties line " + featureItself);
+                                }
+
+
+                                // Now create and append to iDiv
+                                var innerDivFeature = document.createElement('button');
+                                innerDivFeature.className = 'feature';
+                                innerDivFeature.id = 'monthfeature' + uniqueCounterForId++;
+                                innerDivFeature.innerHTML =
+                                        featureProperties[0] + //name and key
+                                        " is to be approved by business till " + featureProperties[1];
+
+                                innerDivFeature.style.backgroundColor = featureProperties[2];
+                                innerDivFeature.style.color = featureProperties[3];
+                                monthsDiv.appendChild(innerDivFeature);
+
+                                //now fill the issues
+                                var issuesBulk = featureItems[1];
+
+                                var issues = issuesBulk.split(BR4);
+                                if (issues.length <= 0)
+                                {
+                                    alert("Wrong list of issues " + issuesBulk);
+                                }
+
+                                var innerDivIssues = document.createElement('div');
+                                //innerDivFeature.className = 'issue';
+                                innerDivIssues.id = 'issues' + innerDivFeature.id;
+
+
+                                monthsDiv.appendChild(innerDivIssues);
+
+                                var data = new google.visualization.DataTable();
+                                data.addColumn('string', 'Task ID');
+                                data.addColumn('string', 'Task Name');
+                                data.addColumn('string', 'Resource');
+                                data.addColumn('date', 'Start Date');
+                                data.addColumn('date', 'End Date');
+                                data.addColumn('number', 'Duration');
+                                data.addColumn('number', 'Percent Complete');
+                                data.addColumn('string', 'Dependencies');
+
+                                issues.forEach(function (issue, index) {
+                                    if (issue.length > 0)//non empty line
+                                    {
+                                        var issueItems = issue.split(BR777);
+                                        if (issueItems.length < 7)
+                                        {
+                                            alert("Wrong issue format " + issue);
+                                        }
+                                        var percentageCompleted = parseFloat(issueItems[4]);
+                                        data.addRows([
+                                            [issueItems[0], issueItems[0], null,
+                                                new Date(issueItems[2]), new Date(issueItems[3]), null,  percentageCompleted,  null]
+                                        ]);
+                                        /*
+                                                                            data.addRows([
+                                                                                ['BI', 'BI', null,
+                                                                                    new Date("1/5/2021"), new Date("1/15/2021"), null,  100,  null]
+                                                                            ]);
+                                        */
+                                    }
+                                });
+                                var options = {
+                                    height: 275,
+
+                                    gantt: {
+                                        criticalPathEnabled: false,
+                                        innerGridHorizLine: {
+                                            stroke: '#ffe0b2',
+                                            strokeWidth: 2
+                                        },
+                                        innerGridTrack: {fill: '#fff3e0'},
+                                        innerGridDarkTrack: {fill: '#ffcc80'}
+                                    }
+                                };
+
+                                var chart = new google.visualization.Gantt(document.getElementById(innerDivIssues.id));
+
+                                chart.draw(data, options);
+                            }
+                        });
                     }
                 });
-                coll[i].nextElementSibling.style.display = "none";
+
+                //code below takes care on accordeon
+
+                var coll = document.getElementsByClassName("feature");
+                var i;
+
+                for (i = 0; i < coll.length; i++) {
+                    coll[i].addEventListener("click", function() {
+                        this.classList.toggle("active");
+                        var content = this.nextElementSibling;
+                        if (content.style.display === "block") {
+                            content.style.display = "none";
+                        } else {
+                            content.style.display = "block";
+                        }
+                    });
+                    coll[i].nextElementSibling.style.display = "none";
+                }
             }
+        </script>
+    </head>
+    <body>
+        #if (!$allisok)
+        <h1 style="color:red">$messagetodisplay</h1>
+        #end
 
+        #if ($allisok)
 
+        <div style="display: none;" id="datacontainer">$monthsrows</div>
+        <div id="months-table"; width="100%">
+        </div>
 
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Task ID');
-            data.addColumn('string', 'Task Name');
-            data.addColumn('string', 'Resource');
-            data.addColumn('date', 'Start Date');
-            data.addColumn('date', 'End Date');
-            data.addColumn('number', 'Duration');
-            data.addColumn('number', 'Percent Complete');
-            data.addColumn('string', 'Dependencies');
-
-            data.addRows([
-                ['Research', 'Economy', null,
-                    new Date("1/1/2021"), new Date("1/5/2021"), null,  100,  null]
-            ]);
-
-            data.addRows([
-                ['BI', 'BI', null,
-                    new Date("1/5/2021"), new Date("1/15/2021"), null,  100,  null]
-            ]);
-            /*
-            data.addRows([
-                ['Research', 'Economy', null,
-                    new Date(2021, 1, 1), new Date(2021, 1, 5), null,  100,  null],
-                ['Write', 'Backlog', 'write',
-                    null, new Date(2021, 1, 9), daysToMilliseconds(3), 25, 'Research,Outline'],
-                ['Cite', 'Art', 'write',
-                    null, new Date(2021, 1, 7), daysToMilliseconds(1), 20, 'Research'],
-                ['Complete', 'Concept Review', 'complete',
-                    null, new Date(2021, 1, 10), daysToMilliseconds(1), 0, 'Cite,Write'],
-                ['Outline', 'Concept Approval', 'write',
-                    null, new Date(2021, 1, 6), daysToMilliseconds(1), 100, 'Research']
-            ]);
-            */
-            var options = {
-                height: 275,
-                width: 1000
-            };
-
-            var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
-
-            chart.draw(data, options);
-        }
-    </script>
-</head>
-<body>
-#if (!$allisok)
-<h1 style="color:red">$messagetodisplay</h1>
-#end
-
-#if ($allisok)
-
-<div style="display: none;" id="datacontainer">$monthsrows</div>
-<div id="months-table"; width="100%">
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!--div id="chart_div"></div-->
-
-
-<p>A Collapsible:</p>
-<button type="button" class="collapsible">Open Collapsible</button>
-<div class="content">
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-</div>
-
-<p>Collapsible Set:</p>
-<button type="button" class="collapsible">Open Section 1</button>
-<div class="content" id="chart_div"></div>
-<!--div id="chart_div"></div-->
-
-
-
-<button type="button" class="collapsible">Open Section 2</button>
-<div class="content">
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-</div>
-<button type="button" class="collapsible">Open Section 3</button>
-<div class="content">
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-</div>
-<script>
-    var coll = document.getElementsByClassName("collapsible"); //collapsible
-    var i;
-
-    for (i = 0; i < coll.length; i++) {
-        coll[i].addEventListener("click", function() {
-            this.classList.toggle("active");
-            var content = this.nextElementSibling;
-            if (content.style.display === "block") {
-                content.style.display = "none";
-            } else {
-                content.style.display = "block";
-            }
-        });
-        coll[i].nextElementSibling.style.display = "none";
-    }
-</script>
-
-#end
-</body>
-</html>
-<table>
-    <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
-        $statustext
+        #end
+    </body>
+    </html>
+    <table>
+        <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
+            $statustext
+        </div>
+    </table>
     </div>
-</table>
-</div>
