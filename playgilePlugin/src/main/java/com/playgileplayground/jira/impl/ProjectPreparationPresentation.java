@@ -74,7 +74,7 @@ public class ProjectPreparationPresentation {
                                 ProjectProgress.convertColorToHexadeimal(featureForeground)
 
                 );
-                result.append(BR3);
+                result.append(BR5);
                 for (ProjectPreparationIssue preparationIssue : rfd.PreparationIssues)
                 {
                     Color issueColor = Color.BLUE;
@@ -89,6 +89,7 @@ public class ProjectPreparationPresentation {
                     );
                     result.append(BR4);
                 }
+                result.append(BR3);
             }
 
             result.append(BR1);

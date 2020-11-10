@@ -57,19 +57,39 @@
                     innerDiv.innerHTML += items[0];
                     monthsDiv.appendChild(innerDiv);
 
-                    var features = items[1].split(BR3);
-                    if (features.length <= 0) {
-                        alert("Wrong line format2 " + features);
+                    var featuresWithIssues = items[1].split(BR3);
+                    if (featuresWithIssues.length < 2) {
+                        alert("Wrong line format2 " + featuresWithIssues);
                     }
-                    features.forEach(function (feature, index) {
+
+                    featuresWithIssues.forEach(function (feature, index) {
                         if (feature.length > 0)//non empty line
                         {
+                            var featureItems = feature.split(BR5);
+                            if (featureItems.length <= 0) {
+                                alert("Wrong line format3 " + feature);
+                            }
+                            var featureItself = featureItems[0];
+
+                            var featureProperties = featureItself.split(BR777);
+                            if (featureProperties.length < 4)
+                            {
+                                alert("Wrong feature properties line " + featureItself);
+                            }
+
+
                             // Now create and append to iDiv
-                            var innerDivFeature = document.createElement('div');
+                            var innerDivFeature = document.createElement('button');
                             innerDivFeature.className = 'feature';
                             innerDivFeature.id = 'monthfeature' + index;
-                            innerDivFeature.innerHTML += feature;
+                            innerDivFeature.innerHTML =
+                                    featureProperties[0] + //name and key
+                                    " is to be approved by business till " + featureProperties[1];
+                            ;
+                            innerDivFeature.style.backgroundColor = featureProperties[2];
+                            innerDivFeature.style.color = featureProperties[3];
                             monthsDiv.appendChild(innerDivFeature);
+
                         }
                     });
                 }
@@ -119,26 +139,6 @@
 
 <div style="display: none;" id="datacontainer">$monthsrows</div>
 <div id="months-table"; width="100%">
-    <!--
-    <div id="month1" class="month">
-        October 2021
-    </div>
-    <div id="month1-feature1" class="feature" style="background-color:red">
-        New tutorial PKP-555 Business approval date 11/3/2021
-    </div>
-    <div id="month1-feature2" class="feature" style="background-color:#fcba03">
-        New tutorial PKP-555 Business approval date 11/3/2021
-    </div>
-    <div id="month2" class="month">
-        November 2020
-    </div>
-    <div id="month2-feature1" class="feature" style="background-color:yellow">
-        New tutorial PKP-555 Business approval date 11/3/2021
-    </div>
-    <div id="month2-feature2" class="feature" style="background-color:red">
-        New tutorial PKP-555 Business approval date 11/3/2021
-    </div>
-    -->
 </div>
 
 

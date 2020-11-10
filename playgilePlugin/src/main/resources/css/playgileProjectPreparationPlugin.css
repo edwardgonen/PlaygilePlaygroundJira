@@ -21,19 +21,22 @@
     background-color: #777;
 }
 .month {
-    background-color: #777;
+    background-color: deepskyblue;
     color: white;
     padding: 18px;
     width: 100%;
     border: none;
     text-align: left;
     outline: none;
-    font-size: 15px;
+    font-size: 20px;
+    font-weight: bold;
 }
 .feature {
     padding: 18px;
+    cursor: pointer;
     width: 100%;
-    border: none;
+    text-indent: 70px;
+    border: 2px solid black;
     text-align: left;
     outline: none;
     font-size: 15px;
