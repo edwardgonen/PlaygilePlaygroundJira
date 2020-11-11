@@ -42,8 +42,8 @@
 
                 var data = new google.visualization.DataTable();
                 data.addColumn('date', 'Date');
-                data.addColumn('number', 'Simulated');
-                data.addColumn('number', 'Predicted');
+                data.addColumn('number', 'Based on initial velocity');
+                data.addColumn('number', 'Based on real project velocity');
 
                 var chartRows = '$chartrows';
                 //split and parse
@@ -190,7 +190,7 @@
                     lineWidth: 3,
                     series: {
                         0: {lineDashStyle: [0, 0]},
-                        1: {lineDashStyle: [2, 2], color: 'green'}
+                        1: {lineDashStyle: [10, 2], color: 'black'}
                     },
                     vAxes: {
                         0: {
