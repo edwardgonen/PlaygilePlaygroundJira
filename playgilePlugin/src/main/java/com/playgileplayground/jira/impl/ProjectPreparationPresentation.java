@@ -55,6 +55,11 @@ public class ProjectPreparationPresentation {
         return result;
     }
 
+    enum IssueTardiness {
+        OK,
+        LATE,
+        TOO_LATE
+    }
     public StringBuilder dataForBrowser()
     {
         StringBuilder result = new StringBuilder();
@@ -69,30 +74,85 @@ public class ProjectPreparationPresentation {
             {
 
 
+                StringBuilder issuesStrings = new StringBuilder();
+                IssueTardiness featureTardiness = IssueTardiness.OK;
+                Color featureBackgroundColor = Color.GREEN;
+                Color featureForegroundColor = Color.RED;
+
+                for (ProjectPreparationIssue preparationIssue : rfd.PreparationIssues)
+                {
+                    float completeness = 0;
 
 
+                    if (preparationIssue.issueState == ProjectPreparationIssue.IssueState.ACTIVE) {
+                        if (preparationIssue.createdDate.after(today)) //not started yet
+                        {
+                            //don't change the tardiness
+                        } else {
+                            if (preparationIssue.dueDate.before(today)) //too late
+                            {
+                                featureTardiness = IssueTardiness.TOO_LATE;
+                            } else //we are within issue now
+                            {
+                                int duration = ProjectProgress.AbsDays(preparationIssue.getDueDate(), preparationIssue.getStartDate());
+                                int daysSinceStart = ProjectProgress.AbsDays(preparationIssue.getDueDate(), preparationIssue.getStartDate());
+                                completeness = (float)daysSinceStart / (float)duration;
+                                if (completeness > 90.0)
+                                {
+                                    if (featureTardiness != IssueTardiness.TOO_LATE) featureTardiness = IssueTardiness.LATE;
+                                }
+                                else
+                                {
+                                    //don't touch
+                                }
+                            }
+                        }
+                    } else //not active
+                    {
+                        //don't touch the tardiness
+                    }
+
+
+
+                    switch (featureTardiness)
+                    {
+                        case OK:
+                            featureBackgroundColor = Color.GREEN;
+                            featureForegroundColor = Color.RED;
+                            break;
+                        case LATE:
+                            featureBackgroundColor = Color.YELLOW;
+                            featureForegroundColor = Color.RED;
+                            break;
+                        case TOO_LATE:
+                            featureBackgroundColor = Color.RED;
+                            featureForegroundColor = Color.YELLOW;
+                            break;
+                    }
+
+
+                    issuesStrings.append(
+                        preparationIssue.issueTypeName + BR777 +
+                            preparationIssue.issueName + " " + preparationIssue.issueKey + BR777 +
+                            ConvertDateToOurFormat(preparationIssue.getStartDate()) + BR777 +
+                            ConvertDateToOurFormat(preparationIssue.getDueDate()) + BR777 +
+                            completeness + BR777 + //percentage completed
+                            preparationIssue.assigneeName + BR777 +
+                            preparationIssue.issueState
+                    );
+                    issuesStrings.append(BR4);
+                }
 
 
                 result.append(rfd.Name + " " + rfd.Key + BR777 +
                                 ConvertDateToOurFormat(rfd.BusinessApprovalDate) + BR777 +
-                                ProjectProgress.convertColorToHexadeimal(featureBackground) + BR777 +
-                                ProjectProgress.convertColorToHexadeimal(featureForeground)
+                                ProjectProgress.convertColorToHexadeimal(featureBackgroundColor) + BR777 +
+                                ProjectProgress.convertColorToHexadeimal(featureForegroundColor)
 
                 );
                 result.append(BR5);
-                for (ProjectPreparationIssue preparationIssue : rfd.PreparationIssues)
-                {
-                    result.append(
-                        preparationIssue.issueTypeName + BR777 +
-                            preparationIssue.issueName + " " + preparationIssue.issueKey + BR777 +
-                            ConvertDateToOurFormat(preparationIssue.createdDate) + BR777 +
-                            ConvertDateToOurFormat(preparationIssue.dueDate) + BR777 +
-                            "15.0" + BR777 + //percentage completed
-                            preparationIssue.assigneeName + BR777 +
-                            preparationIssue.issueState
-                    );
-                    result.append(BR4);
-                }
+                result.append(issuesStrings);
+
                 result.append(BR3);
             }
 
