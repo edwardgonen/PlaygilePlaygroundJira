@@ -68,8 +68,20 @@ public class ProjectPreparationMisc {
         //get status
         Status issueStatus = issue.getStatus();
         if (issueStatus != null) {
-            result.statusCategory = issueStatus.getStatusCategory();
+            String statusName = issueStatus.getName();
+            switch (statusName)
+            {
+                case "Resolved":
+                case "Closed":
+                case "Done":
+                    result.issueState = ProjectPreparationIssue.IssueState.CLOSED;
+                    break;
+                default: result.issueState = ProjectPreparationIssue.IssueState.ACTIVE;
+            }
+
         }
+        else result.issueState = ProjectPreparationIssue.IssueState.UNDEFINED;
+
         result.issueKey = issue.getKey();
         result.issueName = issue.getSummary();
         return result;

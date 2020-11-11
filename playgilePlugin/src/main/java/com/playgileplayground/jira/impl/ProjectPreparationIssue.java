@@ -17,9 +17,15 @@ public class ProjectPreparationIssue
     public Date dueDate;
     public Date businessApprovalDate;
     public String assigneeName;
-    public StatusCategory statusCategory;
+    public IssueState issueState;
 
-
+    public enum IssueState
+    {
+        UNDEFINED,
+        ACTIVE,
+        CLOSED,
+        FUTURE
+    }
 
     public Date getStartDate()
     {

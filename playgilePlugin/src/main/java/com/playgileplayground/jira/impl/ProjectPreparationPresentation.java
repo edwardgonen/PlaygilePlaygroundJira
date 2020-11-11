@@ -58,6 +58,7 @@ public class ProjectPreparationPresentation {
     public StringBuilder dataForBrowser()
     {
         StringBuilder result = new StringBuilder();
+        Date today = Calendar.getInstance().getTime();
 
         for (MonthlyRoadmapFeatures monthlyFeatures : allRoadmapFeatures)
         {
@@ -66,8 +67,12 @@ public class ProjectPreparationPresentation {
             //now list features for this month
             for (RoadmapFeatureDescriptor rfd : monthlyFeatures.roadMapFeaturesInThatMonth)
             {
-                Color featureBackground = Color.RED;
-                Color featureForeground = Color.YELLOW;
+
+
+
+
+
+
                 result.append(rfd.Name + " " + rfd.Key + BR777 +
                                 ConvertDateToOurFormat(rfd.BusinessApprovalDate) + BR777 +
                                 ProjectProgress.convertColorToHexadeimal(featureBackground) + BR777 +
@@ -77,7 +82,6 @@ public class ProjectPreparationPresentation {
                 result.append(BR5);
                 for (ProjectPreparationIssue preparationIssue : rfd.PreparationIssues)
                 {
-                    Color issueColor = Color.BLUE;
                     result.append(
                         preparationIssue.issueTypeName + BR777 +
                             preparationIssue.issueName + " " + preparationIssue.issueKey + BR777 +
@@ -85,7 +89,7 @@ public class ProjectPreparationPresentation {
                             ConvertDateToOurFormat(preparationIssue.dueDate) + BR777 +
                             "15.0" + BR777 + //percentage completed
                             preparationIssue.assigneeName + BR777 +
-                            ProjectProgress.convertColorToHexadeimal(issueColor)
+                            preparationIssue.issueState
                     );
                     result.append(BR4);
                 }

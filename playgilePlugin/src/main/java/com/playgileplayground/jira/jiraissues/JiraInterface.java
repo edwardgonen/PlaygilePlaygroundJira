@@ -268,12 +268,12 @@ public class JiraInterface {
     public List<Issue> getRoadmapFeaturesInPreparationPhase(ApplicationUser applicationUser, Project currentProject, String featureKey)
     {
         Query query;
-        //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved
+        //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
 
         String searchString;
         if (!jiraVersion.startsWith("7.")) //higher than 7
-            searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and issueLinkType=\"Is Parent task of:\" AND Status!=Done AND Status!=Resolved";
-        else searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and Status!=Done AND Status!=Resolved";
+            searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and issueLinkType=\"Is Parent task of:\" AND Status!=Done AND Status!=Resolved AND Status!=Closed";
+        else searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and Status!=Done AND Status!=Resolved AND Status!=Closed";
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
