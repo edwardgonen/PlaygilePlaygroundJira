@@ -85,18 +85,18 @@ public class ProjectPreparationPresentation {
 
 
                     if (preparationIssue.issueState == ProjectPreparationIssue.IssueState.ACTIVE) {
-                        if (preparationIssue.createdDate.after(today)) //not started yet
+                        if (preparationIssue.getStartDate().after(today)) //not started yet
                         {
                             //don't change the tardiness
                         } else {
-                            if (preparationIssue.dueDate.before(today)) //too late
+                            if (preparationIssue.getDueDate().before(today)) //too late
                             {
                                 featureTardiness = IssueTardiness.TOO_LATE;
                             } else //we are within issue now
                             {
                                 int duration = ProjectProgress.AbsDays(preparationIssue.getDueDate(), preparationIssue.getStartDate());
-                                int daysSinceStart = ProjectProgress.AbsDays(preparationIssue.getDueDate(), preparationIssue.getStartDate());
-                                completeness = (float)daysSinceStart / (float)duration;
+                                int daysSinceStart = ProjectProgress.AbsDays(today, preparationIssue.getStartDate());
+                                completeness = Math.round((float)daysSinceStart / (float)duration * 100.0f);
                                 if (completeness > 90.0)
                                 {
                                     if (featureTardiness != IssueTardiness.TOO_LATE) featureTardiness = IssueTardiness.LATE;
