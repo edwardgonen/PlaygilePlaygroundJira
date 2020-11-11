@@ -75,7 +75,6 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         contextMap.put(BASEURL, baseUrl);
         ApplicationUser applicationUser = jac.getLoggedInUser();
         contextMap.put(CURRENTUSER, applicationUser.getKey());
-        contextMap.put(MAINJAVACLASS, this);
 
         JiraInterface jiraInterface = new JiraInterface(applicationUser,  searchService);
 

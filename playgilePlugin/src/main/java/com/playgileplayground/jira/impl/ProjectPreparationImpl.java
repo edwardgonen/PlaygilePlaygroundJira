@@ -76,7 +76,6 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
         contextMap.put(BASEURL, baseUrl);
         ApplicationUser applicationUser = jac.getLoggedInUser();
         contextMap.put(CURRENTUSER, applicationUser.getKey());
-        contextMap.put(MAINJAVACLASS, this);
 
         JiraInterface jiraInterface = new JiraInterface(applicationUser,  searchService);
 

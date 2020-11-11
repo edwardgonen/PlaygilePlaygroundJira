@@ -83,7 +83,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
 
         Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
-        contextMap.put(MAINJAVACLASS, this);
         JiraInterface jiraInterface = new JiraInterface(this, applicationUser,  searchService);
         ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
 
