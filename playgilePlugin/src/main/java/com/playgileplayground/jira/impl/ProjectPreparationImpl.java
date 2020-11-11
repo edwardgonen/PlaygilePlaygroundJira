@@ -128,12 +128,14 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                     List<Issue> productRelatedIssues = jiraInterface.getAllProductRelatedIssues(roadmapFeatureDescriptor);
                     //let's add them to the roadmap feature descriptor
                     if (productRelatedIssues != null && productRelatedIssues.size() > 0) {
+                        projectMonitoringMisc.WriteToStatus(statusText, true, "Product issues number " + productRelatedIssues.size() + " for feature " + roadmapFeatureDescriptor.Key);
                         for (Issue productIssue : productRelatedIssues) {
                             ProjectPreparationIssue ourIssue = projectPreparationMisc.identifyProductPreparationIssue(productIssue, roadmapFeatureDescriptor);
                             if (ourIssue != null) {
                                 ourIssue.businessApprovalDate = roadmapFeatureDescriptor.BusinessApprovalDate;
                                 //add to RF
                                 roadmapFeatureDescriptor.PreparationIssues.add(ourIssue);
+                                projectMonitoringMisc.WriteToStatus(statusText, true, "Issue " + ourIssue.issueName + " " + ourIssue.issueKey + " added with type " + ourIssue.issueTypeName);
                             }
                             else //not our issue or something
                             {
