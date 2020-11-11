@@ -1,8 +1,7 @@
 package com.playgileplayground.jira.impl;
 
 import java.awt.*;
-import java.util.Comparator;
-import java.util.Date;
+import java.util.*;
 
 /**
  * Created by Ext_EdG on 8/8/2020.
@@ -17,11 +16,15 @@ public class RoadmapFeatureDescriptor implements Comparator<RoadmapFeatureDescri
     public AnalyzedStories EstimatedStories;
     public Date IdealEndOfProjet;
     public Date PredictedEndOfProjet;
+    public Date BusinessApprovalDate;
+    public String Key;
     public Color ProgressDataColor;
+    public ArrayList<ProjectPreparationIssue> PreparationIssues;
 
     public RoadmapFeatureDescriptor() {
         Name = "";
         Status = TotalViewMisc.FeatureStatus.NOT_STARTED;
+        PreparationIssues = new ArrayList<>();
     }
 
     @Override
@@ -33,4 +36,11 @@ public class RoadmapFeatureDescriptor implements Comparator<RoadmapFeatureDescri
     public int compare(RoadmapFeatureDescriptor o1, RoadmapFeatureDescriptor o2) {
         return o1.Name.compareTo(o2.Name);
     }
+
+    static Comparator<RoadmapFeatureDescriptor> compareByBusinessApprovalDate = new Comparator<RoadmapFeatureDescriptor>() {
+        @Override
+        public int compare(RoadmapFeatureDescriptor o1, RoadmapFeatureDescriptor o2) {
+            return o1.BusinessApprovalDate.compareTo(o2.BusinessApprovalDate);
+        }
+    };
 }

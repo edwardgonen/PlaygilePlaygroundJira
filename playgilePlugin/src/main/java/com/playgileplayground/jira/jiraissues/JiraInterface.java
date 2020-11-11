@@ -3,6 +3,7 @@ package com.playgileplayground.jira.jiraissues;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.datetime.DateTimeFormatter;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
@@ -19,17 +20,24 @@ import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.project.version.VersionManager;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.util.BuildUtilsInfo;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
 import com.playgileplayground.jira.impl.TotalViewImpl;
+import org.joda.time.DateTime;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,17 +47,19 @@ public class JiraInterface {
     ProjectMonitorImpl mainClass;
     ApplicationUser applicationUser;
     SearchService searchService;
-    ProjectMonitoringMisc projectMonitoringMisc;
+    String jiraVersion;
     public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
     {
         this.mainClass = mainClass;
         this.applicationUser = applicationUser;
         this.searchService = searchService;
+        this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
     }
     public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
     {
         this.applicationUser = applicationUser;
         this.searchService = searchService;
+        this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
     }
     public List<Issue> getAllIssues(Project currentProject) {
         //mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
@@ -63,6 +73,52 @@ public class JiraInterface {
         }
         List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
         return allIssues;
+    }
+    public List<Issue> getAllProductRelatedIssues(RoadmapFeatureDescriptor roadmapFeature)
+    {
+        //get all our issues for Feature
+        if (roadmapFeature == null) return null;
+        Query query;
+        //issuefunction in linkedIssuesOf('id=PKP-85')
+
+        String searchString;
+        if (!jiraVersion.startsWith("7.")) //higher than 7
+            searchString = "issueFunction in linkedIssuesof(\"id=" + roadmapFeature.Key + "\")";
+        else searchString = "issue in linkedIssues(\"" + roadmapFeature.Key + "\")";
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
+
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        List<Issue> issues = new ArrayList<>();
+
+        if (searchResults != null)
+        {
+            issues = this.AccessVersionIndependentListOfIssues(searchResults);
+            if (issues != null && issues.size() > 0)
+            {
+
+            }
+            else
+            {
+                issues = null;
+            }
+        }
+        else
+        {
+            issues = null;
+        }
+
+        return issues;
     }
 
     public List<Issue> getAllRoadmapFeatures(ApplicationUser applicationUser, Project currentProject, String featureKey)
@@ -119,7 +175,15 @@ public class JiraInterface {
         if (roadmapFeature == null) return null;
 
         Query query;
-        String searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
+
+        String searchString;
+        if (!jiraVersion.startsWith("7.") && !currentProject.getKey().contains("BKM")) //higher than 7
+            searchString = "issueFunction in linkedIssuesOf(\"issueKey=" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
+        else searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
+        //as asked by Dima Gil - don't count not needed epic links
+        // issueFunction in linkedIssuesOf("issuekey = BINGOBLITZ-119252","Is Parent task of:")
+        //NOTE - the above query does not work for Board Kings - the Is Parent taks of: does not return any results
+
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
             query = jqlQueryParser.parseQuery(searchString);
@@ -171,6 +235,7 @@ public class JiraInterface {
         return issues;
     }
 
+
     public List<Issue> getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(ApplicationUser applicationUser, Project currentProject, String featureKey)
     {
         Query query;
@@ -199,6 +264,40 @@ public class JiraInterface {
             return this.AccessVersionIndependentListOfIssues(searchResults);
         }
     }
+
+    public List<Issue> getRoadmapFeaturesInPreparationPhase(ApplicationUser applicationUser, Project currentProject, String featureKey)
+    {
+        Query query;
+        //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
+
+        String searchString;
+        if (!jiraVersion.startsWith("7.")) //higher than 7
+            searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and issueLinkType=\"Is Parent task of:\" AND Status!=Done AND Status!=Resolved AND Status!=Closed";
+        else searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and Status!=Done AND Status!=Resolved AND Status!=Closed";
+
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
+
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        if (searchResults == null)
+        {
+            return null;
+        }
+        else {
+            return this.AccessVersionIndependentListOfIssues(searchResults);
+        }
+    }
+
     public List<Issue> getIssuesByEpic(ApplicationUser applicationUser, Project currentProject, Issue epic) {
         //if the version is not defined return null. no query
         if (epic == null) return null;
@@ -263,6 +362,30 @@ public class JiraInterface {
             }
         }
 
+        return result;
+    }
+    public JiraQueryResult getBusinessApprovalDateForIssue(Issue issue, DateTimeFormatter formatter)
+    {
+        JiraQueryResult result = new JiraQueryResult();
+        String[] values = getSpecificCustomFields(issue, "Business Approval");
+        if (values != null && values.length > 0)
+        {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            try {
+                result.Result = format.parse(values[0]);
+            } catch (ParseException e)
+            {
+                result.Code = JiraQueryResult.STATUS_CODE_DATE_PARSE_ERROR;
+                result.Message = "Invalid Date format";
+                result.Result = values[0];
+            }
+        }
+        else
+        {
+            result.Code = JiraQueryResult.STATUS_CODE_NO_SUCH_FIELD;
+            result.Message = "Business Approval Date is missing";
+            result.Result = null;
+        }
         return result;
     }
     public double getStoryPointsForIssue(Issue issue)

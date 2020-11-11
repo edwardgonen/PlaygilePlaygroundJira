@@ -12,11 +12,11 @@
   <resource type="i18n" name="i18n" location="playgilePlugin"/>  
   <!-- add our web resources -->
     <web-resource key="playgileTotalViewPlugin-resources" name="playgileTotalViewPlugin Web Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
-        <resource type="download" name="playgileTotalViewPlugin.css" location="/css/playgileTotalViewPlugin.css"/>
-        <resource type="download" name="playgileTotalViewPlugin.js" location="/js/playgileTotalViewPlugin.js"/>
-        <resource type="download" name="images/" location="/images"/>
-        <context>playgileTotalViewPlugin</context>
+    <dependency>com.atlassian.auiplugin:ajs</dependency>
+    <resource type="download" name="playgileTotalViewPlugin.css" location="/css/playgileTotalViewPlugin.css"/>
+    <resource type="download" name="playgileTotalViewPlugin.js" location="/js/playgileTotalViewPlugin.js"/>
+    <resource type="download" name="images/" location="/images"/>
+    <context>playgileTotalViewPlugin</context>
     </web-resource>
     <web-item name="totalview-page-item" i18n-name-key="totalview--page--item.name" key="totalview--page--item" section="jira.project.sidebar.plugins.navigation" weight="1000">
         <description key="totalview--page--item.description">Menu item for Total View Page</description>
@@ -30,6 +30,26 @@
         <description key="totalview--page.description">Playgile Project Total View</description>
         <context-provider class="com.playgileplayground.jira.impl.TotalViewImpl"/>
         <resource name="view" type="velocity" location="templates/totalview-tab-panel.vm"/>
+    </web-panel>
+    <web-resource key="playgileProjectPreparationPlugin-resources" name="playgileProjectPreparationPlugin Web Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <resource type="download" name="playgileProjectPreparationPlugin.css" location="/css/playgileProjectPreparationPlugin.css"/>
+        <resource type="download" name="playgileProjectPreparationPlugin.js" location="/js/playgileProjectPreparationPlugin.js"/>
+        <resource type="download" name="images/" location="/images"/>
+        <context>playgileProjectPreparationPlugin</context>
+    </web-resource>
+    <web-item name="projectpreparation-page-item" i18n-name-key="projectpreparation--page--item.name" key="projectpreparation--page--item" section="jira.project.sidebar.plugins.navigation" weight="1000">
+        <description key="projectpreparation--page--item.description">Menu item for Project Preparation Page</description>
+        <icon width="32" height="32">
+            <link linkId="projectpreparation--page--item-icon">${baseurl}/download/resources/${atlassian.plugin.key}:playgileProjectPreparationPlugin-resources/images/project-preparation.png</link>
+        </icon>
+        <label key="Playgile Project Preparation"/>
+        <link linkId="projectpreparation--page--item-link">/projects/${pathEncodedProjectKey}?selectedItem=com.atlassian.jira.jira-projects-plugin:projectpreparation-page</link>
+    </web-item>
+    <web-panel name="projectpreparation-page" i18n-name-key="projectpreparation--page.name" key="projectpreparation--page" location="com.atlassian.jira.jira-projects-plugin:projectpreparation-page" weight="1000">
+        <description key="projectpreparation--page.description">Playgile Project Preparation</description>
+        <context-provider class="com.playgileplayground.jira.impl.ProjectPreparationImpl"/>
+        <resource name="view" type="velocity" location="templates/projectpreparation-tab-panel.vm"/>
     </web-panel>
     <web-resource key="playgilePlugin-resources" name="playgilePlugin Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>

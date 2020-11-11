@@ -1,0 +1,44 @@
+.collapsible {
+    background-color: #777;
+    color: white;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+}
+
+.active, .collapsible:hover {
+    background-color: #555;
+}
+
+.content {
+    padding: 0 18px;
+    display: none;
+    overflow: hidden;
+    background-color: #777;
+}
+.month {
+    background-color: deepskyblue;
+    color: white;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 20px;
+    font-weight: bold;
+}
+.feature {
+    padding: 18px;
+    cursor: pointer;
+    width: 100%;
+    text-indent: 70px;
+    border: 2px solid black;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+    overflow: hidden;
+}
