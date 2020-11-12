@@ -84,7 +84,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
         Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
         JiraInterface jiraInterface = new JiraInterface(this, applicationUser,  searchService);
-        ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
+        ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
 
         //start the real work
         if(null != currentProject) {
@@ -297,9 +297,10 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             }
                             startDate = (Date)maor.Result;
                             //get the sprint length
-                            sprintLength = projectMonitoringMisc.getSprintLength(mao, currentProject, selectedRoadmapFeature);
+                            sprintLength = projectMonitoringMisc.getSprintLength(currentProject, selectedRoadmapFeature);
+                            double defaultNotEstimatedIssueValue = projectMonitoringMisc.getDefaultNotEstimatedIssueValue(currentProject, selectedRoadmapFeature);
                             //now let's calculate the remaining story points
-                            double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues, statusText);
+                            double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues, statusText, defaultNotEstimatedIssueValue);
                             projectMonitoringMisc.WriteToStatus(statusText, false,"Calculated estimation " + currentEstimation);
                             //after calculation
                             //1. set initial estimation if previousProjectStartFlag is false
@@ -309,7 +310,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
                             maor = mao.GetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
                             if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS || (double)maor.Result <= 0) {
-                                initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText);
+                                initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, startDate, statusText, defaultNotEstimatedIssueValue);
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Setting initial estimation " + initialEstimation);
                                 maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature), startDate, initialEstimation);
                                 if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
@@ -361,7 +362,6 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                         predictedVelocities.get(index++) + ManageActiveObjects.LINE_SEPARATOR
                                 );
                             }
-
                             contextMap.put(REALVELOCITIES, resultRows);
                             //and the average is
                             //projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
@@ -411,7 +411,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 item = new DataPair(new Date("7/15/2020"), 400);
                 ((ArrayList<DataPair>)maor.Result).add(item);
                 ////////////////////////////////*/
-                sprintLength = projectMonitoringMisc.getSprintLength(mao, currentProject, selectedRoadmapFeature);
+                sprintLength = projectMonitoringMisc.getSprintLength(currentProject, selectedRoadmapFeature);
                 ProjectProgressResult ppr = projectProgress.Initiate(teamVelocity, projectVelocity, (int)sprintLength, (ArrayList<DataPair>) maor.Result);
                 //what is the longest array?
                 StringBuilder chartRows = new StringBuilder();

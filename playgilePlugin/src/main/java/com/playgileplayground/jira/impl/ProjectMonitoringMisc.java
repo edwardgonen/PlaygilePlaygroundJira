@@ -30,11 +30,13 @@ public class ProjectMonitoringMisc {
     private JiraInterface jiraInterface;
     private ApplicationUser applicationUser;
     private Project currentProject;
-    public ProjectMonitoringMisc(JiraInterface jiraInterface, ApplicationUser applicationUser, Project currentProject)
+    private ManageActiveObjects mao;
+    public ProjectMonitoringMisc(JiraInterface jiraInterface, ApplicationUser applicationUser, Project currentProject, ManageActiveObjects mao)
     {
         this.jiraInterface = jiraInterface;
         this.currentProject = currentProject;
         this.applicationUser = applicationUser;
+        this.mao = mao;
     }
     public ArrayList<String> getAllRoadmapFeatureNames(List<Issue> features)
     {
@@ -144,7 +146,7 @@ public class ProjectMonitoringMisc {
         }
     }
 
-    public double getSprintLength(ManageActiveObjects mao, Project currentProject, String selectedRoadmapFeature)
+    public double getSprintLength(Project currentProject, String selectedRoadmapFeature)
     {
         double sprintLength;
         ManageActiveObjectsResult maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
@@ -164,7 +166,17 @@ public class ProjectMonitoringMisc {
         return sprintLength;
     }
 
-    public double getCurrentEstimations(List<Issue> foundIssues, StringBuilder statusText)
+    public double getDefaultNotEstimatedIssueValue(Project currentProject, String selectedRoadmapFeature)
+    {
+        double defaultNotEstimatedIssueValue = 0;
+        ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            defaultNotEstimatedIssueValue = (double)maor.Result;
+        }
+        return defaultNotEstimatedIssueValue;
+    }
+
+    public double getCurrentEstimations(List<Issue> foundIssues, StringBuilder statusText, double defaultNotEstimatedIssueValue)
     {
         double result = 0;
         for (Issue issue : foundIssues)
@@ -173,7 +185,7 @@ public class ProjectMonitoringMisc {
             {
                 WriteToStatus(statusText, false,"Issue status is Complete");
                 double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue));
+                storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue), defaultNotEstimatedIssueValue);
                 result += storyPointValue;
                 WriteToStatus(statusText, true, "Adding story points for issue " +
                     storyPointValue + " " +
@@ -187,7 +199,7 @@ public class ProjectMonitoringMisc {
         return result;
     }
 
-    public double getInitialEstimation(Collection<Issue> issues, Date startDate, StringBuilder statusText)
+    public double getInitialEstimation(Collection<Issue> issues, Date startDate, StringBuilder statusText, double defaultNotEstimatedIssueValue)
     {
         double result = 0;
         WriteToStatus(statusText, true, "Calculate initial estimation for project start date " + startDate);
@@ -195,8 +207,7 @@ public class ProjectMonitoringMisc {
         {
             boolean bOurIssueType = isIssueOneOfOurs(issue);
             double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-
-            storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue));
+            storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue), defaultNotEstimatedIssueValue);
 
             WriteToStatus(statusText, true, "Story points for initial estimation in issue " + issue.getId() + " " + storyPointValue + " created " + issue.getCreated());
             if (bOurIssueType && CompareDatesOnly(issue.getCreated(), startDate) <= 0) //our issue and created before project started
@@ -438,14 +449,19 @@ public class ProjectMonitoringMisc {
         IssueType issueType = issue.getIssueType();
         return issueType.getName().equals(BUG);
     }
-    public double adjustStoryPointsIfNotEstimated(double storyPointValue, boolean isIssueBug)
+    public double adjustStoryPointsIfNotEstimated(double storyPointValue, boolean isIssueBug, double defaultNotEstimatedIssueValue)
     {
         //Julia asked for not estimated bug to be 13
         double result = storyPointValue;
         if (storyPointValue <= 0)
         {
-            if (isIssueBug) result = ProjectMonitor.MAX_BUG_ESTIMATION; //for not estimated
-            else result = ProjectMonitor.MAX_STORY_ESTIMATION; //for not estimated
+            if (defaultNotEstimatedIssueValue <= 0) {
+                if (isIssueBug) result = ProjectMonitor.MAX_BUG_ESTIMATION; //for not estimated
+                else result = ProjectMonitor.MAX_STORY_ESTIMATION; //for not estimated
+            }
+            else {
+                result = defaultNotEstimatedIssueValue;
+            }
         }
         return result;
     }

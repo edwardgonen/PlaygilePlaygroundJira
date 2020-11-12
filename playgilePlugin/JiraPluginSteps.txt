@@ -424,6 +424,11 @@ http://localhost:2990/jira/plugins/servlet/activeobjectsuserlist
 Delete user
 http://localhost:2990/jira/plugins/servlet/activeobjectsuserdelete?user=<>
 
+Set roadmap feature properties (right now only default not estimated value
+http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=<key>&roadmapFeature=<feature summary>&propertyName=<name>&propertyValue=<value>
+For example
+http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=defEstimValue&propertyValue=13
+
 /opt/atlassian/jira/bin/stop-jira.sh и start-jira.sh for sandbox
 
 ================================ Project preparation algorithm ----------------------------------

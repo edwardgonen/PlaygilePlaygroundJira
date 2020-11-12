@@ -86,7 +86,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
         //start the real work
         if(null != currentProject) {
             contextMap.put(PROJECT, currentProject);
-            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
+            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
             ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
             //get list of roadmap features
             List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);

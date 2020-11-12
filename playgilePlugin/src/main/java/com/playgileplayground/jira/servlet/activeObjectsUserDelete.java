@@ -39,7 +39,7 @@ public class activeObjectsUserDelete extends HttpServlet{
             }
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsResult maor = mao.DeleteUserEntity(user); //will not create if exists
-            servletMisc.responseToWeb(maor, resp);
+            servletMisc.responseToWeb("Deleted", maor, resp);
             return null;
         });
     }

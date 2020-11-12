@@ -30,4 +30,6 @@ public interface PrjStatEntity extends Entity {
     void setProjectVersionLabel(String label);
     String getRoadmapFeature();
     void setRoadmapFeature(String name);
+    double getDefNotEstimdIssueValue();
+    void setDefNotEstimdIssueValue(double defNotEstimdIssueValue);
 }

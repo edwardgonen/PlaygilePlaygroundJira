@@ -10,12 +10,12 @@ import java.util.ArrayList;
  * Created by Ext_EdG on 7/16/2020.
  */
 public class servletMisc {
-    static void responseToWeb(ManageActiveObjectsResult maor, HttpServletResponse resp)
+    static void responseToWeb(String response, ManageActiveObjectsResult maor, HttpServletResponse resp)
     {
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
         {
             try {
-                resp.getWriter().write("Deleted");
+                resp.getWriter().write(response);
             } catch (IOException e) {
             }
         } else

@@ -130,6 +130,40 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
+    public ManageActiveObjectsResult GetDefaultNotEstimatedIssueValue(ManageActiveObjectsEntityKey key)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {
+            result.Result = prjStatEntity.getDefNotEstimdIssueValue();
+            result.Message = "Default not estimated value : " + result.Result;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+
+    @Transactional
+    public ManageActiveObjectsResult SetDefaultNotEstimatedIssueValue(ManageActiveObjectsEntityKey key, double defaultNotEstimatedIssueValue)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {
+            prjStatEntity.setDefNotEstimdIssueValue(defaultNotEstimatedIssueValue);
+            prjStatEntity.save();
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+
+    @Transactional
     public ManageActiveObjectsResult SetSprintLength(ManageActiveObjectsEntityKey key, double sprintLength)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -526,6 +560,7 @@ public final class ManageActiveObjects{
     {
         PrjStatEntity result = null;
         PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
+
         if (projectStatusEntities.length <= 0) {
             return result;
         }

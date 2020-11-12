@@ -46,7 +46,7 @@ public class activeObjectsDelete extends HttpServlet{
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeature);
             ManageActiveObjectsResult maor = mao.DeleteProjectEntity(key); //will not create if exists
-            servletMisc.responseToWeb(maor, resp);
+            servletMisc.responseToWeb("Deleted",maor, resp);
             return null;
         });
     }

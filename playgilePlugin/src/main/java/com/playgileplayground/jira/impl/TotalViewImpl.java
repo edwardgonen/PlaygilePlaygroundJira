@@ -85,7 +85,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         //start the real work
         if(null != currentProject) {
             contextMap.put(PROJECT, currentProject);
-            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject);
+            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
             //get list of roadmap features
             List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
 
@@ -171,9 +171,10 @@ long startTime = System.nanoTime();
                                     maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
                                     roadmapFeatureDescriptor.StartDate = (Date)maor.Result;
                                     //get the sprint length
-                                    roadmapFeatureDescriptor.SprintLength = projectMonitoringMisc.getSprintLength(mao, currentProject, roadmapFeature.getSummary());
+                                    roadmapFeatureDescriptor.SprintLength = projectMonitoringMisc.getSprintLength(currentProject, roadmapFeature.getSummary());
+                                    double defaultNotEstimatedIssueValue = projectMonitoringMisc.getDefaultNotEstimatedIssueValue(currentProject, roadmapFeature.getSummary());
                                     //now let's calculate the remaining story points
-                                    double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues, statusText);
+                                    double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues, statusText, defaultNotEstimatedIssueValue);
                                     //after calculation
                                     //1. set initial estimation if previousProjectStartFlag is false
                                     //get the initial estimations
@@ -181,7 +182,7 @@ long startTime = System.nanoTime();
                                     //do we have it stored yet?
                                     maor = mao.GetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
                                     if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS || (double)maor.Result <= 0) {
-                                        double initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, roadmapFeatureDescriptor.StartDate, statusText);
+                                        double initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, roadmapFeatureDescriptor.StartDate, statusText, defaultNotEstimatedIssueValue);
                                         maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.StartDate, initialEstimation);
                                     }
                                     //2. add current estimation to the list of estimations
