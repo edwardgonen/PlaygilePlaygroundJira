@@ -130,7 +130,7 @@
                     var teamVelocity = parseFloat(items[3]);
                     var projectVelocity = parseFloat(items[4]);
                     var velocityCell = row.insertCell(3);
-                    velocityCell.width = 200;
+                    velocityCell.width = '40%';
                     velocityCell.height = rowHeight;
                     velocityCell.id = "velocities" + index;
 
@@ -159,7 +159,7 @@
                     var idealEndOfProject = new Date(items[5]);
                     var predictedEndOfProject = new Date(items[6]);
                     var projectEndCell = row.insertCell(4);
-                    projectEndCell.width = 150;
+                    projectEndCell.width = '20%';
                     projectEndCell.height = rowHeight;
                     projectEndCell.id = "project-end" + index;
 
@@ -192,7 +192,7 @@
                     var estimatedStoriesNumber =  parseFloat(items[10]);
 
                     var issueDistributionCell = row.insertCell(5);
-                    issueDistributionCell.width = 200;
+                    issueDistributionCell.width = '10%';
                     issueDistributionCell.height = rowHeight;
                     issueDistributionCell.id = "issues-estimation" + index;
 
