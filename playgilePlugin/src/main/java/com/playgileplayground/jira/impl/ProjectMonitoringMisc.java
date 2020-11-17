@@ -13,9 +13,7 @@ import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
-import com.playgileplayground.jira.projectprogress.ProjectProgress;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -210,7 +208,7 @@ public class ProjectMonitoringMisc {
             storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue), defaultNotEstimatedIssueValue);
 
             WriteToStatus(statusText, true, "Story points for initial estimation in issue " + issue.getId() + " " + storyPointValue + " created " + issue.getCreated());
-            if (bOurIssueType && CompareZeroBasedDatesOnly(issue.getCreated(), startDate) <= 0) //our issue and created before project started
+            if (bOurIssueType && DateTimeUtils.CompareZeroBasedDatesOnly(issue.getCreated(), startDate) <= 0) //our issue and created before project started
             {
                 WriteToStatus(statusText, true, "Issue for initial estimation calculation " +
                     storyPointValue + " " +
@@ -280,7 +278,7 @@ public class ProjectMonitoringMisc {
         int index = 0;
         for (PlaygileSprint realSprint : allRealSprints)
         {
-            x[index] = ProjectProgress.AbsDays(realSprint.getEndDate(), startDate);
+            x[index] = DateTimeUtils.AbsDays(realSprint.getEndDate(), startDate);
             y[index] = realSprint.sprintVelocity;
             index++;
         }
@@ -290,7 +288,7 @@ public class ProjectMonitoringMisc {
         double slope = lr.slope; double intercept = lr.intercept;
         for (PlaygileSprint realSprint : allRealSprints)
         {
-            result.add(ProjectProgress.AbsDays(realSprint.getEndDate(), startDate) * slope + intercept);
+            result.add(DateTimeUtils.AbsDays(realSprint.getEndDate(), startDate) * slope + intercept);
         }
 
         return result;
@@ -306,11 +304,11 @@ public class ProjectMonitoringMisc {
         if (sprintLength < 2) return result; //otherwise algorithm below will not end
 
         Date constantSprintStart = startDate;
-        Date constantSprintEnd = ProjectProgress.AddDays(constantSprintStart, sprintLength - 1);
+        Date constantSprintEnd = DateTimeUtils.AddDays(constantSprintStart, sprintLength - 1);
 
         WriteToStatus(statusText, true, "#### starting to identify issues by artificial sprints");
 
-        while (CompareZeroBasedDatesOnly(constantSprintEnd, getCurrentDate()) < 0) {
+        while (DateTimeUtils.CompareZeroBasedDatesOnly(constantSprintEnd, DateTimeUtils.getCurrentDate()) < 0) {
             WriteToStatus(statusText, true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
             //find all issues closed withing this period
             PlaygileSprint sprintToAdd = new PlaygileSprint();
@@ -328,7 +326,7 @@ public class ProjectMonitoringMisc {
                     if (bIssueCompleted)
                     {
                         resolutionDate = issue.getResolutionDate();
-                        bIssueResolutionWithinSprint = CheckIfDateIsInsideDateSegmentInclusive(resolutionDate, constantSprintStart, constantSprintEnd);
+                        bIssueResolutionWithinSprint = DateTimeUtils.CheckIfDateIsInsideDateSegmentInclusive(resolutionDate, constantSprintStart, constantSprintEnd);
 
 
                         //CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) >= 0 && CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) <= 0
@@ -366,8 +364,8 @@ public class ProjectMonitoringMisc {
             result.add(sprintToAdd);
 
             //move to next sprint
-            constantSprintStart = ProjectProgress.AddDays(constantSprintStart, sprintLength);
-            constantSprintEnd = ProjectProgress.AddDays(constantSprintStart, sprintLength - 1);
+            constantSprintStart = DateTimeUtils.AddDays(constantSprintStart, sprintLength);
+            constantSprintEnd = DateTimeUtils.AddDays(constantSprintStart, sprintLength - 1);
         }
 
         WriteToStatus(statusText, true, "#### ended to identify issues by artificial sprints, found " + result.size());
@@ -413,7 +411,7 @@ public class ProjectMonitoringMisc {
             result.add(sprintToAdd);
         }
         Date correctSprintStart = startDate;
-        Date correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
+        Date correctSprintEnd = DateTimeUtils.AddDays(correctSprintStart, sprintLength - 1);
 
         do
         {
@@ -429,17 +427,17 @@ public class ProjectMonitoringMisc {
                     boolean bSprintFound =
                         // |-----| correct sprint
                         // |-----|
-                        (CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) <= 0 && CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) >= 0)
+                        (DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) <= 0 && DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) >= 0)
                         ||
-                        (CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) >= 0 && CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) <= 0)
+                        (DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) >= 0 && DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) <= 0)
                         ||
                         // |-----| correct sprint
                         //    |-----|
-                        (CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintStart) > 0 && CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) < 0)
+                        (DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintStart) > 0 && DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) < 0)
                         ||
                         //     |-----| correct sprint
                         // |-----|
-                        (CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) > 0 && CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintEnd) < 0)
+                        (DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) > 0 && DateTimeUtils.CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintEnd) < 0)
                         ;
                     bFoundOverlappingSprints |= bSprintFound;
                     if (bSprintFound) { //overlapping sprint found
@@ -459,9 +457,9 @@ public class ProjectMonitoringMisc {
             }
 
             //next sprint
-            correctSprintStart = ProjectProgress.AddDays(correctSprintStart, sprintLength);
-            correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
-        } while (CompareZeroBasedDatesOnly(correctSprintEnd, getCurrentDate()) < 0);
+            correctSprintStart = DateTimeUtils.AddDays(correctSprintStart, sprintLength);
+            correctSprintEnd = DateTimeUtils.AddDays(correctSprintStart, sprintLength - 1);
+        } while (DateTimeUtils.CompareZeroBasedDatesOnly(correctSprintEnd, DateTimeUtils.getCurrentDate()) < 0);
 
         return result;
     }
@@ -489,11 +487,7 @@ public class ProjectMonitoringMisc {
         return result;
     }
 
-    public String ConvertDateToOurFormat(Date dateToConvert)
-    {
-        SimpleDateFormat outputDateFormat = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT);
-        return outputDateFormat.format(dateToConvert);
-    }
+
 
     public void WriteToStatus(StringBuilder statusText, boolean debug, String text)
     {
@@ -501,52 +495,6 @@ public class ProjectMonitoringMisc {
         if (debug) statusText.append(text + "<br>");
     }
 
-    public boolean CheckIfDateIsInsideDateSegmentInclusive(Date dateInQuestion, Date startSegment, Date endSegment)
-    {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startSegment);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        Date firstAdjustedToZeroDate = calendar.getTime();
-
-        calendar.setTime(endSegment);
-        calendar.set(Calendar.HOUR_OF_DAY, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
-        calendar.set(Calendar.MILLISECOND, 999);
-        Date secondAdjustedToEODDate = calendar.getTime();
-
-        return (dateInQuestion.after(firstAdjustedToZeroDate) || dateInQuestion.equals(firstAdjustedToZeroDate))&&
-            (dateInQuestion.before(secondAdjustedToEODDate) || dateInQuestion.equals(secondAdjustedToEODDate));
-    }
-
-    public int CompareZeroBasedDatesOnly(Date firstDate, Date secondDate)
-    {
-        return (getZeroTimeDate(firstDate).compareTo(getZeroTimeDate(secondDate)));
-    }
-
-
-
-
-    private static Date getZeroTimeDate(Date date) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        date = calendar.getTime();
-        return date;
-    }
-
-    private static Date getCurrentDate()
-    {
-        Calendar today = Calendar.getInstance();
-        today.set(Calendar.HOUR_OF_DAY, 0); // same for minutes and seconds
-        return today.getTime();
-    }
 
     public boolean isIssueOneOfOurs(Issue issue)
     {

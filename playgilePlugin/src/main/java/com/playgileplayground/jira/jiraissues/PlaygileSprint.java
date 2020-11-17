@@ -2,10 +2,9 @@ package com.playgileplayground.jira.jiraissues;
 
 import com.atlassian.jira.issue.Issue;
 import com.playgileplayground.jira.api.ProjectMonitor;
-import com.playgileplayground.jira.projectprogress.ProjectProgress;
+import com.playgileplayground.jira.impl.DateTimeUtils;
 import org.joda.time.DateTime;
 
-import java.text.DateFormat;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -243,9 +242,9 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
 
         try { //maybe resolution date does not exists for the issue - don't count it
             resolutionDate = new Date(issue.getResolutionDate().getTime());
-            int daysSinceBeginOfSprints = ProjectProgress.Days(resolutionDate, startDate);
+            int daysSinceBeginOfSprints = DateTimeUtils.Days(resolutionDate, startDate);
 
-            int sprintLength = ProjectProgress.Days(endDate, startDate);
+            int sprintLength = DateTimeUtils.Days(endDate, startDate);
             if (daysSinceBeginOfSprints >= 0 && sprintLength > 0)
             {
                 double percentage = (double)daysSinceBeginOfSprints / (double)sprintLength;

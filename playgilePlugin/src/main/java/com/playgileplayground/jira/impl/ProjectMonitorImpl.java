@@ -223,7 +223,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                                 PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                 startDate = sprint.getStartDate();
                                 //also get the sprint length
-                                sprintLength = ProjectProgress.AbsDays(sprint.getStartDate(), sprint.getEndDate()) + 1;
+                                sprintLength = DateTimeUtils.AbsDays(sprint.getStartDate(), sprint.getEndDate()) + 1;
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected start date " + startDate);
                                 projectMonitoringMisc.WriteToStatus(statusText, false,"Detected sprint length " + sprintLength);
 
@@ -359,7 +359,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             for (PlaygileSprint sprintToConvert : allRealSprints)
                             {
                                 resultRows.append(
-                                    projectMonitoringMisc.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
+                                    DateTimeUtils.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
                                         sprintToConvert.sprintVelocity  + ManageActiveObjects.PAIR_SEPARATOR +
                                         predictedVelocities.get(index++) + ManageActiveObjects.LINE_SEPARATOR
                                 );
@@ -447,7 +447,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     {
                         if (predictedIsLongest) {
                             chartRows.append(
-                                projectMonitoringMisc.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                     "" + ManageActiveObjects.PAIR_SEPARATOR +
                                     tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
                             );
@@ -455,7 +455,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                         else
                         {
                             chartRows.append(
-                                projectMonitoringMisc.ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                                DateTimeUtils.ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                     tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
                                     "" + ManageActiveObjects.LINE_SEPARATOR
                             );
@@ -464,17 +464,17 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     else //both records available
                     {
                         chartRows.append(
-                            projectMonitoringMisc.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                            DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
                                 tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
                                 tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
                         );
                     }
                 }
                 contextMap.put(CHARTROWS, chartRows.toString());
-                contextMap.put(IDEALENDOFPROJECT, projectMonitoringMisc.ConvertDateToOurFormat(ppr.idealProjectEnd));
+                contextMap.put(IDEALENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(ppr.idealProjectEnd));
                 //make the logic of color
                 contextMap.put(PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(ppr.progressDataColor));
-                contextMap.put(PREDICTEDENDOFPROJECT, projectMonitoringMisc.ConvertDateToOurFormat(ppr.predictedProjectEnd));
+                contextMap.put(PREDICTEDENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(ppr.predictedProjectEnd));
             }
             else
             {
