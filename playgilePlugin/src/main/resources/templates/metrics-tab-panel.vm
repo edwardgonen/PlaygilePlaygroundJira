@@ -30,6 +30,8 @@
             });
         </script>
         <script type="text/javascript">
+            const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString()
+            const BACKGROUND_COLOR = '#f4f5f7'
             google.charts.load('current', {'packages':['corechart']});
             google.charts.setOnLoadCallback(drawChart);
 
@@ -42,20 +44,19 @@
 
                 var data = new google.visualization.DataTable();
                 data.addColumn('date', 'Date');
+                data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn('number', 'Initial Velocity');
                 data.addColumn('number', 'Predicted Velocity');
 
                 var chartRows = '$chartrows';
                 //split and parse
-                if (typeof chartRows === 'undefined' || chartRows === null)
-                {
+                if (typeof chartRows === 'undefined' || chartRows === null){
                     alert("No rows for the chart");
                     return;
                 }
 
                 var lines = chartRows.split(LINE_SEPARATOR);
-                if (lines.length <= 0)
-                {
+                if (lines.length <= 0){
                     alert("Wrong rows format " + chartRows);
                     return;
                 }
@@ -71,13 +72,13 @@
 
                         var date = new Date(items[0]);
 
-                        var ideal = parseFloat(items[1]);
-                        if (isNaN(ideal)) ideal = null;
+                        var ideal = parseFloat(items[1]) || null;
 
-                        var predicted = parseFloat(items[2]);
-                        if (isNaN(predicted)) predicted = null;
+                        var predicted = parseFloat(items[2]) || null;
 
-                        data.addRow([date, ideal, predicted]);
+                        let _annotation = items[0]==TODAY_LOCAL_FORMAT? 'Remaining '+ideal+' SP ' :null;
+
+                        data.addRow([date,_annotation, ideal, predicted]);
                         //data.addRow([new Date(2010, 1, 1),  37.8, 80.8]);
                     }
                 });
@@ -88,17 +89,34 @@
                         0: {lineDashStyle: [0, 0]},
                         1: {lineDashStyle: [2, 2], color: '$predictioncolor'}
                     },
-                    vAxes: {
-                        0: {
+                    width:'100%',
+                    height:'100%',
+                    annotations: {
+                        style:'line',
+                        textStyle: {
+                            fontName: 'sans-serif',
+                            fontSize: 12,
+                            //bold: true,
+                            //italic: true,
+                            // The color of the text.
+                            //color: '#871b47',
+                            // The color of the text outline.
+                            //auraColor: '#d799ae',
+                            // The transparency of the text.
+                            //opacity: 0.8
+                        }
+                    },
+                    vAxes: [
+                        {
                             title: 'Story Points',
                             viewWindow: {
                                 min: 0
                             }
                         }
-                    },
+                    ],
                     curveType: 'function',
                     legend: { position: 'bottom' },
-                    backgroundColor: '#ecedf0'
+                    backgroundColor: BACKGROUND_COLOR
                 };
 
                 var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
@@ -112,17 +130,13 @@
                 dataIssueDistribution.addColumn('number', 'Value');
 
 
-                var notEstimatedNumber = parseFloat('$notestimatedstories');
-                if (isNaN(notEstimatedNumber)) notEstimatedNumber = 0;
+                var notEstimatedNumber = parseFloat('$notestimatedstories') || 0;
 
-                var largeStoriesNumber =  parseFloat('$largestories');
-                if (isNaN(largeStoriesNumber)) largeStoriesNumber = 0;
+                var largeStoriesNumber =  parseFloat('$largestories') || 0;
 
-                var veryLargeStoriesNumber =  parseFloat('$verylargestories');
-                if (isNaN(veryLargeStoriesNumber)) veryLargeStoriesNumber = 0;
+                var veryLargeStoriesNumber =  parseFloat('$verylargestories') || 0;
 
-                var estimatedStoriesNumber =  parseFloat('$estimatedstories');
-                if (isNaN(estimatedStoriesNumber)) estimatedStoriesNumber = 0;
+                var estimatedStoriesNumber =  parseFloat('$estimatedstories') || 0;
 
                 dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
                 dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
@@ -133,7 +147,9 @@
 
                 var optionsIssueDistribution = {
                     title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
-                    backgroundColor: '#ecedf0'
+                    backgroundColor: BACKGROUND_COLOR,
+                    width:'100%',
+                    height:'100%'
                 };
 
                 var chartIssueDistribution = new google.visualization.PieChart(document.getElementById('piechart'));
@@ -148,25 +164,21 @@
 
                 var velocityChartRows = '$realvelocities';
                 //split and parse
-                if (typeof velocityChartRows === 'undefined' || velocityChartRows === null)
-                {
+                if (typeof velocityChartRows === 'undefined' || velocityChartRows === null){
                     alert("No rows for the chart");
                     return;
                 }
                 var lines = velocityChartRows.split(LINE_SEPARATOR);
-                if (lines.length <= 0)
-                {
+                if (lines.length <= 0){
                     alert("Wrong velocity rows format " + chartRows);
                     return;
                 }
 
                 lines.forEach(function (line, index) {
-                    if (line.length > 0)//non empty line
-                    {
+                    if (line.length > 0){
                         //split by pair separator
                         var items = line.split(PAIR_SEPARATOR);
-                        if (items.length < 3)
-                        {
+                        if (items.length < 3){
                             alert("Wrong real velocity line format " + line);
                         }
 
@@ -188,6 +200,8 @@
                 var optionsVelocityChart = {
                     title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + '$averagerealvelocity',
                     lineWidth: 3,
+                    width:'100%',
+                    height:'100%',
                     series: {
                         0: {lineDashStyle: [0, 0]},
                         1: {lineDashStyle: [10, 2], color: 'black'}
@@ -202,7 +216,7 @@
                     },
                     curveType: 'function',
                     legend: { position: 'bottom' },
-                    backgroundColor: '#ecedf0'
+                    backgroundColor: BACKGROUND_COLOR
                 };
 
                 var chartVelocity = new google.visualization.LineChart(document.getElementById('velocity_chart'));
@@ -212,19 +226,16 @@
                 ////////// issues distribution
                 var distributionResult = '$issuedistribution';
                 //split and parse
-                if (typeof distributionResult === 'undefined' || distributionResult === null)
-                {
+                if (typeof distributionResult === 'undefined' || distributionResult === null){
                     alert("No distribution data for chart");
                     return;
                 }
 
                 var firstQ, secondQ, thirdQ, fourthQ, nonCompleted;
-                if (distributionResult.length > 0)//non empty line
-                {
+                if (distributionResult.length > 0){
                     //split by pair separator
                     var items = distributionResult.split(PAIR_SEPARATOR);
-                    if (items.length < 5)
-                    {
+                    if (items.length < 5){
                         alert("Wrong real velocity line format " + distributionResult);
                     }
 
@@ -274,6 +285,8 @@
                 ]);
 
                 var optionsIssueDistribution = {
+                    width:'100%',
+                    height:'100%',
                     title: "Average Issue Closure Distribution (%) in a typical sprint",
                     bar: {groupWidth: "90%"},
                     legend: { position: "bottom" },
@@ -285,7 +298,7 @@
                             }
                         }
                     },
-                    backgroundColor: '#ecedf0'
+                    backgroundColor: BACKGROUND_COLOR
                 };
                 var chartIssueDistribution = new google.visualization.ColumnChart(document.getElementById("issue_distribution"));
                 chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
@@ -359,16 +372,14 @@
                 </form>
             #end
             #if ($allisok)
-                <table>
-                    <tr>
-                        <td><div id="curve_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
-                        <td><div id="velocity_chart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div id="piechart" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
-                        <td><div id="issue_distribution" style="width: 485px; height: 300px; border: 1px solid #ccc"></div></td>
-                    </tr>
-                </table>
+                <div style="width:100%; height:35vh; display: inline-flex;">
+                    <div id="curve_chart" style="width:50%; height:100%; padding:5px"></div>
+                    <div id="velocity_chart" style="width:50%; height:100%;  padding:5px"></div>
+                </div>
+                <div style="width:100%; height:35vh; display: inline-flex;">
+                    <div id="piechart" style="width:50%; height:100%;  padding:5px"></div>
+                    <div id="issue_distribution" style="width:50%; height:100%;  padding:5px"></div>
+                </div>
 
             #end
         </body>

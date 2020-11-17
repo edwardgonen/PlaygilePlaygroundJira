@@ -2,7 +2,6 @@ package com.playgileplayground.jira.impl;
 
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.issuetype.IssueType;
-import com.atlassian.jira.issue.resolution.Resolution;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.project.Project;
@@ -211,7 +210,7 @@ public class ProjectMonitoringMisc {
             storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue), defaultNotEstimatedIssueValue);
 
             WriteToStatus(statusText, true, "Story points for initial estimation in issue " + issue.getId() + " " + storyPointValue + " created " + issue.getCreated());
-            if (bOurIssueType && CompareDatesOnly(issue.getCreated(), startDate) <= 0) //our issue and created before project started
+            if (bOurIssueType && CompareZeroBasedDatesOnly(issue.getCreated(), startDate) <= 0) //our issue and created before project started
             {
                 WriteToStatus(statusText, true, "Issue for initial estimation calculation " +
                     storyPointValue + " " +
@@ -311,7 +310,7 @@ public class ProjectMonitoringMisc {
 
         WriteToStatus(statusText, true, "#### starting to identify issues by artificial sprints");
 
-        while (CompareDatesOnly(constantSprintEnd, getCurrentDate()) < 0) {
+        while (CompareZeroBasedDatesOnly(constantSprintEnd, getCurrentDate()) < 0) {
             WriteToStatus(statusText, true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
             //find all issues closed withing this period
             PlaygileSprint sprintToAdd = new PlaygileSprint();
@@ -329,9 +328,11 @@ public class ProjectMonitoringMisc {
                     if (bIssueCompleted)
                     {
                         resolutionDate = issue.getResolutionDate();
-                        bIssueResolutionWithinSprint = (resolutionDate.before(constantSprintEnd) || resolutionDate.equals(constantSprintEnd))
-                        && (resolutionDate.after(constantSprintStart) || resolutionDate.equals(constantSprintStart))
-                        ;
+                        bIssueResolutionWithinSprint = CheckIfDateIsInsideDateSegmentInclusive(resolutionDate, constantSprintStart, constantSprintEnd);
+
+
+                        //CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) >= 0 && CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) <= 0
+                        //;
                     }
                     else // issue not completed - don't check resolution date
                     {
@@ -428,17 +429,17 @@ public class ProjectMonitoringMisc {
                     boolean bSprintFound =
                         // |-----| correct sprint
                         // |-----|
-                        (CompareDatesOnly(playgileSprint.getStartDate(), correctSprintStart) <= 0 && CompareDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) >= 0)
+                        (CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) <= 0 && CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) >= 0)
                         ||
-                        (CompareDatesOnly(playgileSprint.getStartDate(), correctSprintStart) >= 0 && CompareDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) <= 0)
+                        (CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) >= 0 && CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) <= 0)
                         ||
                         // |-----| correct sprint
                         //    |-----|
-                        (CompareDatesOnly(playgileSprint.getEndDate(), correctSprintStart) > 0 && CompareDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) < 0)
+                        (CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintStart) > 0 && CompareZeroBasedDatesOnly(playgileSprint.getEndDate(), correctSprintEnd) < 0)
                         ||
                         //     |-----| correct sprint
                         // |-----|
-                        (CompareDatesOnly(playgileSprint.getStartDate(), correctSprintStart) > 0 && CompareDatesOnly(playgileSprint.getStartDate(), correctSprintEnd) < 0)
+                        (CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintStart) > 0 && CompareZeroBasedDatesOnly(playgileSprint.getStartDate(), correctSprintEnd) < 0)
                         ;
                     bFoundOverlappingSprints |= bSprintFound;
                     if (bSprintFound) { //overlapping sprint found
@@ -460,7 +461,7 @@ public class ProjectMonitoringMisc {
             //next sprint
             correctSprintStart = ProjectProgress.AddDays(correctSprintStart, sprintLength);
             correctSprintEnd = ProjectProgress.AddDays(correctSprintStart, sprintLength - 1);
-        } while (CompareDatesOnly(correctSprintEnd, getCurrentDate()) < 0);
+        } while (CompareZeroBasedDatesOnly(correctSprintEnd, getCurrentDate()) < 0);
 
         return result;
     }
@@ -500,10 +501,35 @@ public class ProjectMonitoringMisc {
         if (debug) statusText.append(text + "<br>");
     }
 
-    public int CompareDatesOnly(Date firstDate, Date secondDate)
+    public boolean CheckIfDateIsInsideDateSegmentInclusive(Date dateInQuestion, Date startSegment, Date endSegment)
+    {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startSegment);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        Date firstAdjustedToZeroDate = calendar.getTime();
+
+        calendar.setTime(endSegment);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        Date secondAdjustedToEODDate = calendar.getTime();
+
+        return (dateInQuestion.after(firstAdjustedToZeroDate) || dateInQuestion.equals(firstAdjustedToZeroDate))&&
+            (dateInQuestion.before(secondAdjustedToEODDate) || dateInQuestion.equals(secondAdjustedToEODDate));
+    }
+
+    public int CompareZeroBasedDatesOnly(Date firstDate, Date secondDate)
     {
         return (getZeroTimeDate(firstDate).compareTo(getZeroTimeDate(secondDate)));
     }
+
+
+
+
     private static Date getZeroTimeDate(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
