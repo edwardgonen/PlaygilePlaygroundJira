@@ -429,7 +429,36 @@ http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?
 For example
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=defEstimValue&propertyValue=13
 
+
+---------------- jira stop restart -----------
+
 /opt/atlassian/jira/bin/stop-jira.sh и start-jira.sh for sandbox
+
+
+[12:40 PM] Maksim Gorgun
+    login: edg
+​[12:40 PM] Maksim Gorgun
+    password: 1qaz2wsX
+​[12:41 PM] Ed Gonen
+​[12:41 PM] Maksim Gorgun
+    10.200.34.8
+10.200.34.9
+
+[12:45 PM] Maksim Gorgun
+    /opt/atlassian/jira/bin/stop-jira.sh
+​[12:45 PM] Maksim Gorgun
+    /opt/atlassian/jira/bin/start-jira.sh
+​[12:46 PM] Maksim Gorgun
+    htop
+​[12:47 PM] Maksim Gorgun
+    tail -f /opt/jira-data/log/atlassian-jira.log
+
+    [1:10 PM] Maksim Gorgun
+        sudo -s вначале выполни
+    ​[1:11 PM] Maksim Gorgun
+        или добавляй sudo к каждой команде вначале
+
+
 
 ================================ Project preparation algorithm ----------------------------------
 

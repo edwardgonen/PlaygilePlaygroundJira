@@ -194,7 +194,11 @@ long startTime = System.nanoTime();
                                     //get real velocities
                                     //fill real sprint velocity
 
-                                    Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints,
+                                    //Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints,
+                                    //    roadmapFeatureDescriptor.StartDate,
+                                    //    roadmapFeatureDescriptor.TeamVelocity,
+                                    //    (int)roadmapFeatureDescriptor.SprintLength, statusText);
+                                    Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(foundIssues,
                                         roadmapFeatureDescriptor.StartDate,
                                         roadmapFeatureDescriptor.TeamVelocity,
                                         (int)roadmapFeatureDescriptor.SprintLength, statusText);

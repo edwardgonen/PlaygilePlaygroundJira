@@ -295,6 +295,66 @@ public class ProjectMonitoringMisc {
 
         return result;
     }
+    public Collection<PlaygileSprint> getAllRealSprintsVelocitiesForConstantSprints(Collection<Issue> issues, Date startDate, double teamVelocity, int sprintLength, StringBuilder statusText)
+    {
+        //in this algorithm I calculate each constant sprint velocity based on time frame
+        //for example - if the first sprint starts on January 1st, I calculate constant frames, Jan, 1st + sprintLength - 1, and so on
+        //So I don't rely on real sprints, just on the issues completed within each such period
+        ArrayList<PlaygileSprint> result = new ArrayList<>();
+
+        if (issues == null) return result;
+        if (sprintLength < 2) return result; //otherwise algorithm below will not end
+
+        Date constantSprintStart = startDate;
+        Date constantSprintEnd = ProjectProgress.AddDays(constantSprintStart, sprintLength - 1);
+
+        WriteToStatus(statusText, true, "#### starting to identify issues by artificial sprints");
+        while (CompareDatesOnly(constantSprintEnd, getCurrentDate()) < 0) {
+            WriteToStatus(statusText, true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
+            //find all issues closed withing this period
+            PlaygileSprint sprintToAdd = new PlaygileSprint();
+            double constantSprintProjectVelocity = 0;
+            for (Issue issue : issues)
+            {
+                boolean bIssueIsOurs = isIssueOneOfOurs(issue);
+                boolean bIssueCompleted = isIssueCompleted(issue);
+                boolean bIssueResolutionWithinSprint = issue.getResolutionDate().before(constantSprintEnd) || issue.getResolutionDate().equals(constantSprintEnd);
+                if (
+                        bIssueIsOurs &&
+                        bIssueCompleted &&
+                        bIssueResolutionWithinSprint
+                    )
+                {
+                    //issue closed within our constant sprint
+                    double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
+                    WriteToStatus(statusText, true, "Issue to count " + issue.getKey() + " with " + storyPointValue + " points");
+                    constantSprintProjectVelocity += storyPointValue;
+                }
+            }
+
+            sprintToAdd.setEndDate(constantSprintEnd);
+            sprintToAdd.sprintVelocity = constantSprintProjectVelocity;
+            sprintToAdd.setState(SprintState.CLOSED);
+            result.add(sprintToAdd);
+
+            //move to next sprint
+            constantSprintStart = ProjectProgress.AddDays(constantSprintStart, sprintLength);
+            constantSprintEnd = ProjectProgress.AddDays(constantSprintStart, sprintLength - 1);
+        }
+
+        WriteToStatus(statusText, true, "#### ended to identify issues by artificial sprints, found " + result.size());
+
+        //if number of calculated artificial sprints is 2 or less - we use the team velocity
+        if (result.size() < 3)
+        {
+            for (PlaygileSprint tmpSprint : result)
+            {
+                tmpSprint.sprintVelocity = teamVelocity;
+            }
+        }
+
+        return result;
+    }
     public Collection<PlaygileSprint> getAllRealSprintsVelocities(Collection<PlaygileSprint> playgileSprints, Date startDate, double teamVelocity, int sprintLength, StringBuilder statusText)
     {
         ArrayList<PlaygileSprint> result = new ArrayList<>();
