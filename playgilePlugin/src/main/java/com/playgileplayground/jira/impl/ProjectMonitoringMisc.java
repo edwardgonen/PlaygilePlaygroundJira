@@ -323,14 +323,16 @@ public class ProjectMonitoringMisc {
                 Date resolutionDate = null;
                 boolean bIssueResolutionWithinSprint = false;
                 try {
-                    if (bIssueCompleted)
+                    if (bIssueCompleted && bIssueIsOurs)
                     {
                         resolutionDate = issue.getResolutionDate();
-                        bIssueResolutionWithinSprint = DateTimeUtils.CheckIfDateIsInsideDateSegmentInclusive(resolutionDate, constantSprintStart, constantSprintEnd);
+                        //bIssueResolutionWithinSprint = DateTimeUtils.CheckIfDateIsInsideDateSegmentInclusive(resolutionDate, constantSprintStart, constantSprintEnd);
 
 
-                        //CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) >= 0 && CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) <= 0
-                        //;
+                        bIssueResolutionWithinSprint =
+                            DateTimeUtils.CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) >= 0 &&
+                            DateTimeUtils.CompareZeroBasedDatesOnly(resolutionDate, constantSprintEnd) <= 0;
+
                     }
                     else // issue not completed - don't check resolution date
                     {
