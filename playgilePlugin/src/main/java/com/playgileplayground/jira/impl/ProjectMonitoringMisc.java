@@ -2,6 +2,7 @@ package com.playgileplayground.jira.impl;
 
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.issue.resolution.Resolution;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.project.Project;
@@ -309,6 +310,7 @@ public class ProjectMonitoringMisc {
         Date constantSprintEnd = ProjectProgress.AddDays(constantSprintStart, sprintLength - 1);
 
         WriteToStatus(statusText, true, "#### starting to identify issues by artificial sprints");
+
         while (CompareDatesOnly(constantSprintEnd, getCurrentDate()) < 0) {
             WriteToStatus(statusText, true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
             //find all issues closed withing this period
@@ -316,21 +318,46 @@ public class ProjectMonitoringMisc {
             double constantSprintProjectVelocity = 0;
             for (Issue issue : issues)
             {
+
                 boolean bIssueIsOurs = isIssueOneOfOurs(issue);
                 boolean bIssueCompleted = isIssueCompleted(issue);
-                boolean bIssueResolutionWithinSprint = issue.getResolutionDate().before(constantSprintEnd) || issue.getResolutionDate().equals(constantSprintEnd);
+
+                //statusText.append("EEEDDD " + issue.getKey() + " " + issue.getIssueType().getName() + " bool is " + bIssueIsOurs + " issue completed " + issue.getStatus().getStatusCategory().getKey());
+                Date resolutionDate = null;
+                boolean bIssueResolutionWithinSprint = false;
+                try {
+                    if (bIssueCompleted)
+                    {
+                        resolutionDate = issue.getResolutionDate();
+                        bIssueResolutionWithinSprint = (resolutionDate.before(constantSprintEnd) || resolutionDate.equals(constantSprintEnd))
+                        && (resolutionDate.after(constantSprintStart) || resolutionDate.equals(constantSprintStart))
+                        ;
+                    }
+                    else // issue not completed - don't check resolution date
+                    {
+                        bIssueResolutionWithinSprint = false;
+                    }
+                }
+                catch (Exception e)
+                {
+                    statusText.append("EEEDDD EXCEPTION " + e);
+                }
+
                 if (
                         bIssueIsOurs &&
                         bIssueCompleted &&
                         bIssueResolutionWithinSprint
                     )
                 {
+
                     //issue closed within our constant sprint
                     double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                    WriteToStatus(statusText, true, "Issue to count " + issue.getKey() + " with " + storyPointValue + " points");
+                    WriteToStatus(statusText, true, "Issue to count " + issue.getKey() + " with " + storyPointValue + " points and resolution date " + resolutionDate);
                     constantSprintProjectVelocity += storyPointValue;
                 }
             }
+
+
 
             sprintToAdd.setEndDate(constantSprintEnd);
             sprintToAdd.sprintVelocity = constantSprintProjectVelocity;

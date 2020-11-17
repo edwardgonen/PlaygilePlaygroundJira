@@ -344,7 +344,8 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                             //fill real sprint velocity
 
                             //Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints, startDate, teamVelocity, (int)sprintLength, statusText);
-                            Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(foundIssues, startDate, teamVelocity, (int)sprintLength, statusText);
+                            Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(issues, startDate, teamVelocity, (int)sprintLength, statusText);
+
                             //linear regression
                             ArrayList<Double> predictedVelocities;
                             predictedVelocities = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, startDate, statusText);

@@ -198,7 +198,7 @@ long startTime = System.nanoTime();
                                     //    roadmapFeatureDescriptor.StartDate,
                                     //    roadmapFeatureDescriptor.TeamVelocity,
                                     //    (int)roadmapFeatureDescriptor.SprintLength, statusText);
-                                    Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(foundIssues,
+                                    Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(issues,
                                         roadmapFeatureDescriptor.StartDate,
                                         roadmapFeatureDescriptor.TeamVelocity,
                                         (int)roadmapFeatureDescriptor.SprintLength, statusText);
