@@ -20,12 +20,7 @@ public class DateTimeUtils {
     public static boolean CheckIfDateIsInsideDateSegmentInclusive(Date dateInQuestion, Date startSegment, Date endSegment)
     {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startSegment);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        Date firstAdjustedToZeroDate = calendar.getTime();
+        Date firstAdjustedToZeroDate = getZeroTimeDate(startSegment);
 
         calendar.setTime(endSegment);
         calendar.set(Calendar.HOUR_OF_DAY, 23);
@@ -53,6 +48,7 @@ public class DateTimeUtils {
         date = calendar.getTime();
         return date;
     }
+
 
     public static Date getCurrentDate()
     {
