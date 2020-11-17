@@ -42,8 +42,8 @@
 
                 var data = new google.visualization.DataTable();
                 data.addColumn('date', 'Date');
-                data.addColumn('number', 'Based on initial velocity');
-                data.addColumn('number', 'Based on real project velocity');
+                data.addColumn('number', 'Initial Velocity');
+                data.addColumn('number', 'Predicted Velocity');
 
                 var chartRows = '$chartrows';
                 //split and parse
@@ -82,7 +82,7 @@
                     }
                 });
                 var options = {
-                    title: 'Project Monitor. Predicted completion is ' + '$predictedendofproject' + ' based on the project average velocity of ' + '$averagerealvelocity',
+                    title: 'Project Monitor\nPredicted completion is ' + '$predictedendofproject' + ' based on velocity of ' + '$averagerealvelocity' + ' SP',
                     lineWidth: 3,
                     series: {
                         0: {lineDashStyle: [0, 0]},
@@ -143,8 +143,8 @@
                 ///////////////////////velocity chart ////////////////
                 var dataVelocity = new google.visualization.DataTable();
                 dataVelocity.addColumn('date', 'Date');
-                dataVelocity.addColumn('number', 'Real Velocity');
-                dataVelocity.addColumn('number', 'Average Real Velocity');
+                dataVelocity.addColumn('number', 'Actual Velocity');
+                dataVelocity.addColumn('number', 'Predicted Velocity');
 
                 var velocityChartRows = '$realvelocities';
                 //split and parse
@@ -186,7 +186,7 @@
                 });
 
                 var optionsVelocityChart = {
-                    title: 'Real Velocity Chart. Linear regression predicted velocity ' + '$averagerealvelocity',
+                    title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + '$averagerealvelocity',
                     lineWidth: 3,
                     series: {
                         0: {lineDashStyle: [0, 0]},
