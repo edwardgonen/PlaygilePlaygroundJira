@@ -1,10 +1,10 @@
 package com.playgileplayground.jira.projectprogress;
 
+import com.playgileplayground.jira.impl.DateTimeUtils;
+
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Ext_EdG on 7/9/2020.
@@ -47,9 +47,9 @@ public class ProjectProgress
         Date lastDateInProjectData =
             _progressData.GetEstimationDatesList().get(_progressData.GetEstimationDatesList().size() - 1);
         DataPair tmpPair;
-        int daysLeftSinceLastUpdateTillEndOfSprint = SprintLength - 1 - AbsDays(lastDateInProjectData, startProjectDate) % SprintLength;
+        int daysLeftSinceLastUpdateTillEndOfSprint = SprintLength - 1 - DateTimeUtils.AbsDays(lastDateInProjectData, startProjectDate) % SprintLength;
         Date closestSprintEnd =
-            ProjectProgress.AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
+            DateTimeUtils.AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
 
         double endSprintExpectation = 0;
         double endSprintExpectatonIdeal = 0;
@@ -85,7 +85,7 @@ public class ProjectProgress
         boolean continueAddingProgressPoints = true;
         while (endSprintExpectation > 0 || endSprintExpectatonIdeal > 0)
         {
-            pointDate = ProjectProgress.AddDays(pointDate, SprintLength);
+            pointDate = DateTimeUtils.AddDays(pointDate, SprintLength);
             endSprintExpectation = CalculateIdealEstimationByDate(lastSprintEnd, pointDate, lastFullSprintEndValue, dailyVelocity);
             continueAddingProgressPoints = AddDataPairToList(continueAddingProgressPoints, pointDate, endSprintExpectation, _progressData);
             endSprintExpectatonIdeal = CalculateIdealEstimationByDate(lastSprintEnd, pointDate, lastFullSprintEndValue, dailyIdealVelocity);
@@ -119,7 +119,7 @@ public class ProjectProgress
         result.predictedProjectEnd = predictedProjectEnd;
 
         //logic of color
-        int differenceInDays = ProjectProgress.Days(predictedProjectEnd, idealProjectEnd);
+        int differenceInDays = DateTimeUtils.Days(predictedProjectEnd, idealProjectEnd);
         if (differenceInDays <= 7) result.progressDataColor = new Color(0,153,0);//dark green
         else
         if (differenceInDays > 7 && differenceInDays < 30) result.progressDataColor = new Color(204,204,0);//dark yellow;
@@ -141,44 +141,10 @@ public class ProjectProgress
     }
     private Double CalculateIdealEstimationByDate(Date projectStartDate, Date currentDate, double initialProjectEstimation, double dailyVelocity)
     {
-        long distanceDays = ProjectProgress.AbsDays(currentDate, projectStartDate);
+        long distanceDays = DateTimeUtils.AbsDays(currentDate, projectStartDate);
         return Math.max(initialProjectEstimation - distanceDays * dailyVelocity, 0);
     }
-    public static Date AddDays(Date date, int addDays)
-    {
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        c.add(Calendar.DATE, addDays);
-        return c.getTime();
-    }
-    public static Date AddMonths(Date date, int addMonths)
-    {
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        c.add(Calendar.MONTH, addMonths);
-        return c.getTime();
-    }
-    public static int AbsDays(Date secondDate, Date firstDate)
-    {
-        long diffInMillies = Math.abs(secondDate.getTime() - firstDate.getTime());
-        return (int)TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-    }
-    public static boolean CompareDatesByMonthYear(Date firstDate, Date secondDate)
-    {
-        Calendar cFirst = Calendar.getInstance();
-        cFirst.setTime(firstDate);
-        Calendar cSecond = Calendar.getInstance();
-        cSecond.setTime(secondDate);
-        return (cFirst.get(Calendar.MONTH) == cSecond.get(Calendar.MONTH)) && (cFirst.get(Calendar.YEAR) == cSecond.get(Calendar.YEAR));
-    }
-    public static int Days(Date secondDate, Date firstDate)
-    {
-        int sign = 1;
-        long diffInMillies = secondDate.getTime() - firstDate.getTime();
-        if (diffInMillies >= 0) sign = 1;
-        else sign = -1;
-        return sign * (int)TimeUnit.DAYS.convert(Math.abs(diffInMillies), TimeUnit.MILLISECONDS);
-    }
+
     public static String convertColorToHexadeimal(Color color)
     {
         String hex = Integer.toHexString(color.getRGB() & 0xffffff);

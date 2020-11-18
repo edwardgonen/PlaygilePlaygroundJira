@@ -1,7 +1,6 @@
 package com.playgileplayground.jira.impl;
 
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 
 import java.awt.*;
@@ -35,12 +34,12 @@ public class ProjectPreparationPresentation {
         Date lastDate = ourRoadmapFeatures.get(ourRoadmapFeatures.size() - 1).BusinessApprovalDate;
 
         //go through all months from first record to the last
-        for (Date date = firstDate; date.before(lastDate) || date.equals(lastDate); date = ProjectProgress.AddMonths(date, 1)) {
+        for (Date date = firstDate; date.before(lastDate) || date.equals(lastDate); date = DateTimeUtils.AddMonths(date, 1)) {
             //go through the list and build our array and find year/month
             MonthlyRoadmapFeatures monthlyRoadmapFeatures = null;
             for (RoadmapFeatureDescriptor feature : ourRoadmapFeatures)
             {
-                if (ProjectProgress.CompareDatesByMonthYear(feature.BusinessApprovalDate, date))
+                if (DateTimeUtils.CompareDatesByMonthYear(feature.BusinessApprovalDate, date))
                 {
                     if (monthlyRoadmapFeatures == null) {
                         monthlyRoadmapFeatures = new MonthlyRoadmapFeatures();
@@ -94,8 +93,8 @@ public class ProjectPreparationPresentation {
                                 featureTardiness = IssueTardiness.TOO_LATE;
                             } else //we are within issue now
                             {
-                                int duration = ProjectProgress.AbsDays(preparationIssue.getDueDate(), preparationIssue.getStartDate());
-                                int daysSinceStart = ProjectProgress.AbsDays(today, preparationIssue.getStartDate());
+                                int duration = DateTimeUtils.AbsDays(preparationIssue.getDueDate(), preparationIssue.getStartDate());
+                                int daysSinceStart = DateTimeUtils.AbsDays(today, preparationIssue.getStartDate());
                                 completeness = Math.round((float)daysSinceStart / (float)duration * 100.0f);
                                 if (completeness > 90.0)
                                 {

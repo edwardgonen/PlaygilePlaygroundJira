@@ -4,8 +4,8 @@ import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.playgileplayground.jira.impl.DateTimeUtils;
 import com.playgileplayground.jira.projectprogress.DataPair;
-import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import org.apache.commons.lang.time.DateUtils;
 
 import javax.inject.Inject;
@@ -419,12 +419,12 @@ public final class ManageActiveObjects{
 
             DataPair firstRecord = existingData.get(0);
             DataPair lastRecord = existingData.get(existingData.size() - 1);
-            int fullSprints = ProjectProgress.Days(lastRecord.Date, firstRecord.Date) / segmentSize;
-            int partialSprintDays = ProjectProgress.Days(lastRecord.Date, firstRecord.Date) % segmentSize;
+            int fullSprints = DateTimeUtils.Days(lastRecord.Date, firstRecord.Date) / segmentSize;
+            int partialSprintDays = DateTimeUtils.Days(lastRecord.Date, firstRecord.Date) % segmentSize;
             //find the start of last segment as current date minus 2 weeks
 
 
-            Date startOfLastSegment = ProjectProgress.AddDays(Calendar.getInstance().getTime(), -segmentSize);
+            Date startOfLastSegment = DateTimeUtils.AddDays(Calendar.getInstance().getTime(), -segmentSize);
             if (startOfLastSegment.compareTo(firstRecord.Date) < 0)
             {
                 startOfLastSegment = firstRecord.Date;
@@ -440,7 +440,7 @@ public final class ManageActiveObjects{
                 for (DataPair dataPair : existingData) {
                     if (dataPair.Date.compareTo(startOfLastSegment) < 0) //only compress if we are not yet beyond start of last segment
                     {
-                        int segmentNumber = ProjectProgress.Days(dataPair.Date, firstRecord.Date) / segmentSize;
+                        int segmentNumber = DateTimeUtils.Days(dataPair.Date, firstRecord.Date) / segmentSize;
                         segmentsData[segmentNumber] = dataPair;
                     } else //last segment
                     {

@@ -142,7 +142,7 @@ long startTime = System.nanoTime();
                                         PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                         roadmapFeatureDescriptor.StartDate = sprint.getStartDate();
                                         //also get the sprint length
-                                        roadmapFeatureDescriptor.SprintLength = ProjectProgress.AbsDays(sprint.getStartDate(), sprint.getEndDate()) + 1;
+                                        roadmapFeatureDescriptor.SprintLength = DateTimeUtils.AbsDays(sprint.getStartDate(), sprint.getEndDate()) + 1;
                                         //set to AO entity - project started, start date and sprint length
                                         roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.STARTED;
                                         maor = mao.SetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), true);
@@ -194,7 +194,11 @@ long startTime = System.nanoTime();
                                     //get real velocities
                                     //fill real sprint velocity
 
-                                    Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints,
+                                    //Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints,
+                                    //    roadmapFeatureDescriptor.StartDate,
+                                    //    roadmapFeatureDescriptor.TeamVelocity,
+                                    //    (int)roadmapFeatureDescriptor.SprintLength, statusText);
+                                    Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(issues,
                                         roadmapFeatureDescriptor.StartDate,
                                         roadmapFeatureDescriptor.TeamVelocity,
                                         (int)roadmapFeatureDescriptor.SprintLength, statusText);
@@ -285,15 +289,15 @@ long startTime = System.nanoTime();
                                 //status
                                 statusScore * 100.0 + ManageActiveObjects.PAIR_SEPARATOR +
                                 //start date
-                                projectMonitoringMisc.ConvertDateToOurFormat(rfd.StartDate) + ManageActiveObjects.PAIR_SEPARATOR +
+                                DateTimeUtils.ConvertDateToOurFormat(rfd.StartDate) + ManageActiveObjects.PAIR_SEPARATOR +
                                 //predicted velocity
                                 rfd.TeamVelocity + ManageActiveObjects.PAIR_SEPARATOR +
                                 //real project velocity
                                 rfd.ProjectVelocity + ManageActiveObjects.PAIR_SEPARATOR +
                                 //predicted end date
-                                projectMonitoringMisc.ConvertDateToOurFormat(rfd.IdealEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
+                                DateTimeUtils.ConvertDateToOurFormat(rfd.IdealEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
                                 //real end date
-                                projectMonitoringMisc.ConvertDateToOurFormat(rfd.PredictedEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
+                                DateTimeUtils.ConvertDateToOurFormat(rfd.PredictedEndOfProjet) + ManageActiveObjects.PAIR_SEPARATOR +
 
                                 rfd.EstimatedStories.NotEstimatedStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
                                 rfd.EstimatedStories.LargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
@@ -379,7 +383,7 @@ long startTime = System.nanoTime();
                   else if (velocityDifference <= 0.9) veloctiyDifferenceImpact = 0.80;
 
         //completion date difference impact
-        int completionDateDifference = ProjectProgress.Days(rfd.PredictedEndOfProjet, rfd.IdealEndOfProjet) / 14;
+        int completionDateDifference = DateTimeUtils.Days(rfd.PredictedEndOfProjet, rfd.IdealEndOfProjet) / 14;
         double completionDateDifferenceImpact = 1.0;
         if (completionDateDifference > 2) completionDateDifferenceImpact = 0.1;
         else if (completionDateDifference > 1) completionDateDifferenceImpact = 0.5;
