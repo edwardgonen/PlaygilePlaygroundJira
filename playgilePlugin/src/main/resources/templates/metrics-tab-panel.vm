@@ -72,7 +72,7 @@
 
                         var date = new Date(items[0]);
 
-                        var ideal = parseFloat(items[1]) || null;
+                        var ideal = Math.round(parseFloat(items[1])) || null;
 
                         var predicted = parseFloat(items[2]) || null;
 
