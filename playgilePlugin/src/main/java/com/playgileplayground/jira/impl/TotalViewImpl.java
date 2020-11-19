@@ -197,7 +197,7 @@ long startTime = System.nanoTime();
                                     //Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints,
                                     //    roadmapFeatureDescriptor.StartDate,
                                     //    roadmapFeatureDescriptor.TeamVelocity,
-                                    //    (int)roadmapFeatureDescriptor.SprintLength, statusText);
+                                    //    (int)roadmapFeatureDescriptor.SprintLength, logText);
                                     Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(issues,
                                         roadmapFeatureDescriptor.StartDate,
                                         roadmapFeatureDescriptor.TeamVelocity,
@@ -207,10 +207,10 @@ long startTime = System.nanoTime();
                                     predictedVelocities = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, roadmapFeatureDescriptor.StartDate, statusText);
 
                                     //averaging
-                                    //predictedVelocities = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, roadmapFeatureDescriptor.StartDate, statusText);
+                                    //predictedVelocities = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, roadmapFeatureDescriptor.StartDate, logText);
 
                                     //and the average is
-                                    //projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, statusText);
+                                    //projectVelocity = projectMonitoringMisc.getAverageProjectRealVelocity(allRealSprints, teamVelocity, logText);
                                     projectVelocity = (int)Math.round(predictedVelocities.get(predictedVelocities.size() - 1));
                                     if (projectVelocity <= 0) {
                                         projectVelocity = roadmapFeatureDescriptor.TeamVelocity;

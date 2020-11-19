@@ -8,8 +8,6 @@ import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.issue.link.IssueLink;
-import com.atlassian.jira.issue.link.IssueLinkManager;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.jql.builder.JqlClauseBuilder;
@@ -23,32 +21,27 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.BuildUtilsInfo;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
-import com.playgileplayground.jira.impl.ProjectMonitorImpl;
-import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.OldProjectMonitorImpl;
 import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
-import com.playgileplayground.jira.impl.TotalViewImpl;
-import org.joda.time.DateTime;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
  * Created by Ext_EdG on 7/6/2020.
  */
 public class JiraInterface {
-    ProjectMonitorImpl mainClass;
+    OldProjectMonitorImpl mainClass;
     ApplicationUser applicationUser;
     SearchService searchService;
     String jiraVersion;
-    public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
+    public JiraInterface(OldProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
     {
         this.mainClass = mainClass;
         this.applicationUser = applicationUser;

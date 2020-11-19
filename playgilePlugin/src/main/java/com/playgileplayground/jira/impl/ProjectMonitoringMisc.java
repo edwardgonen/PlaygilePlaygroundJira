@@ -319,7 +319,7 @@ public class ProjectMonitoringMisc {
                 boolean bIssueIsOurs = isIssueOneOfOurs(issue);
                 boolean bIssueCompleted = isIssueCompleted(issue);
 
-                //statusText.append("EEEDDD " + issue.getKey() + " " + issue.getIssueType().getName() + " bool is " + bIssueIsOurs + " issue completed " + issue.getStatus().getStatusCategory().getKey());
+                //logText.append("EEEDDD " + issue.getKey() + " " + issue.getIssueType().getName() + " bool is " + bIssueIsOurs + " issue completed " + issue.getStatus().getStatusCategory().getKey());
                 Date resolutionDate = null;
                 boolean bIssueResolutionWithinSprint = false;
                 try {

@@ -1,0 +1,109 @@
+================================ Project preparation algorithm ----------------------------------
+
+1. Get list of roadmap features that not Cancelled and not Go-Live not Closed not done not Resolved (project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved)
+2. for each RF:
+   1. Get query issuefunction in linkedIssuesOf('id=PKP-85')
+      This will give a list of product-related linked issues. Monetization(PKM), BI(BIT), BA(PKBA), Economics (PKEC) tasks - those names should appear in the Key of issue
+      i.e. substring("PKM") or something. I'll build array of PKM, PKBA, PKEC, BIT. Each element may contain a list of tasks. For example
+      there may be 2 or 3 links that have PKM in the name. I'll group them together.
+
+      Roadmap Feature New Tutorial
+               PKM
+                  ---- PKM task 1
+                  ---- PKM task 2
+               PKBA
+                  ---- PKBA task1
+               BIT
+                  ---- BIT task1
+                  ---- BIT taks2
+               PKEC
+                  ---- PKEC task3
+
+   2. Each task above should contain start date (we use creation date if missing) and Due Date. If no due date - mark that task on the gantt as "invalid"
+   3. We draw
+         Monetization
+                       startdate task1 ------------------ due date task1
+                                startdate task2 --------------- due date task2
+         Economics
+                            startdate task1 ------------------ due date task1
+         BI
+                                            startdate task1 ------------------ due date task1
+                          startdate task2 --------------- due date task2
+         BA
+                                                        startdate task3 ------------------ due date task3
+
+   4. No percentage done in the tasks
+   5. Progress indication colors
+    1. if less than 10% of task duration from today to the due date we show the task yellow
+    2. If today is beyond the due date shoe the task red
+    3. Otherwise show it green
+
+
+   6. In Web page 3 levels. The roadmap feature contains Business Approval Date. By this date we group the Roadmap features on the screen
+      August
+        +RF1 (general info about feature including color-coded status)
+        +RF2
+                    BI         ===========
+                    Economy        ------------
+                    BA                  -------------
+      September
+        +RF2
+        +RF3
+      October
+      Not yet planned features (here I group all those without Business approval date)
+
+ ========================================== Roadmap features analysis algorithm =====================================
+      1. There are following configuration parameters to the algorithm that are stored in Jira DB (Active Objects) per each RF
+         Default SP Value for non-estimated (<= 0) stories and tasks
+         Sprint length
+         RF Start date
+         Default initial velocity
+
+      2. The list of all RFs for a project is achieved via the following query
+              String searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\"
+                            and status != Cancelled and status != Go-Live and status != \"On Hold\"";
+              the featureKey = "Roadmap Feature";
+
+      3. If no Roadmap features found by the query above - a message will be given to the user and no list will be presented.
+
+         The query for issues in RF is done as below:
+           if (Jira version > 7.x ) && //for production jira versin is > 7. Needed for backward compatibility
+               It is not Board King project //temporary limitation because of something with BK project
+               then
+                    query = "issueFunction in linkedIssuesOf(\"issueKey=" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
+           else //old form for dev jira environment and BK
+                    searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
+
+        If the number of found issues from the query above is 0 the Roadmap Feature is considered wrongly defined. It will not appear
+        in our lists and thus won't be available. An appropriate log will be written, though no message will be given
+
+      4. If the selected RF is well-configured (i.e. at least one issue exists) we will do the following:
+         4.1 Determine if the RF has started:
+             if (RF Start date exists in Configuration and it is <= Current date) the RF start date is set to that value and project is considered started
+             else if there is at least one closed or active sprint the RF start date is set to that first (oldest) sprint start date
+             else since we have at least one issue in backlog the RF start date will be set to the creation date of the oldest issue
+             *** one of the conditions above true will result in RF considered as Started
+             else the RF is considered not started. Such RF will not appear in the list
+
+         4.2 The Sprint length is determined as follow:
+             If defined in configuration (i.e. > 0) then Sprint length = configured
+             else Sprint length = (End of oldest sprint - Start of oldest sprint)
+             else Sprint length = 14 (hardcoded default).
+             In any case the sprint length is rounded to 7 days. I.e. for value of 4 it will be 7, for 9 it will be 14 etc.
+         4.3 Default SP Value for non-estimated (<= 0) stories and tasks:
+             If configured will be used as default estimation for non estimated issues
+             else a hard-coded value of 13 will be used
+         4.4 Default initial velocity:
+             It will be used for the RF completion prediction when there is not enough information to calculate real velocity (i.e. 2 or less closed sprints)
+             If not configured - a hard-coded value of 50 will be used
+
+      5. Once all those values from above are calculated we do:
+         5.1 Go from the RF start date till today with a step of "Sprint length - 1" (if sprint starts on Tuesday, it will end on Monday i.e. -1 day)
+             5.1.1 Calculate all stories closed within that period. Story is considered closed within this period if is in the "Done" status
+                   and the Resolution date is within that period (>= start <= end of sprint)
+             5.1.2 Calculate the sum of estimations for all not Done user stories in the list
+             5.1.3 Calculate predictions of RF completion based on configured velocity and real velocity (both are presented on the chart)
+             5.1.4 Calculate current distribution of not done issues by their estimation values - very large, large, medium, normal
+         5.2 After we finished with all "sprints" calculate issues closure average distribution across the sprints
+         5.3 Serialize everything for Web
+
