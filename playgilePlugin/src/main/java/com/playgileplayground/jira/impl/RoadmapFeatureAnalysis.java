@@ -29,13 +29,16 @@ public class RoadmapFeatureAnalysis {
 
 
     /////////// publics
-    public StringBuilder logText;
     public String messageToDisplay;
     public boolean bProcessed = false;
     public ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
+    Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
     public double[] overallIssuesDistributionInSprint = new double[ProjectMonitor.DISTRIBUTION_SIZE];
     public List<PlaygileIssue> allPlaygileIssues = new ArrayList<>();
     public List<PlaygileIssue> futurePlaygileIssues = new ArrayList<>();
+    public double remainingTotalEstimations;
+    public double predictedVelocity;
+    public ArrayList<Double> interpolatedVelocityPoints;
 
 
 
@@ -67,7 +70,7 @@ public class RoadmapFeatureAnalysis {
     {
         boolean result = false;
 
-
+        defaultNotEstimatedIssueValue = getDefaultValueForNonEstimatedIssue();
         //get list of issues and convert them to PlaygileIssues
 
 
@@ -76,7 +79,7 @@ public class RoadmapFeatureAnalysis {
 
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);
-                playgileIssue.instantiatePlaygileIssue();
+                playgileIssue.instantiatePlaygileIssue(defaultNotEstimatedIssueValue);
                 //get sprints for issue
                 projectMonitoringMisc.addIssueSprintsToList(playgileIssue.jiraIssue, playgileSprints);
 
@@ -85,6 +88,9 @@ public class RoadmapFeatureAnalysis {
                 if (!playgileIssue.bIssueCompleted && playgileIssue.bOurIssueType)
                 {
                     futurePlaygileIssues.add(playgileIssue);
+                    //adjust to default if needed
+                    double estimationForIssue = playgileIssue.getAdjustedEstimationValue();
+                    remainingTotalEstimations += estimationForIssue;
                 }
             }
 
@@ -101,12 +107,40 @@ public class RoadmapFeatureAnalysis {
             getConfiguredParameters(oldestSprint);
 
 
+            //add current estimation to the list of estimations
+            //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
+            Date timeStamp = DateTimeUtils.getCurrentDate();
+            StatusText.getInstance().add(false,"Current time to add to list " + timeStamp);
+            ManageActiveObjectsResult maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), timeStamp, remainingTotalEstimations);
+
+
+            //get real velocities
+            //fill real sprint velocity
+
+            //Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints, startDateRoadmapFeature, plannedRoadmapFeatureVelocity, (int)sprintLengthRoadmapFeature, logText);
+            artificialTimeWindowsForVelocityCalculation = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantTimeWindows(allPlaygileIssues, startDateRoadmapFeature, plannedRoadmapFeatureVelocity, (int)sprintLengthRoadmapFeature);
+
+            //linear regression
+            interpolatedVelocityPoints = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(artificialTimeWindowsForVelocityCalculation, startDateRoadmapFeature);
+
+            //averaging
+            //interpolatedVelocityPoints = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, startDate, logText);
+
+            predictedVelocity = (int)Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
+            if (predictedVelocity <= 0) {
+                predictedVelocity = plannedRoadmapFeatureVelocity;
+                StatusText.getInstance().add(true,"Project velocity is 0, setting to team velocity " + plannedRoadmapFeatureVelocity);
+            }
+
+            //now do predictions
+
+
 
             result = true;
         }
         else
         {
-            logText.append("Failed to retrieve any project issues for " + roadmapFeature.getSummary());
+            StatusText.getInstance().add(true, "Failed to retrieve any project issues for " + roadmapFeature.getSummary());
             messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
                 ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
             result = false;
@@ -131,6 +165,16 @@ public class RoadmapFeatureAnalysis {
         return roadmapFeature.getKey() + " " + roadmapFeature.getSummary();
     }
 
+    private double getDefaultValueForNonEstimatedIssue()
+    {
+        defaultNotEstimatedIssueValue = 0;
+        ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            defaultNotEstimatedIssueValue = (double)maor.Result;
+        }
+        if (defaultNotEstimatedIssueValue <= 0) defaultNotEstimatedIssueValue = ProjectMonitor.defaultNotEstimatedIssueValueHardCoded;
+        return defaultNotEstimatedIssueValue;
+    }
     private void getConfiguredParameters(PlaygileSprint oldestSprint)
     {
         //we read them from DB (Active objects) and provide fallback if not found
@@ -141,12 +185,7 @@ public class RoadmapFeatureAnalysis {
         }
         if (plannedRoadmapFeatureVelocity <= 0) plannedRoadmapFeatureVelocity = ProjectMonitor.defaultInitialRoadmapFeatureVelocity;
 
-        defaultNotEstimatedIssueValue = 0;
-        maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
-        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            defaultNotEstimatedIssueValue = (double)maor.Result;
-        }
-        if (defaultNotEstimatedIssueValue <= 0) defaultNotEstimatedIssueValue = ProjectMonitor.defaultNotEstimatedIssueValueHardCoded;
+        getDefaultValueForNonEstimatedIssue();
 
         startDateRoadmapFeature = null;
         maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));

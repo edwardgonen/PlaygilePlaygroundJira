@@ -65,7 +65,6 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
         Map<String, Object> contextMap = new HashMap<>();
         String messageToDisplay = "";
         boolean bAllisOk;
-        ManageActiveObjectsResult maor;
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
         JiraQueryResult jqr;
 

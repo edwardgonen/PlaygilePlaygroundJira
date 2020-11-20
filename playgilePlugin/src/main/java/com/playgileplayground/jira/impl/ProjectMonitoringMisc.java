@@ -8,6 +8,7 @@ import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
+import com.playgileplayground.jira.jiraissues.PlaygileIssue;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
@@ -295,6 +296,7 @@ public class ProjectMonitoringMisc {
 
         return result;
     }
+
     public Collection<PlaygileSprint> getAllRealSprintsVelocitiesForConstantSprints(Collection<Issue> issues, Date startDate, double teamVelocity, int sprintLength)
     {
         //in this algorithm I calculate each constant sprint velocity based on time frame
@@ -333,7 +335,7 @@ public class ProjectMonitoringMisc {
 
                         bIssueResolutionWithinSprint =
                             DateTimeUtils.CompareZeroBasedDatesOnly(resolutionDate, constantSprintStart) >= 0 &&
-                            DateTimeUtils.CompareZeroBasedDatesOnly(resolutionDate, constantSprintEnd) <= 0;
+                                DateTimeUtils.CompareZeroBasedDatesOnly(resolutionDate, constantSprintEnd) <= 0;
 
                     }
                     else // issue not completed - don't check resolution date
@@ -347,7 +349,7 @@ public class ProjectMonitoringMisc {
                 }
 
                 if (
-                        bIssueIsOurs &&
+                    bIssueIsOurs &&
                         bIssueCompleted &&
                         bIssueResolutionWithinSprint
                     )
@@ -380,6 +382,70 @@ public class ProjectMonitoringMisc {
             for (PlaygileSprint tmpSprint : result)
             {
                 tmpSprint.sprintVelocity = teamVelocity;
+            }
+        }
+
+        return result;
+    }
+
+    public Collection<PlaygileSprint> getAllRealSprintsVelocitiesForConstantTimeWindows(Collection<PlaygileIssue> playgileIssues, Date startDate, double plannedRoadmapFeatureVelocity, int sprintLength)
+    {
+        //in this algorithm I calculate each constant sprint velocity based on time frame
+        //for example - if the first sprint starts on January 1st, I calculate constant frames, Jan, 1st + sprintLength - 1, and so on
+        //So I don't rely on real sprints, just on the issues completed within each such period
+        ArrayList<PlaygileSprint> result = new ArrayList<>();
+
+        if (playgileIssues == null) return result;
+        if (sprintLength < 2) return result; //otherwise algorithm below will not end
+
+        Date constantSprintStart = startDate;
+        Date constantSprintEnd = DateTimeUtils.AddDays(constantSprintStart, sprintLength - 1);
+
+        StatusText.getInstance().add( true, "#### starting to identify issues by artificial sprints");
+
+        while (DateTimeUtils.CompareZeroBasedDatesOnly(constantSprintEnd, DateTimeUtils.getCurrentDate()) < 0) {
+            StatusText.getInstance().add( true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
+            //find all issues closed withing this period
+            PlaygileSprint sprintToAdd = new PlaygileSprint();
+            double constantSprintProjectVelocity = 0;
+            for (PlaygileIssue issue : playgileIssues)
+            {
+                //logText.append("EEEDDD " + issue.getKey() + " " + issue.getIssueType().getName() + " bool is " + bIssueIsOurs + " issue completed " + issue.getStatus().getStatusCategory().getKey());
+
+                if (issue.bOurIssueType &&
+                    issue.bIssueCompleted &&
+                    DateTimeUtils.CompareZeroBasedDatesOnly(issue.resolutionDate, constantSprintStart) >= 0 &&
+                    DateTimeUtils.CompareZeroBasedDatesOnly(issue.resolutionDate, constantSprintEnd) <= 0
+                    )
+                {
+
+                    //issue closed within our constant sprint
+                    double storyPointValue = issue.getAdjustedEstimationValue();
+                    StatusText.getInstance().add( true, "Issue to count " + issue.issueKey + " with " + storyPointValue + " points and resolution date " + issue.resolutionDate);
+                    constantSprintProjectVelocity += storyPointValue;
+                }
+            }
+
+
+
+            sprintToAdd.setEndDate(constantSprintEnd);
+            sprintToAdd.sprintVelocity = constantSprintProjectVelocity;
+            sprintToAdd.setState(SprintState.CLOSED);
+            result.add(sprintToAdd);
+
+            //move to next sprint
+            constantSprintStart = DateTimeUtils.AddDays(constantSprintStart, sprintLength);
+            constantSprintEnd = DateTimeUtils.AddDays(constantSprintStart, sprintLength - 1);
+        }
+
+        StatusText.getInstance().add( true, "#### ended to identify issues by artificial sprints, found " + result.size());
+
+        //if number of calculated artificial sprints is 2 or less - we use the team velocity
+        if (result.size() < 3)
+        {
+            for (PlaygileSprint tmpSprint : result)
+            {
+                tmpSprint.sprintVelocity = plannedRoadmapFeatureVelocity;
             }
         }
 
