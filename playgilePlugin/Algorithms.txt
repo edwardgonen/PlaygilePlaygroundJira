@@ -81,7 +81,7 @@
          4.1 Determine if the RF has started:
              if (RF Start date exists in Configuration and it is <= Current date) the RF start date is set to that value and project is considered started
              else if there is at least one closed or active sprint the RF start date is set to that first (oldest) sprint start date
-             else since we have at least one issue in backlog the RF start date will be set to the creation date of the oldest issue
+             ??? Not now - else since we have at least one issue in backlog the RF start date will be set to the creation date of the oldest issue
              *** one of the conditions above true will result in RF considered as Started
              else the RF is considered not started. Such RF will not appear in the list
 

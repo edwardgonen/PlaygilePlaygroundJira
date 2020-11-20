@@ -106,7 +106,7 @@ long startTime = System.nanoTime();
                     }
                     else
                     {
-                        projectMonitoringMisc.WriteToStatus(statusText, false, "Velocity is not set");
+                        StatusText.getInstance().add (statusText, false, "Velocity is not set");
                         //team velocity is not set. So use 50. just for fun
                         roadmapFeatureDescriptor.TeamVelocity = DEFAULT_TEAM_VELOCITY;
                     }
@@ -133,11 +133,11 @@ long startTime = System.nanoTime();
                                 boolean projectStarted = (boolean)maor.Result;
                                 if (!projectStarted) //not started
                                 {
-                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Project start flag is false");
+                                    StatusText.getInstance().add (statusText, false,"Project start flag is false");
                                     //let's find out if the project has started
                                     //we should have a list of sprints
                                     if (playgileSprints.size() > 0) {
-                                        projectMonitoringMisc.WriteToStatus(statusText, false,"Valid sprints " + playgileSprints.size());
+                                        StatusText.getInstance().add (statusText, false,"Valid sprints " + playgileSprints.size());
                                         //the first sprint startDate would be the project start date
                                         PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                         roadmapFeatureDescriptor.StartDate = sprint.getStartDate();
@@ -148,7 +148,7 @@ long startTime = System.nanoTime();
                                         maor = mao.SetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), true);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                         {
-                                            projectMonitoringMisc.WriteToStatus(statusText, false,"Project start flag is set to true. Setting start date");
+                                            StatusText.getInstance().add (statusText, false,"Project start flag is set to true. Setting start date");
                                             maor = mao.SetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.StartDate);
                                             maor = mao.SetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.SprintLength);
                                         }
@@ -156,7 +156,7 @@ long startTime = System.nanoTime();
                                     else //no active or closed sprints at all - not started yet
                                     {
                                         roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.NOT_STARTED;
-                                        projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Not started flag (1)");
+                                        StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Not started flag (1)");
                                         continue; //not started nothing to do
                                     }
                                 }
@@ -188,7 +188,7 @@ long startTime = System.nanoTime();
                                     //2. add current estimation to the list of estimations
                                     //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
                                     Date timeStamp = Calendar.getInstance().getTime();
-                                    projectMonitoringMisc.WriteToStatus(statusText, false,"Current time to add to list " + timeStamp);
+                                    StatusText.getInstance().add (statusText, false,"Current time to add to list " + timeStamp);
                                     maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), timeStamp, currentEstimation);
 
                                     //get real velocities
@@ -232,7 +232,7 @@ long startTime = System.nanoTime();
 
                                         if (ppr.Code != ProjectProgressResult.STATUS_CODE_SUCCESS)
                                         {
-                                            projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Bad parameters for prediction " + roadmapFeatureDescriptor.TeamVelocity + " "
+                                            StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Bad parameters for prediction " + roadmapFeatureDescriptor.TeamVelocity + " "
                                                 + roadmapFeatureDescriptor.ProjectVelocity + " " +
                                                 roadmapFeatureDescriptor.SprintLength);
                                             continue;
@@ -244,13 +244,13 @@ long startTime = System.nanoTime();
                                 }
                                 else
                                 {
-                                    projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Project not started flag");
+                                    StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Project not started flag");
                                     continue;
                                 }
                             }
                             else //failed to read start flag
                             {
-                                projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Failed to read project start flag " + maor.Message);
+                                StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Failed to read project start flag " + maor.Message);
                                 continue;
                             }
 
@@ -259,19 +259,19 @@ long startTime = System.nanoTime();
                         else
                         {
                             roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.NO_OPEN_ISSUES;
-                            projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Feature not started or no open issues");
+                            StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Feature not started or no open issues");
                             continue;
                         }
                     }
                     else
                     {
                         //not our structure. Just go to the next one
-                        projectMonitoringMisc.WriteToStatus(statusText, true, roadmapFeatureDescriptor.Name +  " Not our structure");
+                        StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Not our structure");
                         continue;
                     }
                     roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
                     long endTime = System.nanoTime();
-                    projectMonitoringMisc.WriteToStatus(statusText, true, "&&& Feature " + roadmapFeature.getSummary() + " " + (endTime - startTime)/1000000);
+                    StatusText.getInstance().add (statusText, true, "&&& Feature " + roadmapFeature.getSummary() + " " + (endTime - startTime)/1000000);
                 }
 
                 long starTime = System.nanoTime();
@@ -309,11 +309,11 @@ long startTime = System.nanoTime();
                     }
                     else
                     {
-                        projectMonitoringMisc.WriteToStatus(statusText, true, rfd.Name +  " Feature not started or no open issues");
+                        StatusText.getInstance().add (statusText, true, rfd.Name +  " Feature not started or no open issues");
                     }
                 }
                 long endTime = System.nanoTime();
-                projectMonitoringMisc.WriteToStatus(statusText, true, " &&& processing took " + (endTime - starTime) / 1000000);
+                StatusText.getInstance().add (statusText, true, " &&& processing took " + (endTime - starTime) / 1000000);
                 contextMap.put(FEATURESROWS, featuresRows.toString());
 
                 bAllisOk = true;

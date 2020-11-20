@@ -50,6 +50,10 @@ public interface ProjectMonitor {
 
     int DISTRIBUTION_SIZE = 4;
 
+    double defaultInitialRoadmapFeatureVelocity = 50.0;
+    double defaultNotEstimatedIssueValueHardCoded = 13.0;
+    double defaultSprintLength = 14.0;
+
 
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);

@@ -91,7 +91,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             if (currentProject == null) //no current project found - exit
             {
                 //no current project
-                projectMonitoringMisc.WriteToStatus(statusText, false, "No current project found");
+                StatusText.getInstance().add(statusText, false, "No current project found");
                 bAllisOk = false;
                 messageToDisplay = "Cannot identify current project. Please try to reload this page";
                 return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -105,12 +105,12 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             ArrayList<String> roadmapFeaturesNames = projectMonitoringMisc.getAllRoadmapFeatureNames(roadmapFeatures);
             if (roadmapFeatures.size() > 0)
             {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Found roadmap features total " + roadmapFeaturesNames.size());
+                StatusText.getInstance().add(statusText, false, "Found roadmap features total " + roadmapFeaturesNames.size());
                 contextMap.put(ROADMAPFEATURESLIST, roadmapFeaturesNames);
             }
             else
             {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "No roadmap feature found for project");
+                StatusText.getInstance().add(statusText, false, "No roadmap feature found for project");
                 bAllisOk = false;
                 messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please create the Roadmap Features";
                 return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
@@ -122,67 +122,66 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS) //not found
             {
                 //give a message and ask to recalculate
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Failed to retrieve any project issues - no selected roadmap feature");
+                StatusText.getInstance().add(statusText, false, "Failed to retrieve any project issues - no selected roadmap feature");
                 bAllisOk = false;
                 messageToDisplay = "Please select a Roadmap Feature from the list and press Recalculate (also check if the Team's velocity is not 0)";
                 return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
             //user found
-            projectMonitoringMisc.WriteToStatus(statusText, false, "First AO that matches project is found");
-            //get selected roadmap feature and velocity and project?
-
             UserLastLocations userLastLocations = (UserLastLocations)maor.Result;
             selectedRoadmapFeature = userLastLocations.lastRoadmapFeature;
             contextMap.put(SELECTEDROADMAPFEATURE, selectedRoadmapFeature);
-            if (selectedRoadmapFeature.isEmpty())
-            {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Roadmap feature is not selected");
-                bAllisOk = false;
-                messageToDisplay = "Please select the Roadmap Feature";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-            }
-
-            maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
-            if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Velocity is not set");
-                bAllisOk = false;
-                messageToDisplay = "Please set the correct velocity and press Recalculate";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-            }
-
-            //get the stored roadmap feature velocity
-            initialRoadmapFeatureVelocity = (double)maor.Result;
-            if (initialRoadmapFeatureVelocity <= 0)
-            {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "Team velocity is not specified");
-                bAllisOk = false;
-                messageToDisplay = "Please specify team's velocity and press Recalculate";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-            }
-
             selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, selectedRoadmapFeature);
             if (selectedRoadmapFeatureIssue == null) //not found
             {
-                projectMonitoringMisc.WriteToStatus(statusText, false, "our selected feature is not in the list " + selectedRoadmapFeature);
+                StatusText.getInstance().add(statusText, false, "our selected feature is not in the list " + selectedRoadmapFeature);
                 bAllisOk = false;
                 messageToDisplay = "Please select a Roadmap Feature";
                 return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-
-
+            if (selectedRoadmapFeature.isEmpty())
+            {
+                StatusText.getInstance().add(statusText, false, "Roadmap feature is not selected");
+                bAllisOk = false;
+                messageToDisplay = "Please select the Roadmap Feature";
+                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
+            StatusText.getInstance().add(statusText, false, "First AO that matches project is found");
 
             /////////////////////// we are ready to analyze the roadmap feature /////////////////////////////////////////////
+            RoadmapFeatureAnalysis roadmapFeatureAnalysis = new RoadmapFeatureAnalysis(
+                    selectedRoadmapFeatureIssue,
+                    jiraInterface,
+                    applicationUser,
+                    currentProject,
+                    projectMonitoringMisc,
+                    mao);
+            roadmapFeatureAnalysis.analyzeRoadmapFeature();
+
+            if (roadmapFeatureAnalysis.isRoadmapFeatureStarted()) {
+                //Roadmap feature is active
+                StatusText.getInstance().add(statusText, true, "Active Roadmap feature " + roadmapFeatureAnalysis.getRoadmapFeatureKeyAndSummary());
 
 
 
-            projectMonitoringMisc.WriteToStatus(statusText, false, "Exiting successfully");
-            bAllisOk = true;
-            return returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
+
+
+                StatusText.getInstance().add(statusText, false, "Exiting successfully");
+                bAllisOk = true;
+                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
+            }
+            else //not active
+            {
+                StatusText.getInstance().add(statusText, false, "Roadmap feature has not started yet");
+                bAllisOk = false;
+                messageToDisplay = "Selected Roadmap feature has not started yet";
+                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
         }
         catch (Exception e)
         {
-            projectMonitoringMisc.WriteToStatus(statusText, true, "Main route exception " + e);
+            StatusText.getInstance().add(statusText, true, "Main route exception " + e);
             bAllisOk = false;
             messageToDisplay = "General code failure. Please check the log";
             return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
