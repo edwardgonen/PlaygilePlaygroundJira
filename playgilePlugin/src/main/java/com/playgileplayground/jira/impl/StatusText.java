@@ -14,9 +14,13 @@ public class StatusText {
     public static StatusText getInstance(){
         return instance;
     }
-    public void add(StringBuilder dummy, boolean mustPrint, String logEntry)
+    public void add(boolean mustPrint, String logEntry)
     {
         if (mustPrint) statusText.append(mustPrint + "<br>");
+    }
+    public void reset()
+    {
+        this.statusText = new StringBuilder();
     }
     @Override
     public String toString() {

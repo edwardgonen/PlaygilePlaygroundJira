@@ -23,6 +23,7 @@ import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
 import com.playgileplayground.jira.impl.OldProjectMonitorImpl;
 import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
+import com.playgileplayground.jira.impl.StatusText;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -162,7 +163,7 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getIssuesForRoadmapFeature(StringBuilder statusText, ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
+    public List<Issue> getIssuesForRoadmapFeature( ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
     {
         //get all linked epics for Feature
         if (roadmapFeature == null) return null;
@@ -201,14 +202,14 @@ public class JiraInterface {
                 for (Issue issueLink : issueLinks) {
 
                     //TEST
-                    statusText.append("Issue link id " + issueLink.getKey());
+                    StatusText.getInstance().add(true, "Issue link id " + issueLink.getKey());
 
                     //get all issues with epics from all issueLinks
                     List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, currentProject, issueLink);
                     if (nextEpicIssues != null && nextEpicIssues.size() > 0)
                     {
                         //TEST
-                        statusText.append("for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
+                        StatusText.getInstance().add(true, "for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
 
                         //add to initial array
                         issues.addAll(nextEpicIssues);

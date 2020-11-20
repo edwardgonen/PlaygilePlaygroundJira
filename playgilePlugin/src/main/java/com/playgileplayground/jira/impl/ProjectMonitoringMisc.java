@@ -118,28 +118,27 @@ public class ProjectMonitoringMisc {
 
     public void getNotCompletedIssuesAndAndSprints(Collection<Issue> issues,
                                                    ArrayList<Issue> foundIssues,
-                                                   ArrayList<PlaygileSprint> playgileSprints,
-                                                   StringBuilder statusText)
+                                                   ArrayList<PlaygileSprint> playgileSprints)
     {
         for (Issue issue : issues)
         {
             boolean bOurIssueType = isIssueOneOfOurs(issue);
             addIssueSprintsToList(issue, playgileSprints);
             double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-            StatusText.getInstance().add(null, false, "Story points " + issue.getId() + " " + storyPointValue);
+            StatusText.getInstance().add(false, "Story points " + issue.getId() + " " + storyPointValue);
             if (!isIssueCompleted(issue)
                         /*&& storyPointValue >= 0*/ //we don't mind not set story points. I'll set them to 21
                 && (bOurIssueType)
                 )
             {
-                StatusText.getInstance().add(null, true, "Issue for calculation " +
+                StatusText.getInstance().add(true, "Issue for calculation " +
                     storyPointValue + " " +
                     issue.getKey());
                 foundIssues.add(issue);
             }
             else
             {
-                StatusText.getInstance().add(statusText, true, "Issue is not ours - Completed " +
+                StatusText.getInstance().add( true, "Issue is not ours - Completed " +
                     issue.getKey());
                 //go to the next issue
                 continue;
@@ -177,50 +176,50 @@ public class ProjectMonitoringMisc {
         return defaultNotEstimatedIssueValue;
     }
 
-    public double getCurrentEstimations(List<Issue> foundIssues, StringBuilder statusText, double defaultNotEstimatedIssueValue)
+    public double getCurrentEstimations(List<Issue> foundIssues,  double defaultNotEstimatedIssueValue)
     {
         double result = 0;
         for (Issue issue : foundIssues)
         {
             if (!isIssueCompleted(issue))
             {
-                StatusText.getInstance().add(statusText, false,"Issue status is Complete");
+                StatusText.getInstance().add( false,"Issue status is Complete");
                 double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
                 storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue), defaultNotEstimatedIssueValue);
                 result += storyPointValue;
-                StatusText.getInstance().add(statusText, true, "Adding story points for issue " +
+                StatusText.getInstance().add( true, "Adding story points for issue " +
                     storyPointValue + " " +
                     issue.getKey());
             }
             else
             {
-                StatusText.getInstance().add(statusText, false,"Issue status Complete");
+                StatusText.getInstance().add( false,"Issue status Complete");
             }
         }
         return result;
     }
 
-    public double getInitialEstimation(Collection<Issue> issues, Date startDate, StringBuilder statusText, double defaultNotEstimatedIssueValue)
+    public double getInitialEstimation(Collection<Issue> issues, Date startDate,  double defaultNotEstimatedIssueValue)
     {
         double result = 0;
-        StatusText.getInstance().add(statusText, true, "Calculate initial estimation for project start date " + startDate);
+        StatusText.getInstance().add( true, "Calculate initial estimation for project start date " + startDate);
         for (Issue issue : issues)
         {
             boolean bOurIssueType = isIssueOneOfOurs(issue);
             double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
             storyPointValue = adjustStoryPointsIfNotEstimated(storyPointValue, isIssueBug(issue), defaultNotEstimatedIssueValue);
 
-            StatusText.getInstance().add(statusText, true, "Story points for initial estimation in issue " + issue.getId() + " " + storyPointValue + " created " + issue.getCreated());
+            StatusText.getInstance().add( true, "Story points for initial estimation in issue " + issue.getId() + " " + storyPointValue + " created " + issue.getCreated());
             if (bOurIssueType && DateTimeUtils.CompareZeroBasedDatesOnly(issue.getCreated(), startDate) <= 0) //our issue and created before project started
             {
-                StatusText.getInstance().add(statusText, true, "Issue for initial estimation calculation " +
+                StatusText.getInstance().add( true, "Issue for initial estimation calculation " +
                     storyPointValue + " " +
                     issue.getKey());
                 result += storyPointValue;
             }
             else
             {
-                StatusText.getInstance().add(statusText, true, "Issue for initial estimation is not ours " +
+                StatusText.getInstance().add( true, "Issue for initial estimation is not ours " +
                     storyPointValue + " " +
                     issue.getKey());
                 //go to the next issue
@@ -269,7 +268,7 @@ public class ProjectMonitoringMisc {
         return result;
     }
 
-    public ArrayList<Double> getLinearRegressionForRealSprintVelocities(Collection<PlaygileSprint> allRealSprints, Date startDate, StringBuilder statusText)
+    public ArrayList<Double> getLinearRegressionForRealSprintVelocities(Collection<PlaygileSprint> allRealSprints, Date startDate)
     {
         ArrayList<Double> result = new ArrayList<>();
         if (allRealSprints.size() <= 0) {
@@ -296,7 +295,7 @@ public class ProjectMonitoringMisc {
 
         return result;
     }
-    public Collection<PlaygileSprint> getAllRealSprintsVelocitiesForConstantSprints(Collection<Issue> issues, Date startDate, double teamVelocity, int sprintLength, StringBuilder statusText)
+    public Collection<PlaygileSprint> getAllRealSprintsVelocitiesForConstantSprints(Collection<Issue> issues, Date startDate, double teamVelocity, int sprintLength)
     {
         //in this algorithm I calculate each constant sprint velocity based on time frame
         //for example - if the first sprint starts on January 1st, I calculate constant frames, Jan, 1st + sprintLength - 1, and so on
@@ -309,10 +308,10 @@ public class ProjectMonitoringMisc {
         Date constantSprintStart = startDate;
         Date constantSprintEnd = DateTimeUtils.AddDays(constantSprintStart, sprintLength - 1);
 
-        StatusText.getInstance().add(statusText, true, "#### starting to identify issues by artificial sprints");
+        StatusText.getInstance().add( true, "#### starting to identify issues by artificial sprints");
 
         while (DateTimeUtils.CompareZeroBasedDatesOnly(constantSprintEnd, DateTimeUtils.getCurrentDate()) < 0) {
-            StatusText.getInstance().add(statusText, true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
+            StatusText.getInstance().add( true, "*** in the loop - artificial sprint " + constantSprintStart + " " + constantSprintEnd);
             //find all issues closed withing this period
             PlaygileSprint sprintToAdd = new PlaygileSprint();
             double constantSprintProjectVelocity = 0;
@@ -344,7 +343,7 @@ public class ProjectMonitoringMisc {
                 }
                 catch (Exception e)
                 {
-                    statusText.append("EEEDDD EXCEPTION " + e);
+                    StatusText.getInstance().add( true, "EEEDDD EXCEPTION " + e);
                 }
 
                 if (
@@ -356,7 +355,7 @@ public class ProjectMonitoringMisc {
 
                     //issue closed within our constant sprint
                     double storyPointValue = jiraInterface.getStoryPointsForIssue(issue);
-                    StatusText.getInstance().add(statusText, true, "Issue to count " + issue.getKey() + " with " + storyPointValue + " points and resolution date " + resolutionDate);
+                    StatusText.getInstance().add( true, "Issue to count " + issue.getKey() + " with " + storyPointValue + " points and resolution date " + resolutionDate);
                     constantSprintProjectVelocity += storyPointValue;
                 }
             }
@@ -373,7 +372,7 @@ public class ProjectMonitoringMisc {
             constantSprintEnd = DateTimeUtils.AddDays(constantSprintStart, sprintLength - 1);
         }
 
-        StatusText.getInstance().add(statusText, true, "#### ended to identify issues by artificial sprints, found " + result.size());
+        StatusText.getInstance().add( true, "#### ended to identify issues by artificial sprints, found " + result.size());
 
         //if number of calculated artificial sprints is 2 or less - we use the team velocity
         if (result.size() < 3)
@@ -409,7 +408,7 @@ public class ProjectMonitoringMisc {
         PlaygileSprint sprintToAdd = new PlaygileSprint();
         if (playgileSprints.size() < 3) //for mathematical purposed we count the team velocity if less than 3 sprints
         {
-            StatusText.getInstance().add(statusText, true, "Getting real sprints velocity - less than 3 sprints. Using team velocity as first value");
+            StatusText.getInstance().add( true, "Getting real sprints velocity - less than 3 sprints. Using team velocity as first value");
             sprintToAdd.setEndDate(startDate);
             sprintToAdd.sprintVelocity = teamVelocity;
             sprintToAdd.setState(SprintState.CLOSED);
@@ -420,14 +419,14 @@ public class ProjectMonitoringMisc {
 
         do
         {
-            StatusText.getInstance().add(statusText, true, "*** in the loop - correct sprint " + correctSprintStart + " " + correctSprintEnd);
+            StatusText.getInstance().add( true, "*** in the loop - correct sprint " + correctSprintStart + " " + correctSprintEnd);
             double correctSprintVelocity = 0;
             boolean bFoundOverlappingSprints = false;
             for (PlaygileSprint playgileSprint : playgileSprints)
             {
                 if (playgileSprint.getState() == SprintState.CLOSED) {
 
-                    StatusText.getInstance().add(statusText, true, "Checking sprint " + playgileSprint.getName() + " " + playgileSprint.getStartDate() + " " + playgileSprint.getEndDate());
+                    StatusText.getInstance().add( true, "Checking sprint " + playgileSprint.getName() + " " + playgileSprint.getStartDate() + " " + playgileSprint.getEndDate());
                     //sprint fits within correct dates
                     boolean bSprintFound =
                         // |-----| correct sprint
@@ -446,7 +445,7 @@ public class ProjectMonitoringMisc {
                         ;
                     bFoundOverlappingSprints |= bSprintFound;
                     if (bSprintFound) { //overlapping sprint found
-                        StatusText.getInstance().add(statusText, true, "sprint " + playgileSprint.getName() + " is overlapping ");
+                        StatusText.getInstance().add( true, "sprint " + playgileSprint.getName() + " is overlapping ");
                         correctSprintVelocity += playgileSprint.sprintVelocity;
                     }
                 }
@@ -477,17 +476,17 @@ public class ProjectMonitoringMisc {
         int numOfAvailableSprints = 0;
         double tmpSum = 0;
 
-        StatusText.getInstance().add(statusText, true, " Avg velocity calculation for num of sprints " + playgileSprints.size() + " initial sum " + tmpSum);
+        StatusText.getInstance().add( true, " Avg velocity calculation for num of sprints " + playgileSprints.size() + " initial sum " + tmpSum);
         for (PlaygileSprint playgileSprint : playgileSprints)
         {
             if (playgileSprint.getState() == SprintState.CLOSED)
             {
                 numOfAvailableSprints++;
                 tmpSum += playgileSprint.sprintVelocity;
-                StatusText.getInstance().add(statusText, true, " Adding sprint velocity " + playgileSprint.sprintVelocity + " sum is " + tmpSum + " num of values " + numOfAvailableSprints);
+                StatusText.getInstance().add( true, " Adding sprint velocity " + playgileSprint.sprintVelocity + " sum is " + tmpSum + " num of values " + numOfAvailableSprints);
             }
         }
-        StatusText.getInstance().add(statusText, true, " Total sum is " + tmpSum + " and num is " + numOfAvailableSprints);
+        StatusText.getInstance().add( true, " Total sum is " + tmpSum + " and num is " + numOfAvailableSprints);
         result = (int)Math.round(tmpSum / numOfAvailableSprints);
         return result;
     }

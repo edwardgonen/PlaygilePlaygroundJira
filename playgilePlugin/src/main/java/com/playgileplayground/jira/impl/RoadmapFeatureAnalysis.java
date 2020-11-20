@@ -71,7 +71,7 @@ public class RoadmapFeatureAnalysis {
         //get list of issues and convert them to PlaygileIssues
 
 
-        List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(logText, applicationUser, currentProject, roadmapFeature);
+        List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
 
             for (Issue issue : issues) {

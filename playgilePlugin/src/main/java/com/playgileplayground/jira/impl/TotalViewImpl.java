@@ -39,8 +39,6 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
     SearchService searchService;
 
 
-    public StringBuilder statusText = new StringBuilder();
-
     public TotalViewImpl(UserProjectHistoryManager userProjectHistoryManager,
                               ProjectManager projectManager,
                               ActiveObjects ao,
@@ -62,13 +60,12 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
     @Override
     public Map getContextMap(Map<String, Object> map) {
         Map<String, Object> contextMap = new HashMap<>();
-        statusText = new StringBuilder();
         double projectVelocity = 0;
         String messageToDisplay = "";
         boolean bAllisOk;
         ManageActiveObjectsResult maor;
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
-
+        StatusText.getInstance().reset();
 
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
@@ -106,13 +103,13 @@ long startTime = System.nanoTime();
                     }
                     else
                     {
-                        StatusText.getInstance().add (statusText, false, "Velocity is not set");
+                        StatusText.getInstance().add ( false, "Velocity is not set");
                         //team velocity is not set. So use 50. just for fun
                         roadmapFeatureDescriptor.TeamVelocity = DEFAULT_TEAM_VELOCITY;
                     }
 
                     //do we have any issues in the Roadmap feature?
-                    List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(statusText, applicationUser, currentProject, roadmapFeature);
+                    List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature( applicationUser, currentProject, roadmapFeature);
                     if (null != issues && issues.size() > 0)
                     {
                         //do all our stuff
@@ -120,7 +117,7 @@ long startTime = System.nanoTime();
                         ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
 
                         //get list of sprints out of user stories.
-                        projectMonitoringMisc.getNotCompletedIssuesAndAndSprints(issues, foundIssues, playgileSprints, statusText);
+                        projectMonitoringMisc.getNotCompletedIssuesAndAndSprints(issues, foundIssues, playgileSprints);
                         //sort sprints
                         Collections.sort(playgileSprints); //sort by dates
                         //did we find any matching issues? - i.e. not completed
@@ -133,11 +130,11 @@ long startTime = System.nanoTime();
                                 boolean projectStarted = (boolean)maor.Result;
                                 if (!projectStarted) //not started
                                 {
-                                    StatusText.getInstance().add (statusText, false,"Project start flag is false");
+                                    StatusText.getInstance().add ( false,"Project start flag is false");
                                     //let's find out if the project has started
                                     //we should have a list of sprints
                                     if (playgileSprints.size() > 0) {
-                                        StatusText.getInstance().add (statusText, false,"Valid sprints " + playgileSprints.size());
+                                        StatusText.getInstance().add ( false,"Valid sprints " + playgileSprints.size());
                                         //the first sprint startDate would be the project start date
                                         PlaygileSprint sprint = playgileSprints.iterator().next(); //first
                                         roadmapFeatureDescriptor.StartDate = sprint.getStartDate();
@@ -148,7 +145,7 @@ long startTime = System.nanoTime();
                                         maor = mao.SetProjectStartedFlag(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), true);
                                         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
                                         {
-                                            StatusText.getInstance().add (statusText, false,"Project start flag is set to true. Setting start date");
+                                            StatusText.getInstance().add ( false,"Project start flag is set to true. Setting start date");
                                             maor = mao.SetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.StartDate);
                                             maor = mao.SetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.SprintLength);
                                         }
@@ -156,7 +153,7 @@ long startTime = System.nanoTime();
                                     else //no active or closed sprints at all - not started yet
                                     {
                                         roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.NOT_STARTED;
-                                        StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Not started flag (1)");
+                                        StatusText.getInstance().add ( true, roadmapFeatureDescriptor.Name +  " Not started flag (1)");
                                         continue; //not started nothing to do
                                     }
                                 }
@@ -174,7 +171,7 @@ long startTime = System.nanoTime();
                                     roadmapFeatureDescriptor.SprintLength = projectMonitoringMisc.getSprintLength(currentProject, roadmapFeature.getSummary());
                                     double defaultNotEstimatedIssueValue = projectMonitoringMisc.getDefaultNotEstimatedIssueValue(currentProject, roadmapFeature.getSummary());
                                     //now let's calculate the remaining story points
-                                    double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues, statusText, defaultNotEstimatedIssueValue);
+                                    double currentEstimation = projectMonitoringMisc.getCurrentEstimations(foundIssues,  defaultNotEstimatedIssueValue);
                                     //after calculation
                                     //1. set initial estimation if previousProjectStartFlag is false
                                     //get the initial estimations
@@ -182,13 +179,13 @@ long startTime = System.nanoTime();
                                     //do we have it stored yet?
                                     maor = mao.GetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
                                     if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS || (double)maor.Result <= 0) {
-                                        double initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, roadmapFeatureDescriptor.StartDate, statusText, defaultNotEstimatedIssueValue);
+                                        double initialEstimation = projectMonitoringMisc.getInitialEstimation(issues, roadmapFeatureDescriptor.StartDate,  defaultNotEstimatedIssueValue);
                                         maor = mao.SetProjectInitialEstimation(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), roadmapFeatureDescriptor.StartDate, initialEstimation);
                                     }
                                     //2. add current estimation to the list of estimations
                                     //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
                                     Date timeStamp = Calendar.getInstance().getTime();
-                                    StatusText.getInstance().add (statusText, false,"Current time to add to list " + timeStamp);
+                                    StatusText.getInstance().add ( false,"Current time to add to list " + timeStamp);
                                     maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), timeStamp, currentEstimation);
 
                                     //get real velocities
@@ -201,10 +198,10 @@ long startTime = System.nanoTime();
                                     Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantSprints(issues,
                                         roadmapFeatureDescriptor.StartDate,
                                         roadmapFeatureDescriptor.TeamVelocity,
-                                        (int)roadmapFeatureDescriptor.SprintLength, statusText);
+                                        (int)roadmapFeatureDescriptor.SprintLength);
                                     //linear regression
                                     ArrayList<Double> predictedVelocities;
-                                    predictedVelocities = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, roadmapFeatureDescriptor.StartDate, statusText);
+                                    predictedVelocities = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(allRealSprints, roadmapFeatureDescriptor.StartDate);
 
                                     //averaging
                                     //predictedVelocities = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, roadmapFeatureDescriptor.StartDate, logText);
@@ -232,7 +229,7 @@ long startTime = System.nanoTime();
 
                                         if (ppr.Code != ProjectProgressResult.STATUS_CODE_SUCCESS)
                                         {
-                                            StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Bad parameters for prediction " + roadmapFeatureDescriptor.TeamVelocity + " "
+                                            StatusText.getInstance().add ( true, roadmapFeatureDescriptor.Name +  " Bad parameters for prediction " + roadmapFeatureDescriptor.TeamVelocity + " "
                                                 + roadmapFeatureDescriptor.ProjectVelocity + " " +
                                                 roadmapFeatureDescriptor.SprintLength);
                                             continue;
@@ -244,13 +241,13 @@ long startTime = System.nanoTime();
                                 }
                                 else
                                 {
-                                    StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Project not started flag");
+                                    StatusText.getInstance().add ( true, roadmapFeatureDescriptor.Name +  " Project not started flag");
                                     continue;
                                 }
                             }
                             else //failed to read start flag
                             {
-                                StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Failed to read project start flag " + maor.Message);
+                                StatusText.getInstance().add ( true, roadmapFeatureDescriptor.Name +  " Failed to read project start flag " + maor.Message);
                                 continue;
                             }
 
@@ -259,19 +256,19 @@ long startTime = System.nanoTime();
                         else
                         {
                             roadmapFeatureDescriptor.Status = TotalViewMisc.FeatureStatus.NO_OPEN_ISSUES;
-                            StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Feature not started or no open issues");
+                            StatusText.getInstance().add ( true, roadmapFeatureDescriptor.Name +  " Feature not started or no open issues");
                             continue;
                         }
                     }
                     else
                     {
                         //not our structure. Just go to the next one
-                        StatusText.getInstance().add (statusText, true, roadmapFeatureDescriptor.Name +  " Not our structure");
+                        StatusText.getInstance().add ( true, roadmapFeatureDescriptor.Name +  " Not our structure");
                         continue;
                     }
                     roadmapFeatureDescriptors.add(roadmapFeatureDescriptor);
                     long endTime = System.nanoTime();
-                    StatusText.getInstance().add (statusText, true, "&&& Feature " + roadmapFeature.getSummary() + " " + (endTime - startTime)/1000000);
+                    StatusText.getInstance().add ( true, "&&& Feature " + roadmapFeature.getSummary() + " " + (endTime - startTime)/1000000);
                 }
 
                 long starTime = System.nanoTime();
@@ -309,11 +306,11 @@ long startTime = System.nanoTime();
                     }
                     else
                     {
-                        StatusText.getInstance().add (statusText, true, rfd.Name +  " Feature not started or no open issues");
+                        StatusText.getInstance().add ( true, rfd.Name +  " Feature not started or no open issues");
                     }
                 }
                 long endTime = System.nanoTime();
-                StatusText.getInstance().add (statusText, true, " &&& processing took " + (endTime - starTime) / 1000000);
+                StatusText.getInstance().add ( true, " &&& processing took " + (endTime - starTime) / 1000000);
                 contextMap.put(FEATURESROWS, featuresRows.toString());
 
                 bAllisOk = true;
@@ -340,7 +337,7 @@ long startTime = System.nanoTime();
     {
         contextMap.put(ALLISOK, bAllisOk);
         contextMap.put(MESSAGETODISPLAY, messageToDisplay);
-        contextMap.put(STATUSTEXT, statusText.toString());
+        contextMap.put(STATUSTEXT, StatusText.getInstance());
         return contextMap;
     }
     private double getStatusScore(RoadmapFeatureDescriptor rfd)
