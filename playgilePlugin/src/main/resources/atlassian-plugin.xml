@@ -68,7 +68,7 @@
     </web-item>
     <web-panel name="metrics-page" i18n-name-key="metrics--page.name" key="metrics--page" location="com.atlassian.jira.jira-projects-plugin:metrics-page" weight="1000">
         <description key="metrics--page.description">Playgile Project Monitor</description>
-        <context-provider class="com.playgileplayground.jira.impl.OldProjectMonitorImpl"/>
+        <context-provider class="com.playgileplayground.jira.impl.ProjectMonitorImpl"/>
         <resource name="view" type="velocity" location="templates/metrics-tab-panel.vm"/>
     </web-panel>
   <ao key="ao-module"> 

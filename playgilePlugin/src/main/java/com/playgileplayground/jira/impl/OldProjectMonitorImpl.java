@@ -134,7 +134,7 @@ public class OldProjectMonitorImpl implements com.playgileplayground.jira.api.Pr
                 return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
-            maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
+            maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), selectedRoadmapFeature));
             if (maor.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                 StatusText.getInstance().add(false, "Velocity is not set");
                 bAllisOk = false;

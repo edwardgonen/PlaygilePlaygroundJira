@@ -22,6 +22,7 @@ import com.atlassian.jira.util.BuildUtilsInfo;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
 import com.playgileplayground.jira.impl.OldProjectMonitorImpl;
+import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
 import com.playgileplayground.jira.impl.StatusText;
 import org.ofbiz.core.entity.GenericEntityException;
@@ -38,16 +39,20 @@ import java.util.List;
  * Created by Ext_EdG on 7/6/2020.
  */
 public class JiraInterface {
-    OldProjectMonitorImpl mainClass;
+    ProjectMonitorImpl mainClass;
     ApplicationUser applicationUser;
     SearchService searchService;
     String jiraVersion;
-    public JiraInterface(OldProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
+    public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
     {
         this.mainClass = mainClass;
         this.applicationUser = applicationUser;
         this.searchService = searchService;
         this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
+    }
+    public JiraInterface(OldProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
+    {
+//for compatibility. remove later
     }
     public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
     {

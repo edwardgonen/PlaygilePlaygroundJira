@@ -16,7 +16,7 @@ public class StatusText {
     }
     public void add(boolean mustPrint, String logEntry)
     {
-        if (mustPrint) statusText.append(mustPrint + "<br>");
+        if (mustPrint) statusText.append(logEntry + "<br>");
     }
     public void reset()
     {

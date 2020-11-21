@@ -77,7 +77,7 @@ public class RoadmapFeatureAnalysis {
 
         defaultNotEstimatedIssueValue = getDefaultValueForNonEstimatedIssue();
         //get list of issues and convert them to PlaygileIssues
-
+        StatusText.getInstance().add(true, "Start analysis for " + roadmapFeature.getKey() + " " + roadmapFeature.getSummary());
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
@@ -160,11 +160,14 @@ public class RoadmapFeatureAnalysis {
 
             //linear regression
             interpolatedVelocityPoints = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(artificialTimeWindowsForVelocityCalculation, startDateRoadmapFeature);
-
             //averaging
             //interpolatedVelocityPoints = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, startDate, logText);
 
-            predictedVelocity = (int) Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
+            //if previous call wat not able to calculate interpolations, the output will be empty
+            predictedVelocity = 0;
+            if (interpolatedVelocityPoints.size() > 0) {
+                predictedVelocity = (int) Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
+            }
             if (predictedVelocity <= 0) {
                 predictedVelocity = plannedRoadmapFeatureVelocity;
                 StatusText.getInstance().add(true, "Project velocity is 0, setting to team velocity " + plannedRoadmapFeatureVelocity);
@@ -175,7 +178,10 @@ public class RoadmapFeatureAnalysis {
             if (historicalEstimationPairs != null)
             {
                 ProjectProgress projectProgress = new ProjectProgress();
-                projectProgressResult = projectProgress.Initiate(plannedRoadmapFeatureVelocity, predictedVelocity, (int)sprintLengthRoadmapFeature, historicalEstimationPairs);
+                projectProgressResult = projectProgress.Initiate(plannedRoadmapFeatureVelocity,
+                    predictedVelocity,
+                    (int)sprintLengthRoadmapFeature,
+                    historicalEstimationPairs);
             }
             else
             {
@@ -235,7 +241,7 @@ public class RoadmapFeatureAnalysis {
     {
         //we read them from DB (Active objects) and provide fallback if not found
         plannedRoadmapFeatureVelocity = 0;
-        ManageActiveObjectsResult maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        ManageActiveObjectsResult maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             plannedRoadmapFeatureVelocity = (double)maor.Result;
         }
@@ -247,11 +253,16 @@ public class RoadmapFeatureAnalysis {
         maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             startDateRoadmapFeature = (Date)maor.Result;
+            StatusText.getInstance().add(true, "Start feature date from DB is " + startDateRoadmapFeature);
         }
         if (startDateRoadmapFeature == null) {
             //try to find from sprints or first issue created
-            if (oldestSprint != null) startDateRoadmapFeature = oldestSprint.getStartDate();
+            if (oldestSprint != null) {
+                startDateRoadmapFeature = oldestSprint.getStartDate();
+                StatusText.getInstance().add(true, "Start feature date from oldest sprint is " + startDateRoadmapFeature);
+            }
         }
+        StatusText.getInstance().add(true, "Detected start date is " + startDateRoadmapFeature);
 
         //sprint length
         sprintLengthRoadmapFeature = 0;
@@ -300,8 +311,7 @@ public class RoadmapFeatureAnalysis {
         }
         contextMap.put(ProjectMonitor.REALVELOCITIES, resultRows);
         //============================================================================================
-        double projectVelocity = (int)Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
-        contextMap.put(ProjectMonitor.AVERAGEREALVELOCITY, projectVelocity);
+        contextMap.put(ProjectMonitor.AVERAGEREALVELOCITY, (int)Math.round(predictedVelocity));
         //==============================================================================================
         //what is the longest array?
         StringBuilder chartRows = new StringBuilder();

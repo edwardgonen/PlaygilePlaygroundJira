@@ -19,6 +19,8 @@ import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileIssue;
 import com.playgileplayground.jira.persistence.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 
@@ -176,14 +178,18 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             }
             else
             {
-                StatusText.getInstance().add( true, "Failed to analyze roadmap feature " + selectedRoadmapFeatureIssue.getKey() + " " + selectedRoadmapFeatureIssue.getSummary());
-                bAllisOk = true;
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
+                messageToDisplay = "Failed to analyze roadmap feature " + selectedRoadmapFeatureIssue.getKey() + " " + selectedRoadmapFeatureIssue.getSummary();
+                StatusText.getInstance().add( true, messageToDisplay);
+                bAllisOk = false;
+                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
         }
         catch (Exception e)
         {
-            StatusText.getInstance().add( true, "Main route exception " + e);
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            StatusText.getInstance().add( true, "Main route exception " + sw);
             bAllisOk = false;
             messageToDisplay = "General code failure. Please check the log";
             return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);

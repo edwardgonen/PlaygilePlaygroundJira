@@ -96,7 +96,7 @@ long startTime = System.nanoTime();
                     //set name
                     roadmapFeatureDescriptor.Name = roadmapFeature.getSummary();
                     //get team velocity
-                    maor = mao.GetTeamVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeatureDescriptor.Name));
+                    maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeatureDescriptor.Name));
                     if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
                         roadmapFeatureDescriptor.TeamVelocity = (double)maor.Result;
                         if (roadmapFeatureDescriptor.TeamVelocity <= 0) roadmapFeatureDescriptor.TeamVelocity = DEFAULT_TEAM_VELOCITY;

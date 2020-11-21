@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.projectprogress;
 
 import com.playgileplayground.jira.impl.DateTimeUtils;
+import com.playgileplayground.jira.impl.StatusText;
 
 import java.awt.*;
 import java.util.ArrayList;
