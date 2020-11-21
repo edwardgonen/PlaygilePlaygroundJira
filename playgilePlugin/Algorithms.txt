@@ -88,7 +88,7 @@
          4.2 The Sprint length is determined as follow:
              If defined in configuration (i.e. > 0) then Sprint length = configured
              else Sprint length = (End of oldest sprint - Start of oldest sprint)
-             else Sprint length = 14 (hardcoded default).
+             else Sprint length = 14 (hardcoded default). If sprint lengths is less 1-7 days the lengths is set to 7
              In any case the sprint length is rounded to 7 days. I.e. for value of 4 it will be 7, for 9 it will be 14 etc.
          4.3 Default SP Value for non-estimated (<= 0) stories and tasks:
              If configured will be used as default estimation for non estimated issues

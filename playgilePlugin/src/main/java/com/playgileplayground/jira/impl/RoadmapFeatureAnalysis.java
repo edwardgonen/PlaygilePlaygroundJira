@@ -136,8 +136,10 @@ public class RoadmapFeatureAnalysis {
             }
 
 
-            //the first sprint startDate would be the project start date
-            PlaygileSprint oldestSprint = playgileSprints.iterator().next(); //first - the oldest
+            //the first sprint startDate would be the project start date.
+            //BUT!!! there may be no sprints at all
+            PlaygileSprint oldestSprint = null;
+            if (playgileSprints != null && playgileSprints.size() > 0)  oldestSprint = playgileSprints.iterator().next(); //first - the oldest
 
             //we have the sprints, so let's read and set configuration parameters
             //we couldn't read those parameters up to now since we didn't have the sprint list
@@ -261,6 +263,11 @@ public class RoadmapFeatureAnalysis {
                 startDateRoadmapFeature = oldestSprint.getStartDate();
                 StatusText.getInstance().add(true, "Start feature date from oldest sprint is " + startDateRoadmapFeature);
             }
+            else //set today as latest fall back
+            {
+                startDateRoadmapFeature = DateTimeUtils.getCurrentDate();
+                StatusText.getInstance().add(true, "Start feature date is set for today as fallback " + startDateRoadmapFeature);
+            }
         }
         StatusText.getInstance().add(true, "Detected start date is " + startDateRoadmapFeature);
 
@@ -272,16 +279,22 @@ public class RoadmapFeatureAnalysis {
         }
         if (sprintLengthRoadmapFeature <= 0) {
             //try to find from sprints
-            if (oldestSprint != null) sprintLengthRoadmapFeature = DateTimeUtils.AbsDays(oldestSprint.getStartDate(), oldestSprint.getEndDate()) + 1;
+            if (oldestSprint != null) sprintLengthRoadmapFeature = DateTimeUtils.AbsDays(oldestSprint.getStartDate(), oldestSprint.getEndDate());
         }
-        //round
+        StatusText.getInstance().add(true, "Detected sprint length is " + sprintLengthRoadmapFeature);
+
         //round to one week if needed
         if (sprintLengthRoadmapFeature <= 0) sprintLengthRoadmapFeature = ProjectMonitor.defaultSprintLength;
+        else if (sprintLengthRoadmapFeature < 7) sprintLengthRoadmapFeature = 7;
+
+        /*
         else {
-            if (sprintLengthRoadmapFeature < 7) sprintLengthRoadmapFeature = 7.0;
-            else
-                sprintLengthRoadmapFeature = ((int) sprintLengthRoadmapFeature / 7) * 7;
+            int remainder = ((int) sprintLengthRoadmapFeature % 7);
+            sprintLengthRoadmapFeature = ((int) sprintLengthRoadmapFeature / 7) * 7;
+            if (remainder > 0) sprintLengthRoadmapFeature += 7;
         }
+        */
+        StatusText.getInstance().add(true, "Detected sprint length is rounded to " + sprintLengthRoadmapFeature);
 
     }
 

@@ -411,14 +411,13 @@ public class ProjectMonitoringMisc {
             for (PlaygileIssue issue : playgileIssues)
             {
                 //logText.append("EEEDDD " + issue.getKey() + " " + issue.getIssueType().getName() + " bool is " + bIssueIsOurs + " issue completed " + issue.getStatus().getStatusCategory().getKey());
-
                 if (issue.bOurIssueType &&
                     issue.bIssueCompleted &&
+                    issue.resolutionDate != null &&
                     DateTimeUtils.CompareZeroBasedDatesOnly(issue.resolutionDate, constantSprintStart) >= 0 &&
                     DateTimeUtils.CompareZeroBasedDatesOnly(issue.resolutionDate, constantSprintEnd) <= 0
                     )
                 {
-
                     //issue closed within our constant sprint
                     double storyPointValue = issue.getAdjustedEstimationValue();
                     StatusText.getInstance().add( true, "Issue to count " + issue.issueKey + " with " + storyPointValue + " points and resolution date " + issue.resolutionDate);
