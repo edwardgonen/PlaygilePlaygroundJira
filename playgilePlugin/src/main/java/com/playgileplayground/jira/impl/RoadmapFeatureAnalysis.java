@@ -10,6 +10,10 @@ import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
+import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.projectprogress.ProgressData;
+import com.playgileplayground.jira.projectprogress.ProjectProgress;
+import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
 import java.util.*;
 
@@ -30,7 +34,6 @@ public class RoadmapFeatureAnalysis {
 
     /////////// publics
     public String messageToDisplay;
-    public boolean bProcessed = false;
     public ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
     Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
     public double[] overallIssuesDistributionInSprint = new double[ProjectMonitor.DISTRIBUTION_SIZE];
@@ -39,6 +42,8 @@ public class RoadmapFeatureAnalysis {
     public double remainingTotalEstimations;
     public double predictedVelocity;
     public ArrayList<Double> interpolatedVelocityPoints;
+    public ProjectProgressResult projectProgressResult;
+    public AnalyzedStories analyzedStories = new AnalyzedStories();
 
 
 
@@ -76,21 +81,35 @@ public class RoadmapFeatureAnalysis {
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
-
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);
+
+                //======================================================
+                //for performance and cache instantiate our PlaygileIssue
+                //======================================================
                 playgileIssue.instantiatePlaygileIssue(defaultNotEstimatedIssueValue);
+
+                //======================================================
+                //            get list of sprint for issue
+                //======================================================
                 //get sprints for issue
                 projectMonitoringMisc.addIssueSprintsToList(playgileIssue.jiraIssue, playgileSprints);
 
                 allPlaygileIssues.add(playgileIssue);
-                //add to the list of futureIssues
-                if (!playgileIssue.bIssueCompleted && playgileIssue.bOurIssueType)
-                {
+
+                //if issue is not completed yet, add to the list of futureIssues
+                if (!playgileIssue.bIssueCompleted && playgileIssue.bOurIssueType) {
                     futurePlaygileIssues.add(playgileIssue);
                     //adjust to default if needed
                     double estimationForIssue = playgileIssue.getAdjustedEstimationValue();
                     remainingTotalEstimations += estimationForIssue;
+
+                    if (playgileIssue.storyPoints > 0 && playgileIssue.storyPoints < 13) analyzedStories.EstimatedStoriesNumber++;
+                    if (playgileIssue.storyPoints == 13) analyzedStories.LargeStoriesNumber++;
+                    if (playgileIssue.storyPoints > 13) analyzedStories.VeryLargeStoriesNumber++;
+                    if (playgileIssue.storyPoints <= 0) analyzedStories.NotEstimatedStoriesNumber++;
+
+
                 }
             }
 
@@ -98,6 +117,25 @@ public class RoadmapFeatureAnalysis {
             //let's process
             //sort sprints
             Collections.sort(playgileSprints); //sort by dates
+            //========================================================
+            // calculate average issues closure distribution across all closed sprints
+            //========================================================
+            for (PlaygileSprint notFutureSprint : playgileSprints)
+            {
+                double[] sprintIssuesDistribution = notFutureSprint.getIssuesTimeDistribution();
+                //update main counters
+                for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
+                    overallIssuesDistributionInSprint[i] += sprintIssuesDistribution[i];
+                }
+            }
+            //now average it across all sprints
+            if (playgileSprints.size() > 0) {
+                for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
+                    overallIssuesDistributionInSprint[i] /= (double) playgileSprints.size();
+                }
+            }
+
+
             //the first sprint startDate would be the project start date
             PlaygileSprint oldestSprint = playgileSprints.iterator().next(); //first - the oldest
 
@@ -110,7 +148,7 @@ public class RoadmapFeatureAnalysis {
             //add current estimation to the list of estimations
             //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
             Date timeStamp = DateTimeUtils.getCurrentDate();
-            StatusText.getInstance().add(false,"Current time to add to list " + timeStamp);
+            StatusText.getInstance().add(false, "Current time to add to list " + timeStamp);
             ManageActiveObjectsResult maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), timeStamp, remainingTotalEstimations);
 
 
@@ -118,7 +156,7 @@ public class RoadmapFeatureAnalysis {
             //fill real sprint velocity
 
             //Collection<PlaygileSprint> allRealSprints = projectMonitoringMisc.getAllRealSprintsVelocities(playgileSprints, startDateRoadmapFeature, plannedRoadmapFeatureVelocity, (int)sprintLengthRoadmapFeature, logText);
-            artificialTimeWindowsForVelocityCalculation = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantTimeWindows(allPlaygileIssues, startDateRoadmapFeature, plannedRoadmapFeatureVelocity, (int)sprintLengthRoadmapFeature);
+            artificialTimeWindowsForVelocityCalculation = projectMonitoringMisc.getAllRealSprintsVelocitiesForConstantTimeWindows(allPlaygileIssues, startDateRoadmapFeature, plannedRoadmapFeatureVelocity, (int) sprintLengthRoadmapFeature);
 
             //linear regression
             interpolatedVelocityPoints = projectMonitoringMisc.getLinearRegressionForRealSprintVelocities(artificialTimeWindowsForVelocityCalculation, startDateRoadmapFeature);
@@ -126,15 +164,23 @@ public class RoadmapFeatureAnalysis {
             //averaging
             //interpolatedVelocityPoints = projectMonitoringMisc.getAverageForRealSprintVelocities(allRealSprints, startDate, logText);
 
-            predictedVelocity = (int)Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
+            predictedVelocity = (int) Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
             if (predictedVelocity <= 0) {
                 predictedVelocity = plannedRoadmapFeatureVelocity;
-                StatusText.getInstance().add(true,"Project velocity is 0, setting to team velocity " + plannedRoadmapFeatureVelocity);
+                StatusText.getInstance().add(true, "Project velocity is 0, setting to team velocity " + plannedRoadmapFeatureVelocity);
             }
 
             //now do predictions
-
-
+            ArrayList<DataPair> historicalEstimationPairs = getHistoricalEstimations();
+            if (historicalEstimationPairs != null)
+            {
+                ProjectProgress projectProgress = new ProjectProgress();
+                projectProgressResult = projectProgress.Initiate(plannedRoadmapFeatureVelocity, predictedVelocity, (int)sprintLengthRoadmapFeature, historicalEstimationPairs);
+            }
+            else
+            {
+                StatusText.getInstance().add(true, "Failed to get historical estimations");
+            }
 
             result = true;
         }
@@ -163,6 +209,16 @@ public class RoadmapFeatureAnalysis {
     public String getRoadmapFeatureKeyAndSummary()
     {
         return roadmapFeature.getKey() + " " + roadmapFeature.getSummary();
+    }
+
+    private ArrayList<DataPair> getHistoricalEstimations()
+    {
+        ArrayList<DataPair> result = null;
+        ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            result = (ArrayList<DataPair>)maor.Result;
+        }
+        return result;
     }
 
     private double getDefaultValueForNonEstimatedIssue()
@@ -216,6 +272,103 @@ public class RoadmapFeatureAnalysis {
                 sprintLengthRoadmapFeature = ((int) sprintLengthRoadmapFeature / 7) * 7;
         }
 
+    }
+
+    public void prepareDateForWeb(Map<String, Object> contextMap)
+    {
+        contextMap.put(ProjectMonitor.TEAMVELOCITY, plannedRoadmapFeatureVelocity);
+        //================================================================================
+        StringBuilder issuesDistributionString = new StringBuilder();
+        if (playgileSprints.size() > 0) {
+            for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
+                double roundTo2Digits = 100.0 * Math.round(overallIssuesDistributionInSprint[i] * 100.0) / 100.0;
+                issuesDistributionString.append(roundTo2Digits + ManageActiveObjects.PAIR_SEPARATOR);
+            }
+        }
+        contextMap.put(ProjectMonitor.ISSUESDISTRIBUTION, issuesDistributionString.toString());
+        //========================================================================================
+        //convert to strings
+        StringBuilder resultRows = new StringBuilder();
+        int index = 0;
+        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation)
+        {
+            resultRows.append(
+                DateTimeUtils.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
+                    sprintToConvert.sprintVelocity  + ManageActiveObjects.PAIR_SEPARATOR +
+                    interpolatedVelocityPoints.get(index++) + ManageActiveObjects.LINE_SEPARATOR
+            );
+        }
+        contextMap.put(ProjectMonitor.REALVELOCITIES, resultRows);
+        //============================================================================================
+        double projectVelocity = (int)Math.round(interpolatedVelocityPoints.get(interpolatedVelocityPoints.size() - 1));
+        contextMap.put(ProjectMonitor.AVERAGEREALVELOCITY, projectVelocity);
+        //==============================================================================================
+        //what is the longest array?
+        StringBuilder chartRows = new StringBuilder();
+        ProgressData longestList;
+        ProgressData shortestList;
+        boolean predictedIsLongest;
+        if (projectProgressResult.progressData.Length() >= projectProgressResult.idealData.Length()) {
+            longestList = projectProgressResult.progressData;
+            shortestList = projectProgressResult.idealData;
+            predictedIsLongest = true;
+        }
+        else
+        {
+            longestList = projectProgressResult.idealData;
+            shortestList = projectProgressResult.progressData;
+            predictedIsLongest = false;
+        }
+        DataPair tmpPredictedDataPair, tmpIdealDataPair;
+        for (int i = 0; i < longestList.Length(); i++)
+        {
+            if (predictedIsLongest) {
+                tmpPredictedDataPair = longestList.GetElementAtIndex(i);
+                tmpIdealDataPair = shortestList.GetElementAtIndex(i);
+            }
+            else
+            {
+                tmpPredictedDataPair = shortestList.GetElementAtIndex(i);
+                tmpIdealDataPair = longestList.GetElementAtIndex(i);
+            }
+            if (i >= shortestList.Length()) //no more elements in shortest
+            {
+                if (predictedIsLongest) {
+                    chartRows.append(
+                        DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                            "" + ManageActiveObjects.PAIR_SEPARATOR +
+                            tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
+                    );
+                }
+                else
+                {
+                    chartRows.append(
+                        DateTimeUtils.ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                            tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
+                            "" + ManageActiveObjects.LINE_SEPARATOR
+                    );
+                }
+            }
+            else //both records available
+            {
+                chartRows.append(
+                    DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
+                        tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
+                        tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
+                );
+            }
+        }
+        contextMap.put(ProjectMonitor.CHARTROWS, chartRows.toString());
+        contextMap.put(ProjectMonitor.IDEALENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.idealProjectEnd));
+        //make the logic of color
+        contextMap.put(ProjectMonitor.PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(projectProgressResult.progressDataColor));
+        contextMap.put(ProjectMonitor.PREDICTEDENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.predictedProjectEnd));
+
+        //=========================================================================================================================
+        contextMap.put(ProjectMonitor.NOTESTIMATEDSTORIES, analyzedStories.NotEstimatedStoriesNumber);
+        contextMap.put(ProjectMonitor.LARGESTORIES, analyzedStories.LargeStoriesNumber);
+        contextMap.put(ProjectMonitor.VERYLARGESTORIES, analyzedStories.VeryLargeStoriesNumber);
+        contextMap.put(ProjectMonitor.ESTIMATEDSTORIES, analyzedStories.EstimatedStoriesNumber);
     }
 
 }

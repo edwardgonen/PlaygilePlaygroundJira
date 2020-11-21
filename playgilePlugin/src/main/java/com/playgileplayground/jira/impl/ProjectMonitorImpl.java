@@ -95,7 +95,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 messageToDisplay = "Cannot identify current project. Please try to reload this page";
                 return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-
+            contextMap.put(PROJECT, currentProject);
             //let's get all roadmap features and for each do analysis
             //first set the list
             //do we have any roadmap defined?
@@ -156,26 +156,29 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     currentProject,
                     projectMonitoringMisc,
                     mao);
-            roadmapFeatureAnalysis.analyzeRoadmapFeature();
+            if (roadmapFeatureAnalysis.analyzeRoadmapFeature()) {
+                if (roadmapFeatureAnalysis.isRoadmapFeatureStarted()) {
+                    //Roadmap feature is active
+                    StatusText.getInstance().add(true, "Active Roadmap feature " + roadmapFeatureAnalysis.getRoadmapFeatureKeyAndSummary());
 
-            if (roadmapFeatureAnalysis.isRoadmapFeatureStarted()) {
-                //Roadmap feature is active
-                StatusText.getInstance().add( true, "Active Roadmap feature " + roadmapFeatureAnalysis.getRoadmapFeatureKeyAndSummary());
+                    roadmapFeatureAnalysis.prepareDateForWeb(contextMap);
 
-
-
-
-
-                StatusText.getInstance().add( false, "Exiting successfully");
+                    StatusText.getInstance().add(false, "Exiting successfully");
+                    bAllisOk = true;
+                    return returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
+                } else //not active
+                {
+                    StatusText.getInstance().add(false, "Roadmap feature has not started yet");
+                    bAllisOk = false;
+                    messageToDisplay = "Selected Roadmap feature has not started yet";
+                    return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                }
+            }
+            else
+            {
+                StatusText.getInstance().add( true, "Failed to analyze roadmap feature " + selectedRoadmapFeatureIssue.getKey() + " " + selectedRoadmapFeatureIssue.getSummary());
                 bAllisOk = true;
                 return returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
-            }
-            else //not active
-            {
-                StatusText.getInstance().add( false, "Roadmap feature has not started yet");
-                bAllisOk = false;
-                messageToDisplay = "Selected Roadmap feature has not started yet";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
         }
         catch (Exception e)
