@@ -95,7 +95,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 StatusText.getInstance().add( false, "No current project found");
                 bAllisOk = false;
                 messageToDisplay = "Cannot identify current project. Please try to reload this page";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
             contextMap.put(PROJECT, currentProject);
             //let's get all roadmap features and for each do analysis
@@ -104,9 +104,9 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             //roadmapFeatures = jiraInterface.getAllRoadmapFeatures(applicationUser, currentProject, ROADMAPFEATUREKEY);
             roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ROADMAPFEATUREKEY);
             ArrayList<String> roadmapFeaturesNames = projectMonitoringMisc.getAllRoadmapFeatureNames(roadmapFeatures);
-            if (roadmapFeatures.size() > 0)
+            if (roadmapFeatures != null && roadmapFeatures.size() > 0)
             {
-                StatusText.getInstance().add( false, "Found roadmap features total " + roadmapFeaturesNames.size());
+                StatusText.getInstance().add( false, "Found roadmap features total " + roadmapFeatures.size());
                 contextMap.put(ROADMAPFEATURESLIST, roadmapFeaturesNames);
             }
             else
@@ -114,7 +114,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 StatusText.getInstance().add( false, "No roadmap feature found for project");
                 bAllisOk = false;
                 messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please create the Roadmap Features";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
             //we got all roadmap features
 
@@ -126,7 +126,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 StatusText.getInstance().add( false, "Failed to retrieve any project issues - no selected roadmap feature");
                 bAllisOk = false;
                 messageToDisplay = "Please select a Roadmap Feature from the list and press Recalculate (also check if the Team's velocity is not 0)";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
 
             //user found
@@ -139,14 +139,14 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 StatusText.getInstance().add( false, "our selected feature is not in the list " + selectedRoadmapFeature);
                 bAllisOk = false;
                 messageToDisplay = "Please select a Roadmap Feature";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
             if (selectedRoadmapFeature.isEmpty())
             {
                 StatusText.getInstance().add( false, "Roadmap feature is not selected");
                 bAllisOk = false;
                 messageToDisplay = "Please select the Roadmap Feature";
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
             StatusText.getInstance().add( false, "First AO that matches project is found");
 
@@ -167,13 +167,13 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
 
                     StatusText.getInstance().add(false, "Exiting successfully");
                     bAllisOk = true;
-                    return returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
+                    return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
                 } else //not active
                 {
                     StatusText.getInstance().add(false, "Roadmap feature has not started yet");
                     bAllisOk = false;
                     messageToDisplay = "Selected Roadmap feature has not started yet";
-                    return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                    return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
                 }
             }
             else
@@ -181,28 +181,16 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 messageToDisplay = "Failed to analyze roadmap feature " + selectedRoadmapFeatureIssue.getKey() + " " + selectedRoadmapFeatureIssue.getSummary();
                 StatusText.getInstance().add( true, messageToDisplay);
                 bAllisOk = false;
-                return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
         }
         catch (Exception e)
         {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            StatusText.getInstance().add( true, "Main route exception " + sw);
+            String trace = projectMonitoringMisc.getExceptionTrace(e);
+            StatusText.getInstance().add( true, "Main route exception " + trace);
             bAllisOk = false;
             messageToDisplay = "General code failure. Please check the log";
-            return returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
         }
-    }
-
-    //////////////////////////////////////////////////////////////
-
-    private Map<String, Object> returnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
-    {
-        contextMap.put(ALLISOK, bAllisOk);
-        contextMap.put(MESSAGETODISPLAY, messageToDisplay);
-        contextMap.put(STATUSTEXT, StatusText.getInstance());
-        return contextMap;
     }
 }

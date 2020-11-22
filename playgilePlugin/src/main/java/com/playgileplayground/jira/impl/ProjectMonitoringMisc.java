@@ -15,6 +15,8 @@ import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -595,4 +597,18 @@ public class ProjectMonitoringMisc {
         return (statusCategory.getKey() == StatusCategory.COMPLETE);
     }
 
+    public String getExceptionTrace(Exception e)
+    {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
+    }
+    public Map<String, Object> returnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
+    {
+        contextMap.put(ProjectMonitor.ALLISOK, bAllisOk);
+        contextMap.put(ProjectMonitor.MESSAGETODISPLAY, messageToDisplay);
+        contextMap.put(ProjectMonitor.STATUSTEXT, StatusText.getInstance());
+        return contextMap;
+    }
 }
