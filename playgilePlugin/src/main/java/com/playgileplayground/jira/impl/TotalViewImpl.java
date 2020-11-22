@@ -22,7 +22,6 @@ import com.atlassian.plugin.web.ContextProvider;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 
 import java.util.*;
@@ -69,12 +68,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
     @Override
     public Map getContextMap(Map<String, Object> map) {
         Map<String, Object> contextMap = new HashMap<>();
-
-        double projectVelocity = 0;
         String messageToDisplay = "";
         boolean bAllisOk;
-        ManageActiveObjectsResult maor;
-        ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
         activeRoadmapFeatures = new ArrayList<>();
         inactiveRoadmapFeatures = new ArrayList<>();
 
@@ -148,6 +143,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                     else
                     {
                         messageToDisplay = "Failed to analyze roadmap feature " + roadmapFeature.getKey() + " " + roadmapFeature.getSummary();
+                        StatusText.getInstance().add(true, messageToDisplay);
                     }
 
 
@@ -176,7 +172,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         //convert to strings for the web
         StringBuilder featuresRows = new StringBuilder();
         for (RoadmapFeatureAnalysis rfd : activeRoadmapFeatures) {
-                double statusScore = getStatusScore(rfd);
+                double statusScore = rfd.qualityScore;
                 featuresRows.append(
                     //name
                     rfd.roadmapFeature.getSummary() + ManageActiveObjects.PAIR_SEPARATOR +
@@ -202,69 +198,6 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                 );
         }
         contextMap.put(FEATURESROWS, featuresRows.toString());
-    }
-    private double getStatusScore(RoadmapFeatureAnalysis rfd)
-    {
-        double result = 0;
-
-        double VELOCITY_DIFFERENCT_PART = 0.1;
-        double COMPLETION_DATE_DIFFERENCE_PART = 0.50;
-        double ESTIMATED_STORIES_DIFFERENCE_PART = 0.40;
-        //total must be 0 - 1
-
-        /*
-        Estimated percentage 0 - 1
-        0 - <=0.25     0.05
-        >0.25 - <= 0.5 0.15
-        > 0.5 <= 0.8   0.50
-        > 0.8 <= 0.9   0.80
-        >0.9           1.00
-
-
-        (real date - predicted date) / sprint length
-        <= 1,      1.0
-        > 1- <= 2, 0.5
-        > 2-..     0.1
-
-        predicted velocity / real velocity percentage (0  - 1)
-        0 - <=0.25     0.10
-        >0.25 - <= 0.5 0.20
-        > 0.5 <= 0.8   0.50
-        > 0.8 <= 0.9   0.80
-        > 0.9          1
-
-        */
-        //veloctiy difference impact
-        double velocityDifference = rfd.plannedRoadmapFeatureVelocity / rfd.predictedVelocity;
-        double veloctiyDifferenceImpact = 1.0;
-        if (velocityDifference <= 0.25) veloctiyDifferenceImpact = 0.10;
-        else if (velocityDifference <= 0.5) veloctiyDifferenceImpact = 0.20;
-        else if (velocityDifference <= 0.8) veloctiyDifferenceImpact = 0.50;
-        else if (velocityDifference <= 0.9) veloctiyDifferenceImpact = 0.80;
-
-        //completion date difference impact
-        int completionDateDifference = DateTimeUtils.Days(rfd.projectProgressResult.predictedProjectEnd, rfd.projectProgressResult.idealProjectEnd) / (int)rfd.sprintLengthRoadmapFeature;
-        double completionDateDifferenceImpact = 1.0;
-        if (completionDateDifference > 2) completionDateDifferenceImpact = 0.1;
-        else if (completionDateDifference > 1) completionDateDifferenceImpact = 0.5;
-
-        //estimations impact
-        double totalIssues = rfd.analyzedStories.EstimatedStoriesNumber + rfd.analyzedStories.NotEstimatedStoriesNumber +
-            rfd.analyzedStories.VeryLargeStoriesNumber + rfd.analyzedStories.LargeStoriesNumber;
-        double estimationRatio = rfd.analyzedStories.EstimatedStoriesNumber / totalIssues;
-        double estimationRatioImpact = 1.0;
-        if (estimationRatio <= 0.25) estimationRatioImpact = 0.05;
-        else if (estimationRatio <= 0.5) estimationRatioImpact = 0.15;
-        else if (estimationRatio <= 0.8) estimationRatioImpact = 0.50;
-        else if (estimationRatio <= 0.9) estimationRatioImpact = 0.80;
-
-
-        result = VELOCITY_DIFFERENCT_PART * veloctiyDifferenceImpact +
-            COMPLETION_DATE_DIFFERENCE_PART * completionDateDifferenceImpact +
-            ESTIMATED_STORIES_DIFFERENCE_PART * estimationRatioImpact;
-
-
-        return result;
     }
 
 }

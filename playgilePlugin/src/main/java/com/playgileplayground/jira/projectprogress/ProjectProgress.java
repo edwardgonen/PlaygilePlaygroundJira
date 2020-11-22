@@ -120,6 +120,7 @@ public class ProjectProgress
         result.predictedProjectEnd = predictedProjectEnd;
 
         //logic of color
+        //TODO move color logic to client
         int differenceInDays = DateTimeUtils.Days(predictedProjectEnd, idealProjectEnd);
         if (differenceInDays <= 7) result.progressDataColor = new Color(0,153,0);//dark green
         else

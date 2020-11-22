@@ -44,6 +44,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public ArrayList<Double> interpolatedVelocityPoints;
     public ProjectProgressResult projectProgressResult;
     public AnalyzedStories analyzedStories = new AnalyzedStories();
+    public double qualityScore;
 
 
 
@@ -196,6 +197,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     predictedVelocity,
                     (int)sprintLengthRoadmapFeature,
                     historicalEstimationPairs);
+
+                //calculate quality score
+                qualityScore = getQualityScore();
                 result = true;
             }
             else
@@ -408,4 +412,67 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     }
 
 
+    double getQualityScore()
+    {
+        double result = 0;
+
+        double VELOCITY_DIFFERENCT_PART = 0.1;
+        double COMPLETION_DATE_DIFFERENCE_PART = 0.50;
+        double ESTIMATED_STORIES_DIFFERENCE_PART = 0.40;
+        //total must be 0 - 1
+
+        /*
+        Estimated percentage 0 - 1
+        0 - <=0.25     0.05
+        >0.25 - <= 0.5 0.15
+        > 0.5 <= 0.8   0.50
+        > 0.8 <= 0.9   0.80
+        >0.9           1.00
+
+
+        (real date - predicted date) / sprint length
+        <= 1,      1.0
+        > 1- <= 2, 0.5
+        > 2-..     0.1
+
+        predicted velocity / real velocity percentage (0  - 1)
+        0 - <=0.25     0.10
+        >0.25 - <= 0.5 0.20
+        > 0.5 <= 0.8   0.50
+        > 0.8 <= 0.9   0.80
+        > 0.9          1
+
+        */
+        //veloctiy difference impact
+        double velocityDifference = plannedRoadmapFeatureVelocity / predictedVelocity;
+        double veloctiyDifferenceImpact = 1.0;
+        if (velocityDifference <= 0.25) veloctiyDifferenceImpact = 0.10;
+        else if (velocityDifference <= 0.5) veloctiyDifferenceImpact = 0.20;
+        else if (velocityDifference <= 0.8) veloctiyDifferenceImpact = 0.50;
+        else if (velocityDifference <= 0.9) veloctiyDifferenceImpact = 0.80;
+
+        //completion date difference impact
+        int completionDateDifference = DateTimeUtils.Days(projectProgressResult.predictedProjectEnd, projectProgressResult.idealProjectEnd) / (int) sprintLengthRoadmapFeature;
+        double completionDateDifferenceImpact = 1.0;
+        if (completionDateDifference > 2) completionDateDifferenceImpact = 0.1;
+        else if (completionDateDifference > 1) completionDateDifferenceImpact = 0.5;
+
+        //estimations impact
+        double totalIssues = analyzedStories.EstimatedStoriesNumber + analyzedStories.NotEstimatedStoriesNumber +
+            analyzedStories.VeryLargeStoriesNumber + analyzedStories.LargeStoriesNumber;
+        double estimationRatio = analyzedStories.EstimatedStoriesNumber / totalIssues;
+        double estimationRatioImpact = 1.0;
+        if (estimationRatio <= 0.25) estimationRatioImpact = 0.05;
+        else if (estimationRatio <= 0.5) estimationRatioImpact = 0.15;
+        else if (estimationRatio <= 0.8) estimationRatioImpact = 0.50;
+        else if (estimationRatio <= 0.9) estimationRatioImpact = 0.80;
+
+
+        result = VELOCITY_DIFFERENCT_PART * veloctiyDifferenceImpact +
+            COMPLETION_DATE_DIFFERENCE_PART * completionDateDifferenceImpact +
+            ESTIMATED_STORIES_DIFFERENCE_PART * estimationRatioImpact;
+
+
+        return result;
+    }
 }

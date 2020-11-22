@@ -65,10 +65,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
         boolean bAllisOk;
         List<Issue> roadmapFeatures;
         StatusText.getInstance().reset();
-        //////////////////// values taken from configuration //////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////
 
-        double initialRoadmapFeatureVelocity = 0;
         String selectedRoadmapFeature;
         ManageActiveObjectsResult maor;
         Issue selectedRoadmapFeatureIssue;
