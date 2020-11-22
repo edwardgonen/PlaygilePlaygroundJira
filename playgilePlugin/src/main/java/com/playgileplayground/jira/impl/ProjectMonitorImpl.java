@@ -16,11 +16,8 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
-import com.playgileplayground.jira.jiraissues.PlaygileIssue;
 import com.playgileplayground.jira.persistence.*;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 
 
@@ -163,7 +160,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                     //Roadmap feature is active
                     StatusText.getInstance().add(true, "Active Roadmap feature " + roadmapFeatureAnalysis.getRoadmapFeatureKeyAndSummary());
 
-                    roadmapFeatureAnalysis.prepareDateForWeb(contextMap);
+                    roadmapFeatureAnalysis.prepareDataForWeb(contextMap);
 
                     StatusText.getInstance().add(false, "Exiting successfully");
                     bAllisOk = true;

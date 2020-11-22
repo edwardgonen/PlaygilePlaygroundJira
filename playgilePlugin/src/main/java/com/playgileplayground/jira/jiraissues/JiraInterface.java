@@ -21,7 +21,6 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.BuildUtilsInfo;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
-import com.playgileplayground.jira.impl.OldProjectMonitorImpl;
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
 import com.playgileplayground.jira.impl.StatusText;
@@ -50,10 +49,7 @@ public class JiraInterface {
         this.searchService = searchService;
         this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
     }
-    public JiraInterface(OldProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
-    {
-//for compatibility. remove later
-    }
+
     public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
     {
         this.applicationUser = applicationUser;

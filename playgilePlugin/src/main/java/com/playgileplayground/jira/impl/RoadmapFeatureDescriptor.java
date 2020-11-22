@@ -10,7 +10,6 @@ public class RoadmapFeatureDescriptor implements Comparator<RoadmapFeatureDescri
     public String Name;
     public double TeamVelocity;
     public double ProjectVelocity;
-    public TotalViewMisc.FeatureStatus Status;
     public Date StartDate;
     public double SprintLength;
     public AnalyzedStories EstimatedStories;
@@ -23,7 +22,6 @@ public class RoadmapFeatureDescriptor implements Comparator<RoadmapFeatureDescri
 
     public RoadmapFeatureDescriptor() {
         Name = "";
-        Status = TotalViewMisc.FeatureStatus.NOT_STARTED;
         PreparationIssues = new ArrayList<>();
     }
 

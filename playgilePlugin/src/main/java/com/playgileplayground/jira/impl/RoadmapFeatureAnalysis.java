@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * Created by Ext_EdG on 11/19/2020.
  */
-public class RoadmapFeatureAnalysis {
+public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis>, Comparable<RoadmapFeatureAnalysis> {
     Issue roadmapFeature;
     JiraInterface jiraInterface;
     ApplicationUser applicationUser;
@@ -70,6 +70,17 @@ public class RoadmapFeatureAnalysis {
         this.mao = mao;
 
     }
+
+    @Override
+    public int compareTo(RoadmapFeatureAnalysis o) {
+        return roadmapFeature.getSummary().compareTo(o.roadmapFeature.getSummary());
+    }
+
+    @Override
+    public int compare(RoadmapFeatureAnalysis o1, RoadmapFeatureAnalysis o2) {
+        return o1.roadmapFeature.getSummary().compareTo(o2.roadmapFeature.getSummary());
+    }
+
 
     public boolean analyzeRoadmapFeature()
     {
@@ -150,7 +161,8 @@ public class RoadmapFeatureAnalysis {
             //add current estimation to the list of estimations
             //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
             Date timeStamp = DateTimeUtils.getCurrentDate();
-            StatusText.getInstance().add(false, "Current time to add to list " + timeStamp);
+            remainingTotalEstimations = projectMonitoringMisc.roundToDecimalNumbers(remainingTotalEstimations, 2);
+            StatusText.getInstance().add(true, "Current time and estimations to add to list " + timeStamp + " " + remainingTotalEstimations);
             ManageActiveObjectsResult maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), timeStamp, remainingTotalEstimations);
 
 
@@ -184,13 +196,14 @@ public class RoadmapFeatureAnalysis {
                     predictedVelocity,
                     (int)sprintLengthRoadmapFeature,
                     historicalEstimationPairs);
+                result = true;
             }
             else
             {
-                StatusText.getInstance().add(true, "Failed to get historical estimations");
+                StatusText.getInstance().add(true, "Failed to get historical estimations for " + roadmapFeature.getSummary());
+                result = false; //no estimations
             }
 
-            result = true;
         }
         else
         {
@@ -298,14 +311,14 @@ public class RoadmapFeatureAnalysis {
 
     }
 
-    public void prepareDateForWeb(Map<String, Object> contextMap)
+    public void prepareDataForWeb(Map<String, Object> contextMap)
     {
         contextMap.put(ProjectMonitor.TEAMVELOCITY, plannedRoadmapFeatureVelocity);
         //================================================================================
         StringBuilder issuesDistributionString = new StringBuilder();
         if (playgileSprints.size() > 0) {
             for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
-                double roundTo2Digits = 100.0 * Math.round(overallIssuesDistributionInSprint[i] * 100.0) / 100.0;
+                double roundTo2Digits = 100.0 * projectMonitoringMisc.roundToDecimalNumbers(overallIssuesDistributionInSprint[i], 2); //Math.round(overallIssuesDistributionInSprint[i] * 100.0) / 100.0;
                 issuesDistributionString.append(roundTo2Digits + ManageActiveObjects.PAIR_SEPARATOR);
             }
         }
@@ -393,5 +406,6 @@ public class RoadmapFeatureAnalysis {
         contextMap.put(ProjectMonitor.VERYLARGESTORIES, analyzedStories.VeryLargeStoriesNumber);
         contextMap.put(ProjectMonitor.ESTIMATEDSTORIES, analyzedStories.EstimatedStoriesNumber);
     }
+
 
 }

@@ -5,12 +5,6 @@ package com.playgileplayground.jira.impl;
  */
 public class TotalViewMisc {
 
-    public enum FeatureStatus {
-        NOT_STARTED,
-        STARTED,
-        NO_OPEN_ISSUES,
-        NO_SPRINTS
-    };
 }
 
 
