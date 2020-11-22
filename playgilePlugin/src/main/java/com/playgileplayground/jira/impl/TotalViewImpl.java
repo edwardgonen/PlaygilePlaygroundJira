@@ -50,8 +50,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         this.searchService = searchService;
     }
 
-    ArrayList<RoadmapFeatureAnalysis> activeRoadmapFeatures = new ArrayList<>();
-    ArrayList<RoadmapFeatureAnalysis> inactiveRoadmapFeatures = new ArrayList<>();
+    ArrayList<RoadmapFeatureAnalysis> activeRoadmapFeatures;
+    ArrayList<RoadmapFeatureAnalysis> inactiveRoadmapFeatures;
 
     @Override
     public Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
@@ -75,6 +75,9 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         boolean bAllisOk;
         ManageActiveObjectsResult maor;
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
+        activeRoadmapFeatures = new ArrayList<>();
+        inactiveRoadmapFeatures = new ArrayList<>();
+
         StatusText.getInstance().reset();
 
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
