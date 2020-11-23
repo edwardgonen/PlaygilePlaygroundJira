@@ -1,0 +1,34 @@
+<h3>Hello from $test</h3>
+<html>
+<head>
+    <title>All Tutorial Issues &mdash; Issue CRUD Tutorial</title>
+    <meta name="decorator" content="atl.general">
+    <script>
+        AJS.$(document).ready(function() {
+            jQuery('.delete-issue').click(function() {
+                console.log('deleting');
+                var self = jQuery(this);
+                jQuery.ajax({
+                    type: "delete",
+                    url: "issuecrud?key=" + self.data("key"),
+                    success: function(data) {
+                        console.log('dom', self, data);
+                        self.parent().parent().remove();
+                    },
+                    error: function() {
+                        console.log('error', arguments);
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+</head>
+<body class="page-type-admin">
+<div class="content-container">
+
+    <div class="content-body">
+    </div>
+</div>
+</body>
+</html>

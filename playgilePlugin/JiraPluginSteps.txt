@@ -430,7 +430,9 @@ For example
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=defEstimValue&propertyValue=13
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=sprintLengthValue&propertyValue=14
 
-
+Configuration
+http://localhost:2990/jira/plugins/servlet/pluginConfiguration
+https://jira-sandbox.playtika.com//plugins/servlet/pluginConfiguration
 ---------------- jira stop restart -----------
 
 /opt/atlassian/jira/bin/stop-jira.sh и start-jira.sh for sandbox
