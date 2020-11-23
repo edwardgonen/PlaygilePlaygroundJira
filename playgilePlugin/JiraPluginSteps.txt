@@ -428,6 +428,7 @@ Set roadmap feature properties (right now only default not estimated value
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=<key>&roadmapFeature=<feature summary>&propertyName=<name>&propertyValue=<value>
 For example
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=defEstimValue&propertyValue=13
+http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=sprintLengthValue&propertyValue=14
 
 
 ---------------- jira stop restart -----------
@@ -460,56 +461,4 @@ http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?
 
 
 
-================================ Project preparation algorithm ----------------------------------
 
-1. Get list of roadmap features that not Cancelled and not Go-Live not Closed not done not Resolved (project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved)
-2. for each RF:
-   1. Get query issuefunction in linkedIssuesOf('id=PKP-85')
-      This will give a list of product-related linked issues. Monetization(PKM), BI(BIT), BA(PKBA), Economics (PKEC) tasks - those names should appear in the Key of issue
-      i.e. substring("PKM") or something. I'll build array of PKM, PKBA, PKEC, BIT. Each element may contain a list of tasks. For example
-      there may be 2 or 3 links that have PKM in the name. I'll group them together.
-
-      Roadmap Feature New Tutorial
-               PKM
-                  ---- PKM task 1
-                  ---- PKM task 2
-               PKBA
-                  ---- PKBA task1
-               BIT
-                  ---- BIT task1
-                  ---- BIT taks2
-               PKEC
-                  ---- PKEC task3
-
-   2. Each task above should contain start date (we use creation date if missing) and Due Date. If no due date - mark that task on the gantt as "invalid"
-   3. We draw
-         Monetization
-                       startdate task1 ------------------ due date task1
-                                startdate task2 --------------- due date task2
-         Economics
-                            startdate task1 ------------------ due date task1
-         BI
-                                            startdate task1 ------------------ due date task1
-                          startdate task2 --------------- due date task2
-         BA
-                                                        startdate task3 ------------------ due date task3
-
-   4. No percentage done in the tasks
-   5. Progress indication colors
-    1. if less than 10% of task duration from today to the due date we show the task yellow
-    2. If today is beyond the due date shoe the task red
-    3. Otherwise show it green
-
-
-   6. In Web page 3 levels. The roadmap feature contains Business Approval Date. By this date we group the Roadmap features on the screen
-      August
-        +RF1 (general info about feature including color-coded status)
-        +RF2
-                    BI         ===========
-                    Economy        ------------
-                    BA                  -------------
-      September
-        +RF2
-        +RF3
-      October
-      Not yet planned features (here I group all those without Business approval date)

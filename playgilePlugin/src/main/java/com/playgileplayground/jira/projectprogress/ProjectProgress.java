@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.projectprogress;
 
 import com.playgileplayground.jira.impl.DateTimeUtils;
+import com.playgileplayground.jira.impl.StatusText;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -119,6 +120,7 @@ public class ProjectProgress
         result.predictedProjectEnd = predictedProjectEnd;
 
         //logic of color
+        //TODO move color logic to client
         int differenceInDays = DateTimeUtils.Days(predictedProjectEnd, idealProjectEnd);
         if (differenceInDays <= 7) result.progressDataColor = new Color(0,153,0);//dark green
         else

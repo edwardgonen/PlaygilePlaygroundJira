@@ -8,8 +8,6 @@ import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.issue.link.IssueLink;
-import com.atlassian.jira.issue.link.IssueLinkManager;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.jql.builder.JqlClauseBuilder;
@@ -24,20 +22,16 @@ import com.atlassian.jira.util.BuildUtilsInfo;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
 import com.playgileplayground.jira.impl.ProjectMonitorImpl;
-import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
-import com.playgileplayground.jira.impl.TotalViewImpl;
-import org.joda.time.DateTime;
+import com.playgileplayground.jira.impl.StatusText;
 import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -55,6 +49,7 @@ public class JiraInterface {
         this.searchService = searchService;
         this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
     }
+
     public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
     {
         this.applicationUser = applicationUser;
@@ -169,7 +164,7 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getIssuesForRoadmapFeature(StringBuilder statusText, ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
+    public List<Issue> getIssuesForRoadmapFeature( ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
     {
         //get all linked epics for Feature
         if (roadmapFeature == null) return null;
@@ -208,14 +203,14 @@ public class JiraInterface {
                 for (Issue issueLink : issueLinks) {
 
                     //TEST
-                    statusText.append("Issue link id " + issueLink.getKey());
+                    StatusText.getInstance().add(true, "Issue link id " + issueLink.getKey());
 
                     //get all issues with epics from all issueLinks
                     List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, currentProject, issueLink);
                     if (nextEpicIssues != null && nextEpicIssues.size() > 0)
                     {
                         //TEST
-                        statusText.append("for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
+                        StatusText.getInstance().add(true, "for issue link id " + issueLink.getId() + " got next epic issues " + nextEpicIssues.size());
 
                         //add to initial array
                         issues.addAll(nextEpicIssues);

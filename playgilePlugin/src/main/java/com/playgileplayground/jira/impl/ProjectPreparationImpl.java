@@ -38,8 +38,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
     @ComponentImport
     DateTimeFormatterFactory dateTimeFormatter;
 
-
-    public StringBuilder statusText = new StringBuilder();
+    
 
     public ProjectPreparationImpl(UserProjectHistoryManager userProjectHistoryManager,
                               ProjectManager projectManager,
@@ -62,11 +61,10 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
 
     @Override
     public Map getContextMap(Map<String, Object> map) {
+        StatusText.getInstance().reset();
         Map<String, Object> contextMap = new HashMap<>();
-        statusText = new StringBuilder();
         String messageToDisplay = "";
         boolean bAllisOk;
-        ManageActiveObjectsResult maor;
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
         JiraQueryResult jqr;
 
@@ -104,7 +102,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                     if (jqr.Code == JiraQueryResult.STATUS_CODE_SUCCESS)
                     {
                         roadmapFeatureDescriptor.BusinessApprovalDate = (Date)jqr.Result;
-                        projectMonitoringMisc.WriteToStatus(statusText, true, "Business approval date for " +
+                        StatusText.getInstance().add (true, "Business approval date for " +
                             roadmapFeature.getKey() + " is " + roadmapFeatureDescriptor.BusinessApprovalDate.toString());
                     }
                     else //error
@@ -112,11 +110,11 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                         if (jqr.Code == JiraQueryResult.STATUS_CODE_DATE_PARSE_ERROR)
                         {
                             String specifiedDate = (String)jqr.Result;
-                            projectMonitoringMisc.WriteToStatus(statusText, true, "Business approval date for " + roadmapFeature.getKey() + " is invalid " + specifiedDate);
+                            StatusText.getInstance().add ( true, "Business approval date for " + roadmapFeature.getKey() + " is invalid " + specifiedDate);
                         }
                         else //not found
                         {
-                            projectMonitoringMisc.WriteToStatus(statusText, true, "Business approval date for " + roadmapFeature.getKey() + " not defined");
+                            StatusText.getInstance().add ( true, "Business approval date for " + roadmapFeature.getKey() + " not defined");
                         }
                         //continue - no need to analyze the feature as the business approval date is not available
                         continue;
@@ -127,18 +125,18 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                     List<Issue> productRelatedIssues = jiraInterface.getAllProductRelatedIssues(roadmapFeatureDescriptor);
                     //let's add them to the roadmap feature descriptor
                     if (productRelatedIssues != null && productRelatedIssues.size() > 0) {
-                        projectMonitoringMisc.WriteToStatus(statusText, true, "Product issues number " + productRelatedIssues.size() + " for feature " + roadmapFeatureDescriptor.Key);
+                        StatusText.getInstance().add ( true, "Product issues number " + productRelatedIssues.size() + " for feature " + roadmapFeatureDescriptor.Key);
                         for (Issue productIssue : productRelatedIssues) {
                             ProjectPreparationIssue ourIssue = projectPreparationMisc.identifyProductPreparationIssue(productIssue, roadmapFeatureDescriptor);
                             if (ourIssue != null) {
                                 ourIssue.businessApprovalDate = roadmapFeatureDescriptor.BusinessApprovalDate;
                                 //add to RF
                                 roadmapFeatureDescriptor.PreparationIssues.add(ourIssue);
-                                projectMonitoringMisc.WriteToStatus(statusText, true, "Issue " + ourIssue.issueName + " " + ourIssue.issueKey + " added with type " + ourIssue.issueTypeName);
+                                StatusText.getInstance().add ( true, "Issue " + ourIssue.issueName + " " + ourIssue.issueKey + " added with type " + ourIssue.issueTypeName);
                             }
                             else //not our issue or something
                             {
-                                projectMonitoringMisc.WriteToStatus(statusText, true, "Not our or invalid issue " + productIssue.getKey());
+                                StatusText.getInstance().add ( true, "Not our or invalid issue " + productIssue.getKey());
                             }
                         }
                         //add to the list of our features only if our issues are detected
@@ -146,7 +144,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                     }
                     else
                     {
-                        projectMonitoringMisc.WriteToStatus(statusText, true, "No product issues found for " + roadmapFeature.getKey());
+                        StatusText.getInstance().add ( true, "No product issues found for " + roadmapFeature.getKey());
                     }
                 }
 
@@ -185,7 +183,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
     {
         contextMap.put(ALLISOK, bAllisOk);
         contextMap.put(MESSAGETODISPLAY, messageToDisplay);
-        contextMap.put(STATUSTEXT, statusText.toString());
+        contextMap.put(STATUSTEXT, StatusText.getInstance());
         return contextMap;
     }
 }

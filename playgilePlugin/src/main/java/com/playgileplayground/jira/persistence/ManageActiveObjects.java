@@ -294,7 +294,7 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetTeamVelocity(ManageActiveObjectsEntityKey key)
+    public ManageActiveObjectsResult GetPlannedRoadmapVelocity(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
@@ -342,9 +342,6 @@ public final class ManageActiveObjects{
         if(prjStatEntity != null) {
             //read the existing data
             ArrayList<DataPair> remainingEstimations = GetDataRemainingEstimationsList(prjStatEntity);
-            //add the initial estimation
-            DataPair initialDatePair = new DataPair(prjStatEntity.getProjectStartDate(), prjStatEntity.getInitialEstimation());
-            remainingEstimations.add(0, initialDatePair); //add as the first element
             result.Result = remainingEstimations;
             result.Message = "List returned";
         }
@@ -368,9 +365,6 @@ public final class ManageActiveObjects{
             //sort - just in case
             Collections.sort(existingData);
             //now compress - i.e. leave last 2 weeks on a daily basis, rest use only 2 weeks basis
-
-
-
             //do we have such date?
             for (DataPair dataPair : existingData) {
                 if (DateUtils.isSameDay(dataPair.Date, date)) {
