@@ -286,17 +286,25 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 StatusText.getInstance().add(true, "Start feature date is set for today as fallback " + startDateRoadmapFeature);
             }
         }
+        double oldestSprintLength = 0;
         StatusText.getInstance().add(true, "Detected start date is " + startDateRoadmapFeature);
-
+        if (oldestSprint != null) {
+            oldestSprintLength = DateTimeUtils.AbsDays(oldestSprint.getStartDate(), oldestSprint.getEndDate()) + 1;
+            StatusText.getInstance().add(true, "Detected oldest sprint is from " + oldestSprint.getStartDate() + " till " + oldestSprint.getEndDate() + " length is " + oldestSprintLength);
+        }
         //sprint length
         sprintLengthRoadmapFeature = 0;
         maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             sprintLengthRoadmapFeature = (double)maor.Result;
+            StatusText.getInstance().add(true, "Detected sprint length from DB is " + sprintLengthRoadmapFeature);
         }
         if (sprintLengthRoadmapFeature <= 0) {
             //try to find from sprints
-            if (oldestSprint != null) sprintLengthRoadmapFeature = DateTimeUtils.AbsDays(oldestSprint.getStartDate(), oldestSprint.getEndDate());
+            if (oldestSprintLength > 0) {
+                sprintLengthRoadmapFeature = oldestSprintLength;
+                StatusText.getInstance().add(true, "Detected sprint length from the oldest sprint " + sprintLengthRoadmapFeature);
+            }
         }
         StatusText.getInstance().add(true, "Detected sprint length is " + sprintLengthRoadmapFeature);
 

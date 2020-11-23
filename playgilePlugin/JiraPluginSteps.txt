@@ -428,6 +428,7 @@ Set roadmap feature properties (right now only default not estimated value
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=<key>&roadmapFeature=<feature summary>&propertyName=<name>&propertyValue=<value>
 For example
 http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=defEstimValue&propertyValue=13
+http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?projectKey=BKM&roadmapFeature=Tutorial%20for%20BKM&propertyName=sprintLengthValue&propertyValue=14
 
 
 ---------------- jira stop restart -----------

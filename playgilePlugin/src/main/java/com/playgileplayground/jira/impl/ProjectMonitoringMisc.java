@@ -421,7 +421,7 @@ public class ProjectMonitoringMisc {
                     )
                 {
                     //issue closed within our constant sprint
-                    double storyPointValue = issue.getAdjustedEstimationValue();
+                    double storyPointValue = issue.storyPoints; //we can possibly in the future use adjusted issue.getAdjustedEstimationValue()
                     StatusText.getInstance().add( true, "Issue to count " + issue.issueKey + " with " + storyPointValue + " points and resolution date " + issue.resolutionDate);
                     constantSprintProjectVelocity += storyPointValue;
                 }

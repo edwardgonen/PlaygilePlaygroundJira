@@ -63,6 +63,31 @@ public class activeObjectsAccessFeatureProperties extends HttpServlet {
 
                 switch (propertyName)
                 {
+                    case "sprintLengthValue":
+                        //set default sprint length value
+                        double sprintLength = 0;
+                        try {
+                            if (!propertyValue.isEmpty())
+                            {
+                                sprintLength = Double.parseDouble(propertyValue);
+                                maor = mao.SetSprintLength(key, sprintLength);
+                                servletMisc.responseToWeb("Succeeded", maor, resp);
+                            }
+                            else //get value
+                            {
+                                maor = mao.GetSprintLength(key);
+                                servletMisc.responseToWeb(maor.Result.toString(), maor, resp);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            try {
+                                resp.getWriter().write("Wrong value " + propertyValue);
+                            } catch (IOException e) {
+                            }
+                            return null;
+                        }
+                        break;
                     case "defEstimValue":
                         //set default estimation value for not estimated issues
                         double defNotEstimdIssueValue = 0;
