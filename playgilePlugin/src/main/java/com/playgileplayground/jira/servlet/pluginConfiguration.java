@@ -139,8 +139,8 @@ public class pluginConfiguration extends HttpServlet {
                         case "startDateRoadmapFeature":
                             try
                             {
-                                double value = Long.parseLong(parameterValue);
-                                maorLocal = mao.SetProjectStartDate(key, new java.util.Date((long)value * 1000));
+                                long value = Long.parseLong(parameterValue);
+                                maorLocal = mao.SetProjectStartDate(key, new java.util.Date(value));
                             }
                             catch (Exception e) //parse error
                             {
