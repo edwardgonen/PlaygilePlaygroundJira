@@ -39,9 +39,7 @@
         } catch (err) {alert(err + featuresconfigurationkeys)}
     });
     
-    function init(featureArrayText){
-
-        var featureArray = JSON.parse(featureArrayText)
+    function init(featureArray){
 
         if(featureArray.length==0){alert('featureArray.length==0');return}
 
@@ -92,12 +90,12 @@
     }
     function getInputField(text,value){
         var _label = $('<label>').text(text)
-        var _input = $('<input>').attr("placeholder", value)
+        var _input = $('<input>').attr("placeholder", +value)
         return $('<div>').append(_label,_input)
     }
     function getInputDateField(text,value){
         var _label = $('<label>').text(text)
-        var _input = $('<input>').datepicker().val(new Date(value).toLocaleDateString('en-US'))
+        var _input = $('<input>').datepicker().val(new Date(+value).toLocaleDateString('en-US'))
         return $('<div>').append(_label,_input)
     }
     function getValueFromUrlParam(param){
