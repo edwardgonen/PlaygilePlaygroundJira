@@ -20,7 +20,15 @@
 
 <script>
 
-    const featuresconfigurationkeys = `$featuresconfigurationkeys`.replaceAll('&quot;','')
+    const featuresconfigurationkeys = `$featuresconfigurationkeys`.replaceAll('&quot;','').match(/(?<=\{)[\s\S]+?(?=\})/g).map(elem=>{
+            let obj = {}
+            elem.split(',').forEach((elem)=>{
+                let temp = elem.split(':');
+                obj[temp[0]] = temp[1]
+            }
+        )
+        return obj
+    })
     
     const baseurl = location.href
     
