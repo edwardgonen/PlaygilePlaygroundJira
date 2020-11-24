@@ -50,6 +50,7 @@ public class pluginConfiguration extends HttpServlet {
     private static final String PLUGIN_CONFIGURATION_TEMPLATE = "/templates/plugin-configuration.vm";
     private static final String FEATURES_CONFIGURATIONS_KEY = "featuresconfigurationkeys";
     private static final String ALL_IS_OK_KEY = "allisok";
+    private static final String MESSAGE_TO_DISPLAY_KEY = "messagetodisplay";
 
     private static final ArrayList<String> parametersNames = new ArrayList<>();
 
@@ -75,11 +76,12 @@ public class pluginConfiguration extends HttpServlet {
 
 
         String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
-        String roadmapFeatureName = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
-        if (projectKey.isEmpty() || roadmapFeatureName.isEmpty())
+        String roadmapFeatureName = req.getParameter("roadmapFeature");
+        if (projectKey.isEmpty())
         {
-            context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to retrieve project key or rodadmap feature");
+            context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to retrieve project key");
             context.put(ALL_IS_OK_KEY, false);
+            context.put(MESSAGE_TO_DISPLAY_KEY, "Failed to retrieve project key");
             servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
             return;
         }
@@ -95,6 +97,7 @@ public class pluginConfiguration extends HttpServlet {
         {
             context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to find project " + projectKey);
             context.put(ALL_IS_OK_KEY, false);
+            context.put(MESSAGE_TO_DISPLAY_KEY, "Failed to find project " + projectKey);
             servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
             return;
         }
@@ -107,59 +110,52 @@ public class pluginConfiguration extends HttpServlet {
         ao.executeInTransaction((TransactionCallback<Void>) () -> {
 
             //if at least one our parameter is specified - save it
-            ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeatureName);
-            ManageActiveObjects maoLocal = new ManageActiveObjects(this.ao);
-            ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(key); //will not create if exists
-            if (maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                //set team velocity if available
-                String parameterValue = "";
-                for (String parameterName : parametersNames) {
-                    parameterValue = Optional.ofNullable(req.getParameter(parameterName)).orElse("");
-                    switch (parameterName) {
-                        case "plannedRoadmapFeatureVelocity":
-                            try
-                            {
-                                double value = Double.parseDouble(parameterValue);
-                                maorLocal = mao.SetTeamVelocity(key, value);
+            if (roadmapFeatureName != null) { //we do something with parameters only if feature name present
+                ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeatureName);
+                ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(key); //will not create if exists
+                if (maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                    //set team velocity if available
+                    String parameterValue = "";
+                    double value;
+                    long timeStamp;
+                    for (String parameterName : parametersNames) {
+                        parameterValue = Optional.ofNullable(req.getParameter(parameterName)).orElse("");
+                        try {
+                            switch (parameterName) {
+                                case "plannedRoadmapFeatureVelocity":
+                                    value = Double.parseDouble(parameterValue);
+                                    maorLocal = mao.SetTeamVelocity(key, value);
+                                    break;
+                                case "defaultNotEstimatedIssueValue":
+                                    value = Double.parseDouble(parameterValue);
+                                    maorLocal = mao.SetDefaultNotEstimatedIssueValue(key, value);
+                                    break;
+                                case "startDateRoadmapFeature":
+                                    timeStamp = Long.parseLong(parameterValue);
+                                    maorLocal = mao.SetProjectStartDate(key, new java.util.Date(timeStamp));
+                                    break;
+                                case "sprintLengthRoadmapFeature":
+                                    value = Double.parseDouble(parameterValue);
+                                    maorLocal = mao.SetSprintLength(key, value);
+                                    break;
+                                default:
+                                    //unknown parameter
+                                    break;
                             }
-                            catch (Exception e) //parse error
-                            {
-                            }
-                            break;
-                        case "defaultNotEstimatedIssueValue":
-                            try
-                            {
-                                double value = Double.parseDouble(parameterValue);
-                                maorLocal = mao.SetDefaultNotEstimatedIssueValue(key, value);
-                            }
-                            catch (Exception e) //parse error
-                            {
-                            }
-                            break;
-                        case "startDateRoadmapFeature":
-                            try
-                            {
-                                long value = Long.parseLong(parameterValue);
-                                maorLocal = mao.SetProjectStartDate(key, new java.util.Date(value));
-                            }
-                            catch (Exception e) //parse error
-                            {
-                            }
-                            break;
-                        case "sprintLengthRoadmapFeature":
-                            try
-                            {
-                                double value = Double.parseDouble(parameterValue);
-                                maorLocal = mao.SetSprintLength(key, value);
-                            }
-                            catch (Exception e) //parse error
-                            {
-                            }
-                            break;
-                        default:
-                            //uknown parameter
-                            break;
+                        }
+                        catch (Exception e)
+                        {
+                            //nothing for now
+                        }
                     }
+                }
+                else
+                {
+                    context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to find project and feature " + projectKey + " " + roadmapFeatureName);
+                    context.put(ALL_IS_OK_KEY, false);
+                    context.put(MESSAGE_TO_DISPLAY_KEY, "Failed to find project and feature " + projectKey + " " + roadmapFeatureName);
+                    servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
+                    return null;
                 }
             }
 
@@ -170,6 +166,7 @@ public class pluginConfiguration extends HttpServlet {
             {
                 context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to retrieve Roadmap features for project " + projectKey);
                 context.put(ALL_IS_OK_KEY, false);
+                context.put(MESSAGE_TO_DISPLAY_KEY, "Failed to retrieve Roadmap features for project " + projectKey);
                 servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
                 return null;
             }

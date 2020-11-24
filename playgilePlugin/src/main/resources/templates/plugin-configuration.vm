@@ -1,34 +1,100 @@
-<h3>Hello from $test</h3>
 <html>
 <head>
-    <title>All Tutorial Issues &mdash; Issue CRUD Tutorial</title>
+    <title>Playgile Plugin Configuration tool</title>
     <meta name="decorator" content="atl.general">
-    <script>
-        AJS.$(document).ready(function() {
-            jQuery('.delete-issue').click(function() {
-                console.log('deleting');
-                var self = jQuery(this);
-                jQuery.ajax({
-                    type: "delete",
-                    url: "issuecrud?key=" + self.data("key"),
-                    success: function(data) {
-                        console.log('dom', self, data);
-                        self.parent().parent().remove();
-                    },
-                    error: function() {
-                        console.log('error', arguments);
-                    }
-                });
-                return false;
-            });
-        });
-    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body class="page-type-admin">
-<div class="content-container">
+    #if (!$allisok)
+        <h1 style="color:red">$messagetodisplay</h1>
+    #end
 
-    <div class="content-body">
-    </div>
-</div>
+    #if ($allisok)
+        <div class="content-container">
+        </div>
+        <div class="content-body">
+        </div>
+        <div class="form-content"></div>
+    #end
+
+<script>
+
+    const featuresconfigurationkeys = `$featuresconfigurationkeys`.replaceAll('&quot;','')
+    
+    const baseurl = location.href
+    
+    $( document ).ready(()=> {
+        console.log( "document ready" );
+        try{
+            init(featuresconfigurationkeys)
+        } catch (err) {alert(err + featuresconfigurationkeys)}
+    });
+    
+    function init(featureArrayText){
+
+        var featureArray = JSON.parse(featureArrayText)
+
+        if(featureArray.length==0){alert('featureArray.length==0');return}
+
+        var _body = $('.content-body')
+
+        var _formArea = $('.form-content')
+
+        var _select = $('<select>').change(function(){
+                createForm(_formArea,featureArray[this.selectedIndex])
+            })
+
+        createForm(_formArea,featureArray[0])
+
+        var _featureArray = featureArray.map((elem)=>{
+                return $('<option>').text(elem.featureSummary)
+            })
+
+        _select.append(_featureArray)
+
+        _body.append(_select)
+    }
+
+    function createForm(formArea,data){
+        formArea.empty()
+        console.log(data)
+        
+        
+        var _input0 = getInputField('defaultNotEstimatedIssueValue',data.defaultNotEstimatedIssueValue)
+        var _input1 = getInputField('plannedRoadmapFeatureVelocity',data.plannedRoadmapFeatureVelocity)
+        var _input2 = getInputField('sprintLengthRoadmapFeature',data.sprintLengthRoadmapFeature)
+        var _input3 = getInputDateField('startDateRoadmapFeature',data.startDateRoadmapFeature)
+
+        var _saveButton = $('<button>').text('Save').click(()=>{
+            var result = [];
+            if(_input0.find('input').val()){result.push(`defaultNotEstimatedIssueValue=${_input0.find('input').val()}`)}
+            if(_input1.find('input').val()){result.push(`plannedRoadmapFeatureVelocity=${_input1.find('input').val()}`)}
+            if(_input2.find('input').val()){result.push(`sprintLengthRoadmapFeature=${_input2.find('input').val()}`)}
+            var userDate = +new Date(_input3.find('input').val())
+            if(userDate!=data.startDateRoadmapFeature){result.push(`startDateRoadmapFeature=${userDate}`)}
+            if(result.length==0){return}
+            var textResult = result.join('&')
+
+            document.location.href = `${baseurl}&roadmapFeature=${data.featureKey}&${textResult}`
+        })
+
+        formArea.append(_input0,_input1,_input2,_input3,_saveButton)
+        
+    }
+    function getInputField(text,value){
+        var _label = $('<label>').text(text)
+        var _input = $('<input>').attr("placeholder", value)
+        return $('<div>').append(_label,_input)
+    }
+    function getInputDateField(text,value){
+        var _label = $('<label>').text(text)
+        var _input = $('<input>').datepicker().val(new Date(value).toLocaleDateString('en-US'))
+        return $('<div>').append(_label,_input)
+    }
+    function getValueFromUrlParam(param){
+
+    }
+</script>
 </body>
 </html>
