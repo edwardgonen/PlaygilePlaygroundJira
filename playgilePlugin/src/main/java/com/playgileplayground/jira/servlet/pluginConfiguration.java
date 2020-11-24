@@ -24,6 +24,7 @@ import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,28 +51,34 @@ public class pluginConfiguration extends HttpServlet {
     private static final String FEATURES_CONFIGURATIONS_KEY = "featuresconfigurationkeys";
     private static final String ALL_IS_OK_KEY = "allisok";
 
+    private static final ArrayList<String> parametersNames = new ArrayList<>();
+
+
     public pluginConfiguration(ActiveObjects ao,TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
     {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
+
+        parametersNames.add("plannedRoadmapFeatureVelocity");
+        parametersNames.add("defaultNotEstimatedIssueValue");
+        parametersNames.add("startDateRoadmapFeature");
+        parametersNames.add("sprintLengthRoadmapFeature");
     }
     @Override
     @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         ManageActiveObjectsResult maor;
-        boolean bAllIsOk = false;
         Map<String, Object> context = new HashMap<>();
-        //String propertyName = Optional.ofNullable(req.getParameter("propertyName")).orElse("");
-        //String propertyValue = Optional.ofNullable(req.getParameter("propertyValue")).orElse("");
-        //String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
+
 
         String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
-        if (projectKey == null || projectKey.isEmpty()) //no project key provided
+        String roadmapFeatureName = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
+        if (projectKey.isEmpty() || roadmapFeatureName.isEmpty())
         {
-            context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to retrieve project key");
+            context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to retrieve project key or rodadmap feature");
             context.put(ALL_IS_OK_KEY, false);
             servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
             return;
@@ -99,9 +106,65 @@ public class pluginConfiguration extends HttpServlet {
 
         ao.executeInTransaction((TransactionCallback<Void>) () -> {
 
+            //if at least one our parameter is specified - save it
+            ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeatureName);
+            ManageActiveObjects maoLocal = new ManageActiveObjects(this.ao);
+            ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(key); //will not create if exists
+            if (maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                //set team velocity if available
+                String parameterValue = "";
+                for (String parameterName : parametersNames) {
+                    parameterValue = Optional.ofNullable(req.getParameter(parameterName)).orElse("");
+                    switch (parameterName) {
+                        case "plannedRoadmapFeatureVelocity":
+                            try
+                            {
+                                double value = Double.parseDouble(parameterValue);
+                                maorLocal = mao.SetTeamVelocity(key, value);
+                            }
+                            catch (Exception e) //parse error
+                            {
+                            }
+                            break;
+                        case "defaultNotEstimatedIssueValue":
+                            try
+                            {
+                                double value = Double.parseDouble(parameterValue);
+                                maorLocal = mao.SetDefaultNotEstimatedIssueValue(key, value);
+                            }
+                            catch (Exception e) //parse error
+                            {
+                            }
+                            break;
+                        case "startDateRoadmapFeature":
+                            try
+                            {
+                                double value = Long.parseLong(parameterValue);
+                                maorLocal = mao.SetProjectStartDate(key, new java.util.Date((long)value * 1000));
+                            }
+                            catch (Exception e) //parse error
+                            {
+                            }
+                            break;
+                        case "sprintLengthRoadmapFeature":
+                            try
+                            {
+                                double value = Double.parseDouble(parameterValue);
+                                maorLocal = mao.SetSprintLength(key, value);
+                            }
+                            catch (Exception e) //parse error
+                            {
+                            }
+                            break;
+                        default:
+                            //uknown parameter
+                            break;
+                    }
+                }
+            }
+
+
             ArrayList<RoadmapFeatureConfigurationParameters> featuresWithParameters = new ArrayList();
-            ManageActiveObjectsResult maorLocal;
-            String messageToDisplay;
             List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
             if (roadmapFeatures == null)
             {
