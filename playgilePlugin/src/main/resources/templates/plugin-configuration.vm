@@ -6,6 +6,7 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body class="page-type-admin">
+<h1 style="color:red">$messagetodisplay</h1>
     #if (!$allisok)
         <h1 style="color:red">$messagetodisplay</h1>
     #end
@@ -82,7 +83,7 @@
             if(result.length==0){return}
             var textResult = result.join('&')
 
-            document.location.href = `${baseurl}&roadmapFeature=${data.featureKey}&${textResult}`
+            document.location.href = `${baseurl}&roadmapFeature=${data.featureSummary}&${textResult}`
         })
 
         formArea.append(_input0,_input1,_input2,_input3,_saveButton)

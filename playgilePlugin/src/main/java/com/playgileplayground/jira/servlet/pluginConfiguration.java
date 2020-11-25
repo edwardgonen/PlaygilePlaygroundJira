@@ -120,32 +120,32 @@ public class pluginConfiguration extends HttpServlet {
                     long timeStamp;
                     for (String parameterName : parametersNames) {
                         parameterValue = Optional.ofNullable(req.getParameter(parameterName)).orElse("");
-                        try {
-                            switch (parameterName) {
-                                case "plannedRoadmapFeatureVelocity":
-                                    value = Double.parseDouble(parameterValue);
-                                    maorLocal = mao.SetTeamVelocity(key, value);
-                                    break;
-                                case "defaultNotEstimatedIssueValue":
-                                    value = Double.parseDouble(parameterValue);
-                                    maorLocal = mao.SetDefaultNotEstimatedIssueValue(key, value);
-                                    break;
-                                case "startDateRoadmapFeature":
-                                    timeStamp = Long.parseLong(parameterValue);
-                                    maorLocal = mao.SetProjectStartDate(key, new java.util.Date(timeStamp));
-                                    break;
-                                case "sprintLengthRoadmapFeature":
-                                    value = Double.parseDouble(parameterValue);
-                                    maorLocal = mao.SetSprintLength(key, value);
-                                    break;
-                                default:
-                                    //unknown parameter
-                                    break;
+                        if (!parameterValue.isEmpty()) {
+                            try {
+                                switch (parameterName) {
+                                    case "plannedRoadmapFeatureVelocity":
+                                        value = Double.parseDouble(parameterValue);
+                                        maorLocal = mao.SetTeamVelocity(key, value);
+                                        break;
+                                    case "defaultNotEstimatedIssueValue":
+                                        value = Double.parseDouble(parameterValue);
+                                        maorLocal = mao.SetDefaultNotEstimatedIssueValue(key, value);
+                                        break;
+                                    case "startDateRoadmapFeature":
+                                        timeStamp = Long.parseLong(parameterValue);
+                                        maorLocal = mao.SetProjectStartDate(key, new java.util.Date(timeStamp));
+                                        break;
+                                    case "sprintLengthRoadmapFeature":
+                                        value = Double.parseDouble(parameterValue);
+                                        maorLocal = mao.SetSprintLength(key, value);
+                                        break;
+                                    default:
+                                        //unknown parameter
+                                        break;
+                                }
+                            } catch (Exception e) {
+                                //nothing for now
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            //nothing for now
                         }
                     }
                 }
