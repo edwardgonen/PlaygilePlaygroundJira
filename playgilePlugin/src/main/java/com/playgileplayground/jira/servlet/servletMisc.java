@@ -34,22 +34,19 @@ public class servletMisc {
     }
     static void responseToWeb(String response, ManageActiveObjectsResult maor, HttpServletResponse resp)
     {
+        String answer;
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
         {
-            try {
-                resp.getWriter().write(response);
-            } catch (IOException e) {
-            }
+            answer = response;
         } else
         {
-            try {
-                resp.getWriter().write("Failure " + maor.Message);
-            } catch (IOException e) {
-            }
+            answer = "Failure " + maor.Message;
         }
+        simpleResponseToWeb(answer, resp);
     }
     static void responseListToWeb(ManageActiveObjectsResult maor, HttpServletResponse resp)
     {
+        String answer;
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)
         {
             StringBuilder output = new StringBuilder();
@@ -58,17 +55,12 @@ public class servletMisc {
             {
                 output.append(entity + "<br>");
             }
-            try {
-                resp.getWriter().write(output.toString());
-            } catch (IOException e) {
-            }
+            answer = output.toString();
         }
         else
         {
-            try {
-                resp.getWriter().write("Failure " + maor.Message);
-            } catch (IOException e) {
-            }
+            answer = "Failure " + maor.Message;
         }
+        simpleResponseToWeb(answer, resp);
     }
 }

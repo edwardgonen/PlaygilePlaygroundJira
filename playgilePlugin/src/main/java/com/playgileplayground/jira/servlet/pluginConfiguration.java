@@ -211,7 +211,7 @@ public class pluginConfiguration extends HttpServlet {
             ObjectMapper jsonMapper = new ObjectMapper();
             try {
                 String json = jsonMapper.writeValueAsString(featuresWithParameters);
-                if (bItIsPost)
+                if (bItIsPost) //the post method does not require the rendered page. Just the json string
                 {
                     servletMisc.simpleResponseToWeb(json, resp);
                 }
