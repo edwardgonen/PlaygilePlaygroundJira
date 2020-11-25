@@ -70,8 +70,8 @@ public class pluginConfiguration extends HttpServlet {
     @Override
     @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+    //protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
-        ManageActiveObjectsResult maor;
         Map<String, Object> context = new HashMap<>();
 
 
