@@ -25,6 +25,13 @@ public class servletMisc {
             servletMisc.responseToWeb("", maorLocal, resp);
         }
     }
+    static void simpleResponseToWeb(String response, HttpServletResponse resp)
+    {
+        try {
+            resp.getWriter().write(response);
+        } catch (IOException e) {
+        }
+    }
     static void responseToWeb(String response, ManageActiveObjectsResult maor, HttpServletResponse resp)
     {
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS)

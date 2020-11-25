@@ -69,9 +69,16 @@ public class pluginConfiguration extends HttpServlet {
     }
     @Override
     @Transactional
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
-    //protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
-    {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req,  resp, false);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp, true);
+    }
+
+    private void processRequest (HttpServletRequest req, HttpServletResponse resp, boolean bItIsPost) throws ServletException, IOException {
         Map<String, Object> context = new HashMap<>();
 
 
@@ -204,7 +211,16 @@ public class pluginConfiguration extends HttpServlet {
             ObjectMapper jsonMapper = new ObjectMapper();
             try {
                 String json = jsonMapper.writeValueAsString(featuresWithParameters);
-                context.put(FEATURES_CONFIGURATIONS_KEY, json);
+                if (bItIsPost)
+                {
+                    servletMisc.simpleResponseToWeb(json, resp);
+                }
+                else {
+                    context.put(FEATURES_CONFIGURATIONS_KEY, json);
+                    context.put(ALL_IS_OK_KEY, true);
+                    servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
+                    return null;
+                }
             } catch (JsonProcessingException e) {
                 context.put(FEATURES_CONFIGURATIONS_KEY, "Failed to serialize list of features " + e.toString());
                 context.put(ALL_IS_OK_KEY, false);
@@ -212,12 +228,10 @@ public class pluginConfiguration extends HttpServlet {
                 return null;
             }
 
-            context.put(ALL_IS_OK_KEY, true);
-            servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
-
             return null;
         });
     }
+
 }
 class RoadmapFeatureConfigurationParameters implements Comparator<RoadmapFeatureConfigurationParameters>, Comparable<RoadmapFeatureConfigurationParameters>
 {
