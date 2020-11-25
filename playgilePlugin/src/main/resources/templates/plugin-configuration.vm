@@ -4,6 +4,101 @@
     <meta name="decorator" content="atl.general">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <style type="text/css">
+        input{
+            border: 2px solid rgba(220,220,220,1);
+            color: #2980b9;
+            font-size: 16px;
+            box-shadow: 1px 1px 3px 1px rgba(200,200,200, 0.2) inset;
+            /* background-color: rgba(52, 152, 219, 0.1); */
+            padding: 1em;
+            width: 17em;
+            outline: none;
+            margin: 0;
+            -webkit-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            -moz-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            -o-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+        }
+        .form-content{
+            padding: 20px;
+            inline-size: min-content;
+            font-size: 2em;
+        }
+        select{
+            border: 2px solid rgba(220,220,220,1);
+            color: #2980b9;
+            font-size: 16px;
+            box-shadow: 1px 1px 3px 1px rgba(200,200,200, 0.2) inset;
+            /* background-color: rgba(52, 152, 219, 0.1); */
+            padding: 1em;
+            width: 500px;
+            outline: none;
+            margin: 0;
+            -webkit-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            -moz-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            -o-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+        }
+        .saveButtun {
+            color: #fff;
+            text-decoration: none; 
+            user-select: none; 
+            background: rgb(212,75,56); 
+            padding: .7em 1.5em; 
+            outline: none; 
+        } 
+        .saveButtun:hover { background: rgb(232,95,76); } 
+        .saveButtun:active { background: rgb(152,15,0); } 
+        .fade{
+            text-align: center;
+            position: absolute;
+            background: black;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            opacity: 0.3;
+            display: visible;
+        }
+        .ui-datepicker{
+            background:white
+        }
+        .lds-spinner {
+  color: official;
+  display: inline-block;
+margin-top: 20%;
+  width: 80px;
+  height: 80px;
+}
+.lds-spinner div {
+  transform-origin: 40px 40px;
+  animation: lds-spinner 1.2s linear infinite;
+}
+.lds-spinner div:after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 3px;
+  left: 37px;
+  width: 6px;
+  height: 18px;
+  border-radius: 20%;
+  background: #fff;
+}
+.lds-spinner div:nth-child(1) {  transform: rotate(0deg);  animation-delay: -1.1s;}
+.lds-spinner div:nth-child(2) {  transform: rotate(30deg);  animation-delay: -1s;}
+.lds-spinner div:nth-child(3) {  transform: rotate(60deg);  animation-delay: -0.9s;}
+.lds-spinner div:nth-child(4) {  transform: rotate(90deg);  animation-delay: -0.8s;}
+.lds-spinner div:nth-child(5) {  transform: rotate(120deg);  animation-delay: -0.7s;}
+.lds-spinner div:nth-child(6) {  transform: rotate(150deg);  animation-delay: -0.6s;}
+.lds-spinner div:nth-child(7) {  transform: rotate(180deg);  animation-delay: -0.5s;}
+.lds-spinner div:nth-child(8) {  transform: rotate(210deg);  animation-delay: -0.4s;}
+.lds-spinner div:nth-child(9) {  transform: rotate(240deg);  animation-delay: -0.3s;}
+.lds-spinner div:nth-child(10) {  transform: rotate(270deg);  animation-delay: -0.2s;}
+.lds-spinner div:nth-child(11) {  transform: rotate(300deg);  animation-delay: -0.1s;}
+.lds-spinner div:nth-child(12) {  transform: rotate(330deg);  animation-delay: 0s;}
+@keyframes lds-spinner {  0% {    opacity: 1;  }  100% {    opacity: 0;  }}
+    </style>
 </head>
 <body class="page-type-admin">
 <h1 style="color:red">$messagetodisplay</h1>
@@ -12,6 +107,7 @@
     #end
 
     #if ($allisok)
+        <div id="FadeBlock" class="fade"><div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div>
         <div class="content-container">
         </div>
         <div class="content-body">
@@ -20,42 +116,52 @@
     #end
 
 <script>
-
-    const featuresconfigurationkeys = `$featuresconfigurationkeys`.replaceAll('&quot;','').match(/(?<=\{)[\s\S]+?(?=\})/g).map(elem=>{
-            let obj = {}
-            elem.split(',').forEach((elem)=>{
-                let temp = elem.split(':');
-                obj[temp[0]] = temp[1]
-            }
-        )
-        return obj
-    })
-    
-    const baseurl = location.origin+location.pathname+'?projectKey='+getUrlParameterByName('projectKey')
+    fadeOn() 
+    const GET_URL = location.origin+location.pathname+'?projectKey='+getUrlParameterByName('projectKey')
+    const POST_UTL = location.origin+location.pathname
+    const PROJECT = getUrlParameterByName('projectKey')
     
     $( document ).ready(()=> {
         console.log( "document ready" );
         try{
-            init(featuresconfigurationkeys)
-        } catch (err) {alert(err + featuresconfigurationkeys)}
+            getFeaturesDateAndBuild({projectKey:PROJECT})
+        } catch (err) {alert(err)}
     });
     
+    function getFeaturesDateAndBuild(obj){
+        fadeOn()
+        jQuery.post( POST_UTL,obj)
+            .done(function (data){
+                var jsonData = JSON.parse(data)
+                init(jsonData)
+                fadeOff()
+            })
+            .fail(function (){
+                fadeOff()
+                alert("POST error")
+            })
+    }
+
     function init(featureArray){
 
         if(featureArray.length==0){alert('featureArray.length==0');return}
 
-        var _body = $('.content-body')
+        var _body = $('.content-body').empty()
 
         var _formArea = $('.form-content')
 
         var _select = $('<select>').change(function(){
+                localStorage.activeFeatureNameConfigPLuginV1 = $(this).val()
                 createForm(_formArea,featureArray[this.selectedIndex])
             })
 
         createForm(_formArea,featureArray[0])
+        var activeFeatureName = localStorage.activeFeatureNameConfigPLuginV1||""
 
-        var _featureArray = featureArray.map((elem)=>{
-                return $('<option>').text(elem.featureSummary)
+        var _featureArray = featureArray.map((elem,index)=>{
+                let $option = $('<option>').text(elem.featureSummary)
+                if(elem.featureSummary==activeFeatureName){$option.get()[0].selected = true}
+                return $option
             })
 
         _select.append(_featureArray)
@@ -73,20 +179,26 @@
         var _input2 = getInputField('sprintLengthRoadmapFeature',data.sprintLengthRoadmapFeature)
         var _input3 = getInputDateField('startDateRoadmapFeature',data.startDateRoadmapFeature)
 
-        var _saveButton = $('<button>').text('Save').click(()=>{
-            var result = [];
-            if(_input0.find('input').val()){result.push(`defaultNotEstimatedIssueValue=${_input0.find('input').val()}`)}
-            if(_input1.find('input').val()){result.push(`plannedRoadmapFeatureVelocity=${_input1.find('input').val()}`)}
-            if(_input2.find('input').val()){result.push(`sprintLengthRoadmapFeature=${_input2.find('input').val()}`)}
+        var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click(()=>{
+            var result = {};
+            var check = 0
+            if(_input0.find('input').val()){ check++;
+                result.defaultNotEstimatedIssueValue = _input0.find('input').val()
+            }
+            if(_input1.find('input').val()){ check++;
+                result.plannedRoadmapFeatureVelocity = _input1.find('input').val()
+            }
+            if(_input2.find('input').val()){ check++;
+                result.sprintLengthRoadmapFeature = _input2.find('input').val()
+            }
 
             var userDate = +new Date(_input3.find('input').val())
             var isTimeHaveDiff = new Date(userDate).toDateString()!=new Date(+data.startDateRoadmapFeature).toDateString()
-            if(isTimeHaveDiff){result.push(`startDateRoadmapFeature=${userDate}`)}
+            if(isTimeHaveDiff){result.startDateRoadmapFeature = userDate}
 
-            if(result.length==0){return}
-            var textResult = result.join('&')
-            var encodedDataFeatureSummary = encodeURIComponent(data.featureSummary)
-            document.location.href = `${baseurl}&roadmapFeature=${encodedDataFeatureSummary}&${textResult}`
+            if(!check){return}
+            result.roadmapFeature = data.featureSummary
+            getFeaturesDateAndBuild({projectKey:PROJECT,...result})
         })
 
         formArea.append(_input0,_input1,_input2,_input3,_saveButton)
@@ -102,9 +214,9 @@
         var _input = $('<input>').datepicker().val(new Date(+value).toLocaleDateString())
         return $('<div>').append(_label,_input)
     }
-    function getValueFromUrlParam(param){
 
-    }
+    function fadeOn(){FadeBlock.style.display = 'block'}
+    function fadeOff(){FadeBlock.style.display = 'none'}
 </script>
 </body>
 </html>
