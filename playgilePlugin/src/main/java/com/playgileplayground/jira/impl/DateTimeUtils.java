@@ -38,7 +38,7 @@ public class DateTimeUtils {
         return (getZeroTimeDate(firstDate).compareTo(getZeroTimeDate(secondDate)));
     }
 
-    private static Date getZeroTimeDate(Date date) {
+    public static Date getZeroTimeDate(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.set(Calendar.HOUR_OF_DAY, 0);

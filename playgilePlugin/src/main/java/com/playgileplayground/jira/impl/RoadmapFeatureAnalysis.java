@@ -292,8 +292,10 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 StatusText.getInstance().add(true, "Start feature date is set for today as fallback " + startDateRoadmapFeature);
             }
         }
-        double oldestSprintLength = 0;
+        startDateRoadmapFeature = DateTimeUtils.getZeroTimeDate(startDateRoadmapFeature);
         StatusText.getInstance().add(true, "Detected start date is " + startDateRoadmapFeature);
+
+        double oldestSprintLength = 0;
         if (oldestSprint != null) {
             oldestSprintLength = DateTimeUtils.AbsDays(oldestSprint.getStartDate(), oldestSprint.getEndDate()) + 1;
             StatusText.getInstance().add(true, "Detected oldest sprint is from " + oldestSprint.getStartDate() + " till " + oldestSprint.getEndDate() + " length is " + oldestSprintLength);
