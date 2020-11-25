@@ -16,7 +16,6 @@ public class DateTimeUtils {
         SimpleDateFormat outputDateFormat = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT);
         return outputDateFormat.format(dateToConvert);
     }
-
     public static boolean CheckIfDateIsInsideDateSegmentInclusive(Date dateInQuestion, Date startSegment, Date endSegment)
     {
         Calendar calendar = Calendar.getInstance();
@@ -95,5 +94,20 @@ public class DateTimeUtils {
         if (diffInMillies >= 0) sign = 1;
         else sign = -1;
         return sign * (int)TimeUnit.DAYS.convert(Math.abs(diffInMillies), TimeUnit.MILLISECONDS);
+    }
+
+    public static int getYear(Date date)
+    {
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        return c.get(Calendar.YEAR);
+    }
+
+    static String getMonth(Date date)
+    {
+        String[] monthString = new String[]{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        return monthString[c.get(Calendar.MONTH)];
     }
 }
