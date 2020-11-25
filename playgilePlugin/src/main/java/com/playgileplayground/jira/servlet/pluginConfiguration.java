@@ -198,6 +198,8 @@ public class pluginConfiguration extends HttpServlet {
                 {
                 }
             }
+            //sort
+            Collections.sort(featuresWithParameters);
             //serialize
             ObjectMapper jsonMapper = new ObjectMapper();
             try {
@@ -217,7 +219,7 @@ public class pluginConfiguration extends HttpServlet {
         });
     }
 }
-class RoadmapFeatureConfigurationParameters
+class RoadmapFeatureConfigurationParameters implements Comparator<RoadmapFeatureConfigurationParameters>, Comparable<RoadmapFeatureConfigurationParameters>
 {
     public String featureSummary;
     public String featureKey;
@@ -225,4 +227,13 @@ class RoadmapFeatureConfigurationParameters
     public double defaultNotEstimatedIssueValue = 0;
     public Date startDateRoadmapFeature = null;
     public double sprintLengthRoadmapFeature = 0;
+    @Override
+    public int compareTo(RoadmapFeatureConfigurationParameters o) {
+        return featureSummary.compareTo(o.featureSummary);
+    }
+
+    @Override
+    public int compare(RoadmapFeatureConfigurationParameters o1, RoadmapFeatureConfigurationParameters o2) {
+        return o1.featureSummary.compareTo(o2.featureSummary);
+    }
 }
