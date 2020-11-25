@@ -78,9 +78,11 @@
             if(_input0.find('input').val()){result.push(`defaultNotEstimatedIssueValue=${_input0.find('input').val()}`)}
             if(_input1.find('input').val()){result.push(`plannedRoadmapFeatureVelocity=${_input1.find('input').val()}`)}
             if(_input2.find('input').val()){result.push(`sprintLengthRoadmapFeature=${_input2.find('input').val()}`)}
-            var timeZoneOffset = +new Date("1970-01-01 00:00:00");
-            var userDate = +new Date(_input3.find('input').val())-timeZoneOffset;
-            if(userDate!=data.startDateRoadmapFeature){result.push(`startDateRoadmapFeature=${userDate}`)}
+
+            var userDate = +new Date(_input3.find('input').val())
+            var isTimeHaveDiff = new Date(userDate).toDateString()!=new Date(+data.startDateRoadmapFeature).toDateString()
+            if(isTimeHaveDiff){result.push(`startDateRoadmapFeature=${userDate}`)}
+
             if(result.length==0){return}
             var textResult = result.join('&')
             var encodedDataFeatureSummary = encodeURIComponent(data.featureSummary)
@@ -97,7 +99,7 @@
     }
     function getInputDateField(text,value){
         var _label = $('<label>').text(text)
-        var _input = $('<input>').datepicker().val(new Date(+value).toLocaleDateString('en-US'))
+        var _input = $('<input>').datepicker().val(new Date(+value).toLocaleDateString())
         return $('<div>').append(_label,_input)
     }
     function getValueFromUrlParam(param){
