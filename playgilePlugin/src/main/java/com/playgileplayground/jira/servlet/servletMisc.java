@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.servlet;
 
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
 import javax.servlet.http.HttpServletResponse;
@@ -44,6 +45,22 @@ public class servletMisc {
         }
         simpleResponseToWeb(answer, resp);
     }
+
+    static String serializeToJsonAndSend(Object object, HttpServletResponse resp)
+    {
+        String result = null;
+        ObjectMapper jsonMapper = new ObjectMapper();
+        try {
+            result = jsonMapper.writeValueAsString(object);
+            simpleResponseToWeb(result, resp);
+        }
+        catch (Exception e)
+        {
+            result = null;
+        }
+        return result;
+    }
+
     static void responseListToWeb(ManageActiveObjectsResult maor, HttpServletResponse resp)
     {
         String answer;

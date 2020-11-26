@@ -100,4 +100,8 @@
    <description key="plugin-configuration.description">Playgile Configuration</description>
    <url-pattern>/pluginConfiguration</url-pattern>
  </servlet>
+    <servlet name="Playgile get active features" i18n-name-key="get-active-features.name" key="get-active-features" class="com.playgileplayground.jira.servlet.getActiveFeatures">
+        <description key="plugin-configuration.description">Playgile Get Active Features</description>
+        <url-pattern>/getActiveFeatures</url-pattern>
+    </servlet>
 </atlassian-plugin>
