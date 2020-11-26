@@ -5,6 +5,15 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <style type="text/css">
+        .label{
+            white-space: nowrap;
+        }
+        .wrongIput{
+            background:#ff000024;
+        }
+        input:invalid{
+            background:#ff000024;
+        }
         input{
             border: 2px solid rgba(220,220,220,1);
             color: #2980b9;
@@ -51,6 +60,7 @@
         .saveButtun:hover { background: rgb(232,95,76); } 
         .saveButtun:active { background: rgb(152,15,0); } 
         .fade{
+            min-height: 50vh;
             text-align: center;
             position: absolute;
             background: black;
@@ -64,12 +74,12 @@
             background:white
         }
         .lds-spinner {
-  color: official;
-  display: inline-block;
-margin-top: 20%;
-  width: 80px;
-  height: 80px;
-}
+            color: official;
+            display: inline-block;
+            margin-top: 20vh;
+            width: 80px;
+            height: 80px;
+            }
 .lds-spinner div {
   transform-origin: 40px 40px;
   animation: lds-spinner 1.2s linear infinite;
@@ -101,25 +111,24 @@ margin-top: 20%;
     </style>
 </head>
 <body class="page-type-admin">
-<h1 style="color:red">$messagetodisplay</h1>
-    #if (!$allisok)
-        <h1 style="color:red">$messagetodisplay</h1>
-    #end
-
-    #if ($allisok)
         <div id="FadeBlock" class="fade"><div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div>
         <div class="content-container">
         </div>
         <div class="content-body">
         </div>
         <div class="form-content"></div>
-    #end
-
 <script>
     fadeOn() 
     const GET_URL = location.origin+location.pathname+'?projectKey='+getUrlParameterByName('projectKey')
     const POST_UTL = location.origin+location.pathname
     const PROJECT = getUrlParameterByName('projectKey')
+    const MIN_INPUT_SP = 0;
+    const MAX_INPUT_SP = 200;
+    const LABEL_1_TEXT = 'Default value for not estimated issues'
+    const LABEL_2_TEXT = 'Originally planned velocity'
+    const LABEL_3_TEXT = 'Sprint length in days'
+    const LABEL_4_TEXT = 'Roadmap Feature start date'
+
     
     $( document ).ready(()=> {
         console.log( "document ready" );
@@ -173,28 +182,30 @@ margin-top: 20%;
         formArea.empty()
         console.log(data)
         
-        
-        var _input0 = getInputField('defaultNotEstimatedIssueValue',data.defaultNotEstimatedIssueValue)
-        var _input1 = getInputField('plannedRoadmapFeatureVelocity',data.plannedRoadmapFeatureVelocity)
-        var _input2 = getInputField('sprintLengthRoadmapFeature',data.sprintLengthRoadmapFeature)
-        var _input3 = getInputDateField('startDateRoadmapFeature',data.startDateRoadmapFeature)
+
+        var _input0 = getInputField(LABEL_1_TEXT,data.defaultNotEstimatedIssueValue)
+        var _input1 = getInputField(LABEL_2_TEXT,data.plannedRoadmapFeatureVelocity)
+        var _input2 = getInputField(LABEL_3_TEXT,data.sprintLengthRoadmapFeature)
+        var _input3 = getInputDateField(LABEL_4_TEXT,data.startDateRoadmapFeature)
 
         var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click(()=>{
             var result = {};
             var check = 0
-            if(_input0.find('input').val()){ check++;
+            if(checkCorrectInput(_input0.find('input').val())){ check++;
                 result.defaultNotEstimatedIssueValue = _input0.find('input').val()
             }
-            if(_input1.find('input').val()){ check++;
+            if(checkCorrectInput(_input1.find('input').val())){ check++;
                 result.plannedRoadmapFeatureVelocity = _input1.find('input').val()
             }
-            if(_input2.find('input').val()){ check++;
+            if(checkCorrectInput(_input2.find('input').val())){ check++;
                 result.sprintLengthRoadmapFeature = _input2.find('input').val()
             }
 
             var userDate = +new Date(_input3.find('input').val())
             var isTimeHaveDiff = new Date(userDate).toDateString()!=new Date(+data.startDateRoadmapFeature).toDateString()
-            if(isTimeHaveDiff){result.startDateRoadmapFeature = userDate}
+            if(isTimeHaveDiff){ check++;
+                result.startDateRoadmapFeature = userDate
+            }
 
             if(!check){return}
             result.roadmapFeature = data.featureSummary
@@ -206,17 +217,33 @@ margin-top: 20%;
     }
     function getInputField(text,value){
         var _label = $('<label>').text(text)
-        var _input = $('<input>').attr("placeholder", +value)
+        var _input = $('<input>')
+                .prop({
+                    placeholder:value,
+                    type:'number'
+                })
+                .on('input',function(){
+                    let val = +$(this).val();
+                    checkCorrectInput(val)? $(this).removeClass('wrongIput'):$(this).addClass('wrongIput')
+                })
         return $('<div>').append(_label,_input)
     }
     function getInputDateField(text,value){
         var _label = $('<label>').text(text)
-        var _input = $('<input>').datepicker().val(new Date(+value).toLocaleDateString())
+        var _input = $('<input>')
+                .prop({
+                    type:'date'
+                })
+        _input.prop({valueAsNumber:+value})
         return $('<div>').append(_label,_input)
     }
 
     function fadeOn(){FadeBlock.style.display = 'block'}
     function fadeOff(){FadeBlock.style.display = 'none'}
+
+    function checkCorrectInput(value){
+        return !!(+value&&MIN_INPUT_SP<=value&&value<=MAX_INPUT_SP)
+    }
 </script>
 </body>
 </html>
