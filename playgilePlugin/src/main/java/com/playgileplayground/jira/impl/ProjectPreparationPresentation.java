@@ -1,10 +1,8 @@
 package com.playgileplayground.jira.impl;
 
-import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 
 import java.awt.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -43,7 +41,7 @@ public class ProjectPreparationPresentation {
                 {
                     if (monthlyRoadmapFeatures == null) {
                         monthlyRoadmapFeatures = new MonthlyRoadmapFeatures();
-                        monthlyRoadmapFeatures.monthYear = getMonth(date) + ", " + getYear(date);
+                        monthlyRoadmapFeatures.monthYear = DateTimeUtils.getMonth(date) + ", " + DateTimeUtils.getYear(date);
                         allRoadmapFeatures.add(monthlyRoadmapFeatures);
                     }
                     monthlyRoadmapFeatures.roadMapFeaturesInThatMonth.add(feature);
@@ -133,8 +131,8 @@ public class ProjectPreparationPresentation {
                     issuesStrings.append(
                         preparationIssue.issueTypeName + BR777 +
                             preparationIssue.issueName + " " + preparationIssue.issueKey + BR777 +
-                            ConvertDateToOurFormat(preparationIssue.getStartDate()) + BR777 +
-                            ConvertDateToOurFormat(preparationIssue.getDueDate()) + BR777 +
+                            DateTimeUtils.ConvertDateToOurFormat(preparationIssue.getStartDate()) + BR777 +
+                            DateTimeUtils.ConvertDateToOurFormat(preparationIssue.getDueDate()) + BR777 +
                             completeness + BR777 + //percentage completed
                             preparationIssue.assigneeName + BR777 +
                             preparationIssue.issueState
@@ -144,7 +142,7 @@ public class ProjectPreparationPresentation {
 
 
                 result.append(rfd.Name + " " + rfd.Key + BR777 +
-                                ConvertDateToOurFormat(rfd.BusinessApprovalDate) + BR777 +
+                    DateTimeUtils.ConvertDateToOurFormat(rfd.BusinessApprovalDate) + BR777 +
                                 ProjectProgress.convertColorToHexadeimal(featureBackgroundColor) + BR777 +
                                 ProjectProgress.convertColorToHexadeimal(featureForegroundColor)
 
@@ -166,23 +164,6 @@ public class ProjectPreparationPresentation {
         public String monthYear;
         public ArrayList<RoadmapFeatureDescriptor> roadMapFeaturesInThatMonth = new ArrayList<>();
     }
-    public String ConvertDateToOurFormat(Date dateToConvert)
-    {
-        SimpleDateFormat outputDateFormat = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT);
-        return outputDateFormat.format(dateToConvert);
-    }
-    static String getMonth(Date date)
-    {
-        String[] monthString = new String[]{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        return monthString[c.get(Calendar.MONTH)];
-    }
-    static int getYear(Date date)
-    {
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        return c.get(Calendar.YEAR);
-    }
+
 }
 

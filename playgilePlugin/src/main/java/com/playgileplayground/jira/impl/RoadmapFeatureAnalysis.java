@@ -33,6 +33,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
 
     /////////// publics
+    public String featureSummary;
+    public String featureKey;
+    public String projectKey;
     public String messageToDisplay;
     public ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
     Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
@@ -68,18 +71,21 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         this.applicationUser = applicationUser;
         this.currentProject = currentProject;
         this.projectMonitoringMisc = projectMonitoringMisc;
+        this.featureKey = roadmapFeature.getKey();
+        this.featureSummary = roadmapFeature.getSummary();
+        this.projectKey = currentProject.getKey();
         this.mao = mao;
 
     }
 
     @Override
     public int compareTo(RoadmapFeatureAnalysis o) {
-        return roadmapFeature.getSummary().compareTo(o.roadmapFeature.getSummary());
+        return featureSummary.compareTo(o.featureSummary);
     }
 
     @Override
     public int compare(RoadmapFeatureAnalysis o1, RoadmapFeatureAnalysis o2) {
-        return o1.roadmapFeature.getSummary().compareTo(o2.roadmapFeature.getSummary());
+        return o1.featureSummary.compareTo(o2.featureSummary);
     }
 
 
@@ -89,7 +95,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
         defaultNotEstimatedIssueValue = getDefaultValueForNonEstimatedIssue();
         //get list of issues and convert them to PlaygileIssues
-        StatusText.getInstance().add(true, "Start analysis for " + roadmapFeature.getKey() + " " + roadmapFeature.getSummary());
+        StatusText.getInstance().add(true, "Start analysis for " + featureKey + " " + featureSummary);
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
@@ -164,7 +170,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             Date timeStamp = DateTimeUtils.getCurrentDate();
             remainingTotalEstimations = projectMonitoringMisc.roundToDecimalNumbers(remainingTotalEstimations, 2);
             StatusText.getInstance().add(true, "Current time and estimations to add to list " + timeStamp + " " + remainingTotalEstimations);
-            ManageActiveObjectsResult maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()), timeStamp, remainingTotalEstimations);
+            ManageActiveObjectsResult maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(projectKey, featureSummary), timeStamp, remainingTotalEstimations);
 
 
             //get real velocities
@@ -204,14 +210,14 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             }
             else
             {
-                StatusText.getInstance().add(true, "Failed to get historical estimations for " + roadmapFeature.getSummary());
+                StatusText.getInstance().add(true, "Failed to get historical estimations for " + featureSummary);
                 result = false; //no estimations
             }
 
         }
         else
         {
-            StatusText.getInstance().add(true, "Failed to retrieve any project issues for " + roadmapFeature.getSummary());
+            StatusText.getInstance().add(true, "Failed to retrieve any project issues for " + featureSummary);
             messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
                 ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
             result = false;
@@ -233,13 +239,13 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     }
     public String getRoadmapFeatureKeyAndSummary()
     {
-        return roadmapFeature.getKey() + " " + roadmapFeature.getSummary();
+        return featureKey + " " + featureSummary;
     }
 
     private ArrayList<DataPair> getHistoricalEstimations()
     {
         ArrayList<DataPair> result = null;
-        ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             result = (ArrayList<DataPair>)maor.Result;
         }
@@ -249,7 +255,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     private double getDefaultValueForNonEstimatedIssue()
     {
         defaultNotEstimatedIssueValue = 0;
-        ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             defaultNotEstimatedIssueValue = (double)maor.Result;
         }
@@ -260,7 +266,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     {
         //we read them from DB (Active objects) and provide fallback if not found
         plannedRoadmapFeatureVelocity = 0;
-        ManageActiveObjectsResult maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        ManageActiveObjectsResult maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             plannedRoadmapFeatureVelocity = (double)maor.Result;
         }
@@ -269,7 +275,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         getDefaultValueForNonEstimatedIssue();
 
         startDateRoadmapFeature = null;
-        maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             startDateRoadmapFeature = (Date)maor.Result;
             StatusText.getInstance().add(true, "Start feature date from DB is " + startDateRoadmapFeature);
@@ -286,15 +292,17 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 StatusText.getInstance().add(true, "Start feature date is set for today as fallback " + startDateRoadmapFeature);
             }
         }
-        double oldestSprintLength = 0;
+        startDateRoadmapFeature = DateTimeUtils.getZeroTimeDate(startDateRoadmapFeature);
         StatusText.getInstance().add(true, "Detected start date is " + startDateRoadmapFeature);
+
+        double oldestSprintLength = 0;
         if (oldestSprint != null) {
             oldestSprintLength = DateTimeUtils.AbsDays(oldestSprint.getStartDate(), oldestSprint.getEndDate()) + 1;
             StatusText.getInstance().add(true, "Detected oldest sprint is from " + oldestSprint.getStartDate() + " till " + oldestSprint.getEndDate() + " length is " + oldestSprintLength);
         }
         //sprint length
         sprintLengthRoadmapFeature = 0;
-        maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(currentProject.getKey(), roadmapFeature.getSummary()));
+        maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             sprintLengthRoadmapFeature = (double)maor.Result;
             StatusText.getInstance().add(true, "Detected sprint length from DB is " + sprintLengthRoadmapFeature);

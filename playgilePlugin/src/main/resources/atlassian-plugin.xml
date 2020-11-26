@@ -96,8 +96,8 @@
    <description key="user-objects-delete.description">The users List Plugin</description>
    <url-pattern>/activeobjectsuserdelete</url-pattern>
  </servlet>
- <servlet name="get set Feature Properties" i18n-name-key="getset-feature-properties.name" key="getset-feature-properties" class="com.playgileplayground.jira.servlet.activeObjectsAccessFeatureProperties">
-     <description key="user-objects-delete.description">The users List Plugin</description>
-     <url-pattern>/activeObjectsAccessFeatureProperties</url-pattern>
+ <servlet name="Playgile plugin configuration" i18n-name-key="plugin-configuration.name" key="plugin-configuration" class="com.playgileplayground.jira.servlet.pluginConfiguration">
+   <description key="plugin-configuration.description">Playgile Configuration</description>
+   <url-pattern>/pluginConfiguration</url-pattern>
  </servlet>
 </atlassian-plugin>
