@@ -164,8 +164,9 @@
                 createForm(_formArea,featureArray[this.selectedIndex])
             })
 
-        createForm(_formArea,featureArray[0])
-        var activeFeatureName = localStorage.activeFeatureNameConfigPLuginV1||""
+        var activeFeatureName = localStorage.activeFeatureNameConfigPLuginV1||featureArray[0].featureSummary
+        var activeFeatureIndex = activeFeatureName.findIndex((elem)=>{return elem.featureSummary==activeFeatureName})
+        createForm(_formArea,featureArray[activeFeatureIndex])
 
         var _featureArray = featureArray.map((elem,index)=>{
                 let $option = $('<option>').text(elem.featureSummary)
