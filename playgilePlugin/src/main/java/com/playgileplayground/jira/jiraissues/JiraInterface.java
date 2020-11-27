@@ -56,6 +56,46 @@ public class JiraInterface {
         this.searchService = searchService;
         this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
     }
+
+    public Issue getIssueByKey(String projectKey, String issueKey)
+    {
+        Issue result;
+
+        Query query;
+        String searchString = "project = \"" + projectKey + "\" AND issueKey = " + issueKey;
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
+
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        if (searchResults == null)
+        {
+            result = null;
+        }
+        else {
+            List<Issue> tmpList = this.AccessVersionIndependentListOfIssues(searchResults);
+            if (tmpList != null && tmpList.size() > 0)
+            {
+                result = tmpList.get(0); //first
+            }
+            else
+            {
+                result = null;
+            }
+        }
+
+        return result;
+    }
+
     public List<Issue> getAllIssues(Project currentProject) {
         //mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
         IssueManager issueManager = ComponentAccessor.getIssueManager();

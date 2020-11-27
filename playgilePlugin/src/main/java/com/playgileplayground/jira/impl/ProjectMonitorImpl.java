@@ -127,6 +127,13 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
             UserLastLocations userLastLocations = (UserLastLocations)maor.Result;
             selectedRoadmapFeature = userLastLocations.lastRoadmapFeature;
             contextMap.put(SELECTEDROADMAPFEATURE, selectedRoadmapFeature);
+            if (selectedRoadmapFeature.isEmpty())
+            {
+                StatusText.getInstance().add( false, "Roadmap feature is not selected");
+                bAllisOk = false;
+                messageToDisplay = "Please select the Roadmap Feature";
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            }
             selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, selectedRoadmapFeature);
             if (selectedRoadmapFeatureIssue == null) //not found
             {
@@ -135,13 +142,7 @@ public class ProjectMonitorImpl implements com.playgileplayground.jira.api.Proje
                 messageToDisplay = "Please select a Roadmap Feature";
                 return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
             }
-            if (selectedRoadmapFeature.isEmpty())
-            {
-                StatusText.getInstance().add( false, "Roadmap feature is not selected");
-                bAllisOk = false;
-                messageToDisplay = "Please select the Roadmap Feature";
-                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-            }
+
             StatusText.getInstance().add( false, "First AO that matches project is found");
 
             /////////////////////// we are ready to analyze the roadmap feature /////////////////////////////////////////////

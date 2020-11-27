@@ -38,7 +38,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public String projectKey;
     public String messageToDisplay;
     public ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
-    Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
+    public Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
     public double[] overallIssuesDistributionInSprint = new double[ProjectMonitor.DISTRIBUTION_SIZE];
     public List<PlaygileIssue> allPlaygileIssues = new ArrayList<>();
     public List<PlaygileIssue> futurePlaygileIssues = new ArrayList<>();
@@ -415,6 +415,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             }
         }
         contextMap.put(ProjectMonitor.CHARTROWS, chartRows.toString());
+        //===========================================================================================================
         contextMap.put(ProjectMonitor.IDEALENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.idealProjectEnd));
         //make the logic of color
         contextMap.put(ProjectMonitor.PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(projectProgressResult.progressDataColor));

@@ -53,7 +53,20 @@ public class ProjectMonitoringMisc {
         }
         return roadmapFeaturesNames;
     }
-
+    public ArrayList<String> getAllRoadmapFeatureKeys(List<Issue> features)
+    {
+        ArrayList<String> roadmapFeaturesNames = new ArrayList<>();
+        if (features != null && features.size() > 0)
+        {
+            //convert to string list
+            for (Issue feature : features)
+            {
+                roadmapFeaturesNames.add(feature.getKey());
+            }
+            Collections.sort(roadmapFeaturesNames);//sort alphabetically for better user experience
+        }
+        return roadmapFeaturesNames;
+    }
 
 
     public void addIssueSprintsToList(Issue issue, ArrayList<PlaygileSprint> playgileSprints)
@@ -597,7 +610,7 @@ public class ProjectMonitoringMisc {
         return (statusCategory.getKey() == StatusCategory.COMPLETE);
     }
 
-    public String getExceptionTrace(Exception e)
+    public static String getExceptionTrace(Exception e)
     {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);

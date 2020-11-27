@@ -19,8 +19,6 @@ package com.playgileplayground.jira.servlet;
     import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
     import com.playgileplayground.jira.jiraissues.JiraInterface;
     import com.playgileplayground.jira.persistence.ManageActiveObjects;
-    import org.slf4j.Logger;
-    import org.slf4j.LoggerFactory;
 
     import javax.servlet.ServletException;
     import javax.servlet.http.HttpServlet;
@@ -58,47 +56,54 @@ public class getActiveFeatures extends HttpServlet {
     }
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Response ourResponse = new Response();
-        String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
-        if (projectKey.isEmpty())
+        GetActiveFeaturesResponse ourResponse = new GetActiveFeaturesResponse();
+
+        try {
+            String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
+            if (projectKey.isEmpty()) {
+                ourResponse.statusMessage = "Project key is missing";
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                return;
+            }
+
+            //prepare to walk through the features
+            ManageActiveObjects mao = new ManageActiveObjects(this.ao);
+            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
+            ApplicationUser applicationUser = jac.getLoggedInUser();
+            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+
+            Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
+            if (currentProject == null) {
+                ourResponse.statusMessage = "Failed to find project by key " + projectKey;
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                return;
+            }
+            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
+            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            if (roadmapFeatures == null) {
+                ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                return;
+            }
+
+            //ArrayList<String> featureNames = projectMonitoringMisc.getAllRoadmapFeatureNames(roadmapFeatures);
+            ArrayList<String> featureNames = projectMonitoringMisc.getAllRoadmapFeatureKeys(roadmapFeatures);
+            Collections.sort(featureNames); //alphabetically
+            ourResponse.featuresList = featureNames;
+            resp.setContentType("text/html;charset=utf-8");
+            servletMisc.serializeToJsonAndSend(ourResponse, resp);
+        }
+        catch (Exception e)
         {
-            ourResponse.statusMessage = "Project key is missing";
+            ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
             return;
         }
-
-        //prepare to walk through the features
-        ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-        JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
-        ApplicationUser applicationUser = jac.getLoggedInUser();
-        JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
-
-        Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
-        if (currentProject == null)
-        {
-            ourResponse.statusMessage = "Failed to find project by key " + projectKey;
-            servletMisc.serializeToJsonAndSend(ourResponse, resp);
-            return;
-        }
-        ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
-        List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
-        if (roadmapFeatures == null)
-        {
-            ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
-            servletMisc.serializeToJsonAndSend(ourResponse, resp);
-            return;
-        }
-
-        ArrayList<String> featureNames =  projectMonitoringMisc.getAllRoadmapFeatureNames(roadmapFeatures);
-        Collections.sort(featureNames); //alphabetically
-        ourResponse.featuresList = featureNames;
-        resp.setContentType("text/html;charset=utf-8");
-        servletMisc.serializeToJsonAndSend(ourResponse, resp);
 
     }
 }
 
-class Response
+class GetActiveFeaturesResponse
 {
     public String statusMessage = "";
     public ArrayList<String> featuresList = new ArrayList<>();
