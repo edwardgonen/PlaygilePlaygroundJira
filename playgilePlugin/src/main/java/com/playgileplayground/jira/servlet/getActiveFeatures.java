@@ -86,10 +86,25 @@ public class getActiveFeatures extends HttpServlet {
                 return;
             }
 
-            //ArrayList<String> featureNames = projectMonitoringMisc.getAllRoadmapFeatureNames(roadmapFeatures);
-            ArrayList<String> featureNames = projectMonitoringMisc.getAllRoadmapFeatureKeys(roadmapFeatures);
-            Collections.sort(featureNames); //alphabetically
-            ourResponse.featuresList = featureNames;
+            //prepare list of short feature descriptors
+            if (roadmapFeatures != null && roadmapFeatures.size() > 0)
+            {
+                //convert to string list
+                for (Issue feature : roadmapFeatures)
+                {
+                    ActiveFeatureShortDescriptor afsd = new ActiveFeatureShortDescriptor();
+                    afsd.featureKey = feature.getKey();
+                    afsd.setFeatureSummary(feature.getSummary());
+                    ourResponse.featuresList.add(afsd);
+                }
+                Collections.sort(ourResponse.featuresList);//sort alphabetically for better user experience
+            }
+            else
+            {
+                ourResponse.statusMessage = "No active features found for " + projectKey;
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                return;
+            }
             resp.setContentType("text/html;charset=utf-8");
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
         }
@@ -106,5 +121,24 @@ public class getActiveFeatures extends HttpServlet {
 class GetActiveFeaturesResponse
 {
     public String statusMessage = "";
-    public ArrayList<String> featuresList = new ArrayList<>();
+    public ArrayList<ActiveFeatureShortDescriptor> featuresList = new ArrayList<>();
+}
+class ActiveFeatureShortDescriptor implements Comparator<ActiveFeatureShortDescriptor>, Comparable<ActiveFeatureShortDescriptor>
+{
+    public String featureKey;
+    private String featureSummary;
+
+    public void setFeatureSummary(String featureSummary)
+    {
+        this.featureSummary = featureSummary;
+    }
+    @Override
+    public int compareTo(ActiveFeatureShortDescriptor o) {
+        return featureSummary.compareTo(o.featureSummary);
+    }
+
+    @Override
+    public int compare(ActiveFeatureShortDescriptor o1, ActiveFeatureShortDescriptor o2) {
+        return o1.featureSummary.compareTo(o2.featureSummary);
+    }
 }

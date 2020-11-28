@@ -102,6 +102,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
             } else
             {
                 contextMap.put(PROJECT, currentProject);
+                /*
                 //get list of roadmap features
                 List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
                 if (roadmapFeatures != null && roadmapFeatures.size() > 0)
@@ -153,7 +154,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
 
                 //prepare for web
                 prepareDataForWeb(contextMap);
-
+*/
                 StatusText.getInstance().add(false, "Exiting successfully");
                 bAllisOk = true;
                 return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
