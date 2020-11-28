@@ -4,11 +4,15 @@
 <html>
 <head>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    $webResourceManager.requireResourcesForContext("playgilePlugin")
     <script type="text/javascript">
+    /*
         google.charts.load('current', {'packages':['corechart']});
         google.charts.load('current', {'packages':['gauge']});
         google.charts.load('current', {'packages':['timeline']});
-        google.charts.setOnLoadCallback(drawChart);
+        google.charts.setOnLoadCallback(drawChart);*/
 
         function drawChart() {
             if (!$allisok) return; //no need to execute
@@ -242,10 +246,271 @@
 #end
 
 #if ($allisok)
+<div class="content">
+        <div class="generalLoading">
+            generalLoading
+        </div>
+    <div class="generalViewBlock">
+            <table class="generalViewTable" width="100%">
+            </table>
+    </div>
+</div>
 <table id="roadmap-features-table"; width="100%">
 </table>
 
+
 #end
+<script>
+window.onload = function() {
+    google.charts.load('current', {'packages':['corechart']});
+        google.charts.load('current', {'packages':['gauge']});
+        google.charts.load('current', {'packages':['timeline']});
+        google.charts.setOnLoadCallback(init);
+  };
+function init() {
+    console.log('loaded resources playgilePlugin and init v1');
+
+    const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
+
+    const BASE_URL = location.origin;
+
+    const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?projectKey=' + PROJECT_NAME;
+
+    const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?projectKey=' + PROJECT_NAME + '&roadmapFeature=';
+
+    const $generalLoading = $('.generalLoading');
+
+    const $generalViewBlock = $('.generalViewBlock');
+
+    const $generalViewTable = $('.generalViewTable')
+
+    const STORE = {
+        featureArray: [],
+        viewChildren: [],
+        $currentBlockInLoading: null
+    };
+    console.log('STORE');
+    console.log(STORE)
+
+    globalLoadingOFF()
+
+
+    doPost(FEATURES_URL, {}, function (data) {
+        STORE.featureArray = data.featuresList
+        console.log(data)
+        initBuildPanels()
+    })
+
+    function initBuildPanels() {
+        if (STORE.featureArray.length != STORE.viewChildren.length) {
+            var featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length])
+            var $panelBlock = $('<div>').text('Loading');
+            $generalViewBlock.append($panelBlock)
+            STORE.$currentBlockInLoading = $panelBlock;
+            STORE.viewChildren.push($panelBlock);
+            doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
+                if (!!data.statusMessage) {
+                    $panelBlock.hide()
+                    initBuildPanels()
+                } else {
+                    $panelBlock.empty();
+                    $panelBlock.append($(getTotalViewBlock(data)));
+                    console.log(data)
+                    initBuildPanels()
+                }
+
+            })
+        }
+
+
+    }
+
+    function globalLoadingON() {
+        $generalLoading.show()
+    }
+
+    function globalLoadingOFF() {
+        $generalLoading.hide()
+    }
+
+    function doPost(url, postData, callback) {
+        globalLoadingON()
+        jQuery.post(url, postData)
+            .done(function (textData) {
+                var jsonData = JSON.parse(textData)
+                if (!!jsonData.statusMessage) { traceDataMessageError(jsonData) }
+                callback(jsonData)
+                globalLoadingOFF()
+            })
+            .fail(function (err) {
+                alert("POST error")
+                globalLoadingOFF()
+            })
+    }
+    function traceDataMessageError(data) {
+        console.log('----------------data.statusMessage----ERROR---------------')
+        console.log(data.statusMessage)
+        console.log(data)
+    }
+
+    function getTotalViewBlock(featureData) {
+
+        const SUMMARY = featureData.summary;//[0]
+
+        const QUALITY_SCORE = normolizedInt(featureData.qualityScore);//[1]
+
+        const START_DATE_ROADMAP_FEATURE = normolizedDate(featureData.startDateRoadmapFeature);//[2]
+
+        const PLANNED_VELOCITY = normolizedInt(featureData.plannedRoadmapFeatureVelocity);//[3]
+
+        //NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
+        const PROJECT_VELOCITY = normolizedInt(13);//[4] I dont know how find it
+
+        const IDEAL_PROJECT_END = normolizedDate(featureData.idealProjectEnd);//[5]
+
+        const PREDICTED_PROJECT_END = normolizedDate(featureData.predictedProjectEnd);//[6]
+
+        const NOT_ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.notEstimatedStoriesNumber);//[7]
+
+        const LARGE_STORIES_NUMBER = normolizedInt(featureData.largeStoriesNumber);//[8]
+
+        const VERY_LARGE_STORIES_NUMBER = normolizedInt(featureData.veryLargeStoriesNumber);//[9]
+
+        const ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.estimatedStoriesNumber);//[10]
+
+        const LINE_COLOR1 = '#4285f4'
+        const LINE_COLOR2 = "#cccc00"//[11]
+
+
+        const ROW_HEIGHT = 100;
+        const ROW_WIDTH = 100;
+        const LABEL = 'Label';
+        const VALUE = 'Value';
+        const RISK = 'Risk'
+
+        var table = document.createElement('table');
+        table.width = '100%'
+
+        var row = table.insertRow(0);
+
+        var featureStatusCell = row.insertCell(0);
+        featureStatusCell.width = ROW_WIDTH;
+        featureStatusCell.height = ROW_HEIGHT;
+
+        var dataStatusGauge = google.visualization.arrayToDataTable([
+            [LABEL, VALUE],
+            [RISK, 100 - QUALITY_SCORE],
+        ]);
+        var featureStatusGaugeOptions = {
+            width: "5%", height: ROW_HEIGHT,
+            redFrom: 50, redTo: 100,
+            yellowFrom: 25, yellowTo: 50,
+            greenFrom: 0, greenTo: 25,
+            minorTicks: 0
+        };
+        var featureStautsGauge = new google.visualization.Gauge(featureStatusCell);
+
+        featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
+        ///////////////////////////////////////////////////////////////
+        var featureNameCell = row.insertCell(1);
+        featureNameCell.width = '10%';
+        featureNameCell.height = ROW_HEIGHT;
+        featureNameCell.innerText = SUMMARY;
+        /////////////////////////////////////////////////////////////////////////
+        var startDateCell = row.insertCell(2);
+        startDateCell.width = "10%";
+        startDateCell.height = ROW_HEIGHT;
+        startDateCell.innerText = 'Started on ' + START_DATE_ROADMAP_FEATURE.toDateString();
+        ////////////////////////////////////////////////////////////////////////
+        var velocityCell = row.insertCell(3);
+        velocityCell.width = '30%';
+        velocityCell.height = ROW_HEIGHT;
+        var dataVelocities = google.visualization.arrayToDataTable([
+            ['', 'Predicted', 'Real'],
+            ['', PLANNED_VELOCITY, PROJECT_VELOCITY]
+        ]);
+        var optionsVelocities = {
+            title: 'Velocities',
+            legend: 'none',
+            chartArea: { width: '95%' },
+            colors: [LINE_COLOR1, '#009900'],
+            bar: { groupWidth: "60%" },
+            hAxis: {
+                title: 'Story Points per Sprint',
+                minValue: 0
+            }
+        };
+        var chartVelocities = new google.visualization.BarChart(velocityCell);
+        chartVelocities.draw(dataVelocities, optionsVelocities);
+        //////////////////////////////////////////////////////////////////////////
+        var projectEndCell = row.insertCell(4);
+        projectEndCell.width = '30%';
+        projectEndCell.height = ROW_HEIGHT;
+
+        var dataProjectEnd = new google.visualization.DataTable();
+        dataProjectEnd.addColumn('string', '');
+        dataProjectEnd.addColumn('date', 'Start');
+        dataProjectEnd.addColumn('date', 'End');
+
+        dataProjectEnd.addRows([
+            ['Predicted', START_DATE_ROADMAP_FEATURE, IDEAL_PROJECT_END],
+            ['Real', START_DATE_ROADMAP_FEATURE, PREDICTED_PROJECT_END],
+        ]);
+
+        var optionsProjectEnd = {
+            height: ROW_HEIGHT,
+            colors: [LINE_COLOR1, LINE_COLOR2],
+            timeline: {
+                rowLabelStyle: { fontSize: 10 },
+                barLabelStyle: { fontSize: 5 }
+            }
+        };
+
+        var chartProjectEnd = new google.visualization.Timeline(projectEndCell);
+        chartProjectEnd.draw(dataProjectEnd, optionsProjectEnd);
+
+        ////////////////////////////////////////////////////////////////////
+        var issueDistributionCell = row.insertCell(5);
+        issueDistributionCell.width = '5%';
+        issueDistributionCell.height = ROW_HEIGHT;
+
+        var dataIssueDistribution = new google.visualization.DataTable();
+
+        dataIssueDistribution.addColumn('string', 'Category');
+        dataIssueDistribution.addColumn('number', 'Value');
+
+        dataIssueDistribution.addRow(['Not estimated', NOT_ESTIMATED_STORIES_NUMBER]);
+        dataIssueDistribution.addRow(['Very Large (21 points)', VERY_LARGE_STORIES_NUMBER]);
+        dataIssueDistribution.addRow(['Large (13 points)', LARGE_STORIES_NUMBER]);
+        dataIssueDistribution.addRow(['Normal', ESTIMATED_STORIES_NUMBER]);
+
+        var totalStories = NOT_ESTIMATED_STORIES_NUMBER + LARGE_STORIES_NUMBER + VERY_LARGE_STORIES_NUMBER + ESTIMATED_STORIES_NUMBER;
+
+        var optionsIssueDistribution = {
+            title: 'Total ' + totalStories + ' issues',
+            legend: 'none'
+        };
+
+        var chartIssueDistribution = new google.visualization.PieChart(issueDistributionCell);
+
+        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+
+        return table;
+    }
+    function normolizedInt(int) {
+        if ((typeof int) == 'number') {
+            return parseFloat(int)
+        } else {
+            return null
+        }
+    }
+    function normolizedDate(date) {
+        return (new Date(date))
+    }
+}
+
+
+</script>
 </body>
 </html>
 <table>
