@@ -6,6 +6,40 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <style>
+        .ButtonPlugin{
+            box-sizing: border-box;
+            transition: background-color .1s ease-out;
+            border-radius: 3.01px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-variant: normal;
+            /* font-weight: 400; */
+            /* background-image: none; */
+            /* background-color: rgba(9,30,66,.08); */
+            /* border: 1px solid transparent; */
+            /* color: #344563; */
+            /* text-decoration: none; */
+            display: inline-block;
+            height: 2.14285714em;
+            /* line-height: 1.42857143em; */
+            /* margin: 0; */
+            /* padding: 4px 10px; */
+            vertical-align: baseline;
+            white-space: nowrap;
+            position: relative;
+            color: #deebff;
+            background-color: #2684ff;
+            border: 0;
+            line-height: 1.57142857;
+            margin: 5px 0 0 10px;
+            padding: 4px 10px;
+            background-image: none;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 #if (!$allisok)
@@ -194,17 +228,17 @@ function init() {
         featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
         ///////////////////////////////////////////////////////////////
         var featureNameCell = row.insertCell(1);
-        featureNameCell.width = '10%';
+        featureNameCell.width = '15%';
         featureNameCell.height = ROW_HEIGHT;
         featureNameCell.innerText = SUMMARY;
         /////////////////////////////////////////////////////////////////////////
         var startDateCell = row.insertCell(2);
-        startDateCell.width = "10%";
+        startDateCell.width = "15%";
         startDateCell.height = ROW_HEIGHT;
         startDateCell.innerText = 'Started on ' + START_DATE_ROADMAP_FEATURE.toDateString();
         ////////////////////////////////////////////////////////////////////////
         var velocityCell = row.insertCell(3);
-        velocityCell.width = '30%';
+        velocityCell.width = '25%';
         velocityCell.height = ROW_HEIGHT;
         var dataVelocities = google.visualization.arrayToDataTable([
             ['', 'Predicted', 'Real'],
@@ -225,7 +259,7 @@ function init() {
         chartVelocities.draw(dataVelocities, optionsVelocities);
         //////////////////////////////////////////////////////////////////////////
         var projectEndCell = row.insertCell(4);
-        projectEndCell.width = '30%';
+        projectEndCell.width = '25%';
         projectEndCell.height = ROW_HEIGHT;
 
         var dataProjectEnd = new google.visualization.DataTable();
