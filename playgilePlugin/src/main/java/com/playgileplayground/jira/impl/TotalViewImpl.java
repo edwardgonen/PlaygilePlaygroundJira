@@ -8,7 +8,6 @@ import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
-import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectManager;
@@ -19,12 +18,12 @@ import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
-import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.projectprogress.ProjectProgress;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Scanned
@@ -68,8 +67,7 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
     @Override
     public Map getContextMap(Map<String, Object> map) {
         Map<String, Object> contextMap = new HashMap<>();
-        String messageToDisplay = "";
-        boolean bAllisOk;
+        String messageToDisplay;
         activeRoadmapFeatures = new ArrayList<>();
         inactiveRoadmapFeatures = new ArrayList<>();
 
@@ -96,22 +94,19 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
             {
                 //no current project
                 StatusText.getInstance().add( false, "No current project found");
-                bAllisOk = false;
                 messageToDisplay = "Cannot identify current project. Please try to reload this page";
-                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
             } else
             {
                 contextMap.put(PROJECT, currentProject);
                 StatusText.getInstance().add(false, "Exiting successfully");
-                bAllisOk = true;
-                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
+                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, true, "");
             }
         } catch (Exception e) {
-            String trace = projectMonitoringMisc.getExceptionTrace(e);
+            String trace = ProjectMonitoringMisc.getExceptionTrace(e);
             StatusText.getInstance().add(true, "Main route exception " + trace);
-            bAllisOk = false;
             messageToDisplay = "General code failure in Total View. Please check the log";
-            return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+            return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
         }
     }
 }

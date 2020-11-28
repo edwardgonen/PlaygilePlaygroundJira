@@ -6,225 +6,40 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    $webResourceManager.requireResourcesForContext("playgilePlugin")
-    <script type="text/javascript">
-    /*
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.load('current', {'packages':['gauge']});
-        google.charts.load('current', {'packages':['timeline']});
-        google.charts.setOnLoadCallback(drawChart);*/
-
-        function drawChart() {
-            if (!$allisok) return; //no need to execute
-            /////////// project predictions
-            const LINE_SEPARATOR = "BOBRUISK";
-            const PAIR_SEPARATOR = "|";
-            const DATE_FORMAT = "MM/dd/yyyy";
-
-            //split by lines
-            var featureRows = '$featuresrows';
-            //split and parse
-            if (typeof featureRows === 'undefined' || featureRows === null)
-            {
-                alert("No rows for the page");
-                return;
-            }
-
-            var lines = featureRows.split(LINE_SEPARATOR);
-            if (lines.length <= 0)
-            {
-                alert("Wrong rows format " + featureRows);
-                return;
-            }
-            // Find a <table> element with id="myTable":
-            var table = document.getElementById("roadmap-features-table");
-            var rowHeight = 100;
-            lines.forEach(function (line, index) {
-                if (line.length > 0)//non empty line
-                {
-                    //split by pair separator
-                    var items = line.split(PAIR_SEPARATOR);
-                    if (items.length < 11)
-                    {
-                        alert("Wrong line format " + line);
-                    }
-
-                    //add new row to table
-                    // Create an empty <tr> element and add it to the 1st position of the table:
-                    var row = table.insertRow(index);
-
-                    //////////////////////////////////////////
-                    var createClickHandler =
-                            function(row)
-                            {
-                                return function() {
-                                    var cell = row.getElementsByTagName("td")[2];
-                                    var encodedFeatureName = encodeURIComponent(cell.innerText);
-                                    jQuery.ajax({
-                                        type: "GET",
-                                        async: false,
-                                        url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
-                                        + "&roadmapfeature=" + encodedFeatureName + "&user=" + '$currentuser',
-                                        success: function(data) {
-                                            var newUrl = window.location.href.replace('totalview', 'metrics');
-                                            window.location.href = newUrl;
-                                        },
-                                        error: function() {
-                                            alert("error");
-                                            //console.log('error', arguments);
-                                        }
-                                    });
-                                };
-                            };
-
-                    row.onclick = createClickHandler(row);
-
-                    //////////////////////////////////////////
-
-                    var featureStatus = parseFloat(items[1]);
-                    var featureStatusCell = row.insertCell(0);
-                    featureStatusCell.width = 100;
-                    featureStatusCell.height = rowHeight;
-                    featureStatusCell.id = "feature-status" + index;
-                    var dataStatusGauge = google.visualization.arrayToDataTable([
-                        ['Label', 'Value'],
-                        ['Risk', 100 - featureStatus],
-                    ]);
-/*
-                    var featureStatusGaugeOptions = {
-                        width: 100, height: rowHeight,
-                        redFrom: 0, redTo: 50,
-                        yellowFrom:50, yellowTo: 70,
-                        greenFrom: 70, greenTo: 100,
-                        minorTicks: 5
-                    };
-*/
-                    var featureStatusGaugeOptions = {
-                        width: 100, height: rowHeight,
-                        redFrom: 50, redTo: 100,
-                        yellowFrom: 25, yellowTo: 50,
-                        greenFrom: 0, greenTo: 25,
-                        minorTicks: 0
-                    };
-
-                    var featureStautsGauge = new google.visualization.Gauge(document.getElementById(featureStatusCell.id));
-
-                    featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
-
-                    ///////////////////////////////////////////////////////////////
-
-                    var featureName = items[0];
-                    var featureNameCell = row.insertCell(1);
-                    featureNameCell.width = 120;
-                    featureNameCell.height = rowHeight;
-                    featureNameCell.innerText = featureName;
-                    featureNameCell.id = "feature-name";
-
-
-                    /////////////////////////////////////////////////////////////////////////
-
-                    var startDate = new Date(items[2]);
-                    var startDateCell = row.insertCell(2);
-                    startDateCell.width = 120;
-                    startDateCell.height = rowHeight;
-                    startDateCell.innerText = 'Started on ' + startDate.toDateString();
-
-                    ////////////////////////////////////////////////////////////////////////
-
-                    var teamVelocity = parseFloat(items[3]);
-                    var projectVelocity = parseFloat(items[4]);
-                    var velocityCell = row.insertCell(3);
-                    velocityCell.width = '40%';
-                    velocityCell.height = rowHeight;
-                    velocityCell.id = "velocities" + index;
-
-                    var dataVelocities = google.visualization.arrayToDataTable([
-                        ['', 'Predicted', 'Real'],
-                        ['', teamVelocity, projectVelocity]
-                    ]);
-
-                    var optionsVelocities = {
-                        title: 'Velocities',
-                        legend: 'none',
-                        chartArea: {width: '50%'},
-                        colors: ['#4285f4', '#009900'],
-                        bar: {groupWidth: "60%"},
-                        hAxis: {
-                            title: 'Story Points per Sprint',
-                            minValue: 0
-                        }
-                    };
-                    var chartVelocities = new google.visualization.BarChart(document.getElementById(velocityCell.id));
-                    chartVelocities.draw(dataVelocities, optionsVelocities);
-
-
-                    //////////////////////////////////////////////////////////////////////////
-
-                    var idealEndOfProject = new Date(items[5]);
-                    var predictedEndOfProject = new Date(items[6]);
-                    var projectEndCell = row.insertCell(4);
-                    projectEndCell.width = '20%';
-                    projectEndCell.height = rowHeight;
-                    projectEndCell.id = "project-end" + index;
-
-                    var dataProjectEnd = new google.visualization.DataTable();
-                    dataProjectEnd.addColumn('string', '');
-                    dataProjectEnd.addColumn('date', 'Start');
-                    dataProjectEnd.addColumn('date', 'End');
-
-                    dataProjectEnd.addRows([
-                        ['Predicted', startDate, idealEndOfProject],
-                        ['Real', startDate, predictedEndOfProject],
-                    ]);
-
-                    var optionsProjectEnd = {
-                        height: rowHeight,
-                        colors: ['#4285f4', items[11]],
-                        timeline: {
-                            rowLabelStyle: { fontSize: 10 },
-                            barLabelStyle: { fontSize: 5 }
-                        }
-                    };
-
-                    var chartProjectEnd = new google.visualization.Timeline(document.getElementById(projectEndCell.id));
-                    chartProjectEnd.draw(dataProjectEnd, optionsProjectEnd);
-
-                    ////////////////////////////////////////////////////////////////////
-                    var notEstimatedNumber = parseFloat(items[7]);
-                    var largeStoriesNumber =  parseFloat(items[8]);
-                    var veryLargeStoriesNumber =  parseFloat(items[9]);
-                    var estimatedStoriesNumber =  parseFloat(items[10]);
-
-                    var issueDistributionCell = row.insertCell(5);
-                    issueDistributionCell.width = '10%';
-                    issueDistributionCell.height = rowHeight;
-                    issueDistributionCell.id = "issues-estimation" + index;
-
-                    var dataIssueDistribution = new google.visualization.DataTable();
-
-                    dataIssueDistribution.addColumn('string', 'Category');
-                    dataIssueDistribution.addColumn('number', 'Value');
-
-                    dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
-                    dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
-                    dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
-                    dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
-
-                    var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
-
-                    var optionsIssueDistribution = {
-                        title: 'Total ' + totalStories + ' issues',
-                        legend: 'none'
-                    };
-
-                    var chartIssueDistribution = new google.visualization.PieChart(document.getElementById(issueDistributionCell.id));
-
-                    chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
-                }
-            });
-
+    <style>
+        .ButtonPlugin{
+            box-sizing: border-box;
+            transition: background-color .1s ease-out;
+            border-radius: 3.01px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-variant: normal;
+            /* font-weight: 400; */
+            /* background-image: none; */
+            /* background-color: rgba(9,30,66,.08); */
+            /* border: 1px solid transparent; */
+            /* color: #344563; */
+            /* text-decoration: none; */
+            display: inline-block;
+            height: 2.14285714em;
+            /* line-height: 1.42857143em; */
+            /* margin: 0; */
+            /* padding: 4px 10px; */
+            vertical-align: baseline;
+            white-space: nowrap;
+            position: relative;
+            color: #deebff;
+            background-color: #2684ff;
+            border: 0;
+            line-height: 1.57142857;
+            margin: 5px 0 0 10px;
+            padding: 4px 10px;
+            background-image: none;
+            text-decoration: none;
+            font-weight: 600;
         }
-    </script>
+    </style>
 </head>
 <body>
 #if (!$allisok)
@@ -303,7 +118,7 @@ function init() {
 
     function initBuildPanels() {
         if (STORE.featureArray.length != STORE.viewChildren.length) {
-            var featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length])
+            var featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey)
             var $panelBlock = $('<div>').text('Loading');
             $generalViewBlock.append($panelBlock)
             STORE.$currentBlockInLoading = $panelBlock;
@@ -413,17 +228,17 @@ function init() {
         featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
         ///////////////////////////////////////////////////////////////
         var featureNameCell = row.insertCell(1);
-        featureNameCell.width = '10%';
+        featureNameCell.width = '15%';
         featureNameCell.height = ROW_HEIGHT;
         featureNameCell.innerText = SUMMARY;
         /////////////////////////////////////////////////////////////////////////
         var startDateCell = row.insertCell(2);
-        startDateCell.width = "10%";
+        startDateCell.width = "15%";
         startDateCell.height = ROW_HEIGHT;
         startDateCell.innerText = 'Started on ' + START_DATE_ROADMAP_FEATURE.toDateString();
         ////////////////////////////////////////////////////////////////////////
         var velocityCell = row.insertCell(3);
-        velocityCell.width = '30%';
+        velocityCell.width = '25%';
         velocityCell.height = ROW_HEIGHT;
         var dataVelocities = google.visualization.arrayToDataTable([
             ['', 'Predicted', 'Real'],
@@ -444,7 +259,7 @@ function init() {
         chartVelocities.draw(dataVelocities, optionsVelocities);
         //////////////////////////////////////////////////////////////////////////
         var projectEndCell = row.insertCell(4);
-        projectEndCell.width = '30%';
+        projectEndCell.width = '25%';
         projectEndCell.height = ROW_HEIGHT;
 
         var dataProjectEnd = new google.visualization.DataTable();
