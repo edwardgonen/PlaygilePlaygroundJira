@@ -102,59 +102,6 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
             } else
             {
                 contextMap.put(PROJECT, currentProject);
-                /*
-                //get list of roadmap features
-                List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
-                if (roadmapFeatures != null && roadmapFeatures.size() > 0)
-                {
-                    StatusText.getInstance().add( false, "Found roadmap features total " + roadmapFeatures.size());
-                }
-                else
-                {
-                    StatusText.getInstance().add( false, "No roadmap feature found for project");
-                    bAllisOk = false;
-                    messageToDisplay = "Failed to retrieve a list of Roadmap Features for the project. Please create the Roadmap Features";
-                    return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
-                }
-
-                for (Issue roadmapFeature : roadmapFeatures) {
-
-                    /////////////////////// we are ready to analyze the roadmap feature /////////////////////////////////////////////
-                    RoadmapFeatureAnalysis roadmapFeatureAnalysis = new RoadmapFeatureAnalysis(
-                        roadmapFeature,
-                        jiraInterface,
-                        applicationUser,
-                        currentProject,
-                        projectMonitoringMisc,
-                        mao);
-                    if (roadmapFeatureAnalysis.analyzeRoadmapFeature()) {
-                        if (roadmapFeatureAnalysis.isRoadmapFeatureStarted()) {
-                            //Roadmap feature is active
-                            StatusText.getInstance().add(true, "Found active Roadmap feature " + roadmapFeatureAnalysis.getRoadmapFeatureKeyAndSummary());
-                            activeRoadmapFeatures.add(roadmapFeatureAnalysis);
-
-
-
-                        } else //not active
-                        {
-                            //add to the list of inactive features
-                            inactiveRoadmapFeatures.add(roadmapFeatureAnalysis);
-                        }
-                    }
-                    else
-                    {
-                        messageToDisplay = "Failed to analyze roadmap feature " + roadmapFeature.getKey() + " " + roadmapFeature.getSummary();
-                        StatusText.getInstance().add(true, messageToDisplay);
-                    }
-
-
-
-
-                }//loop by features
-
-                //prepare for web
-                prepareDataForWeb(contextMap);
-*/
                 StatusText.getInstance().add(false, "Exiting successfully");
                 bAllisOk = true;
                 return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, "");
@@ -167,38 +114,4 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
             return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
         }
     }
-
-    public void prepareDataForWeb(Map<String, Object> contextMap) {
-        Collections.sort(activeRoadmapFeatures);
-        //convert to strings for the web
-        StringBuilder featuresRows = new StringBuilder();
-        for (RoadmapFeatureAnalysis rfd : activeRoadmapFeatures) {
-                double statusScore = rfd.qualityScore;
-                featuresRows.append(
-                    //name
-                    rfd.roadmapFeature.getSummary() + ManageActiveObjects.PAIR_SEPARATOR +
-                        //status
-                        statusScore * 100.0 + ManageActiveObjects.PAIR_SEPARATOR +
-                        //start date
-                        DateTimeUtils.ConvertDateToOurFormat(rfd.startDateRoadmapFeature) + ManageActiveObjects.PAIR_SEPARATOR +
-                        //predicted velocity
-                        rfd.plannedRoadmapFeatureVelocity + ManageActiveObjects.PAIR_SEPARATOR +
-                        //real project velocity
-                        rfd.predictedVelocity + ManageActiveObjects.PAIR_SEPARATOR +
-                        //predicted end date
-                        DateTimeUtils.ConvertDateToOurFormat(rfd.projectProgressResult.idealProjectEnd) + ManageActiveObjects.PAIR_SEPARATOR +
-                        //real end date
-                        DateTimeUtils.ConvertDateToOurFormat(rfd.projectProgressResult.predictedProjectEnd) + ManageActiveObjects.PAIR_SEPARATOR +
-
-                        rfd.analyzedStories.NotEstimatedStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
-                        rfd.analyzedStories.LargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
-                        rfd.analyzedStories.VeryLargeStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
-                        rfd.analyzedStories.EstimatedStoriesNumber + ManageActiveObjects.PAIR_SEPARATOR +
-                        ProjectProgress.convertColorToHexadeimal(rfd.projectProgressResult.progressDataColor) +
-                        "BOBRUISK"
-                );
-        }
-        contextMap.put(FEATURESROWS, featuresRows.toString());
-    }
-
 }
