@@ -155,6 +155,7 @@ class GetAnalyzedFeatureResponse
     public String summary;
     public Date startDateRoadmapFeature;
     public double plannedRoadmapFeatureVelocity;
+    public double predictedVelocity;
     public double[] overallIssuesDistributionInSprint;
     public Date idealProjectEnd;
     public Date predictedProjectEnd;
@@ -171,6 +172,7 @@ class GetAnalyzedFeatureResponse
         summary = roadmapFeatureAnalysis.featureSummary;
         startDateRoadmapFeature = roadmapFeatureAnalysis.startDateRoadmapFeature;
         plannedRoadmapFeatureVelocity = roadmapFeatureAnalysis.plannedRoadmapFeatureVelocity;
+        predictedVelocity = roadmapFeatureAnalysis.predictedVelocity;
         overallIssuesDistributionInSprint = roadmapFeatureAnalysis.overallIssuesDistributionInSprint;
         idealProjectEnd = roadmapFeatureAnalysis.projectProgressResult.idealProjectEnd;
         predictedProjectEnd = roadmapFeatureAnalysis.projectProgressResult.predictedProjectEnd;
