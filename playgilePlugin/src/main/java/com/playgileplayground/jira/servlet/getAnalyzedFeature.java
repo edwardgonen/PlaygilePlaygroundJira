@@ -155,6 +155,8 @@ class GetAnalyzedFeatureResponse
     public String summary;
     public Date startDateRoadmapFeature;
     public double plannedRoadmapFeatureVelocity;
+    public double defaultNotEstimatedIssueValue;
+    public double sprintLengthRoadmapFeature;
     public double predictedVelocity;
     public double[] overallIssuesDistributionInSprint;
     public Date idealProjectEnd;
@@ -163,6 +165,7 @@ class GetAnalyzedFeatureResponse
     public double largeStoriesNumber;
     public double veryLargeStoriesNumber;
     public double estimatedStoriesNumber;
+
     public double qualityScore;
     public ArrayList<ProgressDataSet> progressDataSets;
     public ArrayList<VelocitiesDataSet> velocityDataSets;
@@ -173,6 +176,7 @@ class GetAnalyzedFeatureResponse
         startDateRoadmapFeature = roadmapFeatureAnalysis.startDateRoadmapFeature;
         plannedRoadmapFeatureVelocity = roadmapFeatureAnalysis.plannedRoadmapFeatureVelocity;
         predictedVelocity = roadmapFeatureAnalysis.predictedVelocity;
+        defaultNotEstimatedIssueValue = roadmapFeatureAnalysis.defaultNotEstimatedIssueValue;
         overallIssuesDistributionInSprint = roadmapFeatureAnalysis.overallIssuesDistributionInSprint;
         idealProjectEnd = roadmapFeatureAnalysis.projectProgressResult.idealProjectEnd;
         predictedProjectEnd = roadmapFeatureAnalysis.projectProgressResult.predictedProjectEnd;
@@ -181,6 +185,8 @@ class GetAnalyzedFeatureResponse
         largeStoriesNumber = roadmapFeatureAnalysis.analyzedStories.LargeStoriesNumber;
         veryLargeStoriesNumber = roadmapFeatureAnalysis.analyzedStories.VeryLargeStoriesNumber;
         estimatedStoriesNumber = roadmapFeatureAnalysis.analyzedStories.EstimatedStoriesNumber;
+        sprintLengthRoadmapFeature = roadmapFeatureAnalysis.sprintLengthRoadmapFeature;
+
 
         qualityScore = roadmapFeatureAnalysis.qualityScore * 100.0; //percents
 
