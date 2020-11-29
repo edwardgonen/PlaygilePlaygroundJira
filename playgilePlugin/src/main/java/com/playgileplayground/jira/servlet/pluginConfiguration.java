@@ -82,6 +82,17 @@ public class pluginConfiguration extends HttpServlet {
         Map<String, Object> context = new HashMap<>();
 
         try {
+            //first check user
+            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
+            ApplicationUser applicationUser = jac.getLoggedInUser();
+            if (applicationUser == null)
+            {
+                context.put(FEATURES_CONFIGURATIONS_KEY, "User Authentication Failure");
+                context.put(ALL_IS_OK_KEY, false);
+                context.put(MESSAGE_TO_DISPLAY_KEY, "\"User Authentication Failure\"");
+                servletMisc.renderAndResponseToWeb(templateRenderer, PLUGIN_CONFIGURATION_TEMPLATE, context, resp);
+                return;
+            }
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
             String roadmapFeatureName = req.getParameter("roadmapFeature");
             if (projectKey.isEmpty()) {
@@ -94,8 +105,6 @@ public class pluginConfiguration extends HttpServlet {
 
             //prepare to walk through the features
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
-            ApplicationUser applicationUser = jac.getLoggedInUser();
             JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
 
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);

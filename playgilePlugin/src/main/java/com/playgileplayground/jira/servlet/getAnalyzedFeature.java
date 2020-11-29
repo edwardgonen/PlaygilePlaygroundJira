@@ -70,6 +70,16 @@ public class getAnalyzedFeature extends HttpServlet {
     private void processRequest (HttpServletRequest req, HttpServletResponse resp, boolean bItIsPost) throws ServletException, IOException {
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
+            //first check user
+            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
+            ApplicationUser applicationUser = jac.getLoggedInUser();
+            if (applicationUser == null)
+            {
+                ourResponse.statusMessage = "User authentication failure";
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                return;
+            }
+
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
             String roadmapFeatureName = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
             if (projectKey.isEmpty() || roadmapFeatureName.isEmpty()) {
@@ -80,8 +90,6 @@ public class getAnalyzedFeature extends HttpServlet {
 
             //prepare to walk through the features
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
-            ApplicationUser applicationUser = jac.getLoggedInUser();
             JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
 
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);

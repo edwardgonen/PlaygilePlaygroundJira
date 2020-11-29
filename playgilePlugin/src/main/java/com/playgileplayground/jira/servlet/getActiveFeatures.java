@@ -59,6 +59,16 @@ public class getActiveFeatures extends HttpServlet {
         GetActiveFeaturesResponse ourResponse = new GetActiveFeaturesResponse();
 
         try {
+            //first check user
+            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
+            ApplicationUser applicationUser = jac.getLoggedInUser();
+            if (applicationUser == null)
+            {
+                ourResponse.statusMessage = "User authentication failure";
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                return;
+            }
+
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
             if (projectKey.isEmpty()) {
                 ourResponse.statusMessage = "Project key is missing";
@@ -67,9 +77,7 @@ public class getActiveFeatures extends HttpServlet {
             }
 
             //prepare to walk through the features
-            ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
-            ApplicationUser applicationUser = jac.getLoggedInUser();
+
             JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
 
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);

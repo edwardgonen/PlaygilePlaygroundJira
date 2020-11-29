@@ -74,19 +74,20 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
         StatusText.getInstance().reset();
 
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
+        ApplicationUser applicationUser = jac.getLoggedInUser();
+        if (applicationUser == null)
+        {
+            StatusText.getInstance().add( false, "User Authentication Failure");
+            messageToDisplay = "User Authentication Failure";
+            return ProjectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
+        }
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
         contextMap.put(BASEURL, baseUrl);
-        ApplicationUser applicationUser = jac.getLoggedInUser();
         contextMap.put(CURRENTUSER, applicationUser.getKey());
 
-        JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
-
-        ManageActiveObjects mao = new ManageActiveObjects(this.ao);
 
         //get the current project
         Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
-        ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
-
         try {
             //start the real work
             // do we have the current project?
@@ -95,18 +96,18 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
                 //no current project
                 StatusText.getInstance().add( false, "No current project found");
                 messageToDisplay = "Cannot identify current project. Please try to reload this page";
-                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
+                return ProjectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
             } else
             {
                 contextMap.put(PROJECT, currentProject);
                 StatusText.getInstance().add(false, "Exiting successfully");
-                return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, true, "");
+                return ProjectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, true, "");
             }
         } catch (Exception e) {
             String trace = ProjectMonitoringMisc.getExceptionTrace(e);
             StatusText.getInstance().add(true, "Main route exception " + trace);
             messageToDisplay = "General code failure in Total View. Please check the log";
-            return projectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
+            return ProjectMonitoringMisc.returnContextMapToVelocityTemplate(contextMap, false, messageToDisplay);
         }
     }
 }

@@ -617,7 +617,7 @@ public class ProjectMonitoringMisc {
         e.printStackTrace(pw);
         return sw.toString();
     }
-    public Map<String, Object> returnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
+    public static Map<String, Object> returnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
     {
         contextMap.put(ProjectMonitor.ALLISOK, bAllisOk);
         contextMap.put(ProjectMonitor.MESSAGETODISPLAY, messageToDisplay);
