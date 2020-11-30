@@ -21,8 +21,8 @@
         .StatusBlock{
         animation-name: slideRight;
         -webkit-animation-name: slideRight; 
-        animation-duration: 2s; 
-        -webkit-animation-duration: 2s;   
+        animation-duration: 1s; 
+        -webkit-animation-duration: 1s;   
         visibility: visible !important;
         border-radius: 20px;
         transition:all 1s;
@@ -92,6 +92,7 @@
 
 #if ($allisok)
 <div id="progressbar"><div class="progress-label">Loading...</div></div>
+<input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
 <div class="content">
         <div class="generalLoading">
             generalLoading
@@ -132,9 +133,10 @@ function init() {
     
     const progressbar = $( "#progressbar" );
     
-    const progressLabel = $( ".progress-label" );  
-    
+    const progressLabel = $( ".progress-label" );
 
+    const $featureSearch = $(".FeatureSearch").on('input',featureSearchOnChange)
+    
     const STORE = {
         featureArray: [],
         viewChildren: [],
@@ -154,11 +156,11 @@ function init() {
     })
 
     function initBuildPanels() {
-        var loadingValue = parseInt(STORE.viewChildren.length/STORE.featureArray.length*100);
+        let loadingValue = parseInt(STORE.viewChildren.length/STORE.featureArray.length*100);
             progressbar.progressbar( "value", loadingValue );
         if (STORE.featureArray.length != STORE.viewChildren.length) {
-        var featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
-            var $panelBlock = $('<div>').text('Loading');
+            let featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
+            let $panelBlock = $('<div>').text('Loading');
             $generalViewBlock.append($panelBlock)
             STORE.$currentBlockInLoading = $panelBlock;
             STORE.viewChildren.push($panelBlock);
@@ -374,6 +376,15 @@ function init() {
               }
             });
           } );
+    }
+    function featureSearchOnChange(e){
+        var searchValue = e.currentTarget.value.toUpperCase()
+        STORE.viewChildren.forEach((elem)=>{
+        if(elem.find('td')[2]){
+            var text = elem.find('td')[2].innerText;
+            !searchValue.length||text.toUpperCase().indexOf(searchValue)>=0?elem.show():elem.hide()
+        }
+        })
     }
     function normolizedInt(int) {
         if ((typeof int) == 'number') {
