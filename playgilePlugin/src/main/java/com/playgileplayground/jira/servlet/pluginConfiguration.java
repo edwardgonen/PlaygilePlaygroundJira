@@ -55,6 +55,7 @@ public class pluginConfiguration extends HttpServlet {
         parametersNames.add("defaultNotEstimatedIssueValue");
         parametersNames.add("startDateRoadmapFeature");
         parametersNames.add("sprintLengthRoadmapFeature");
+        parametersNames.add("targetDate");
     }
     @Override
     @Transactional
@@ -142,6 +143,10 @@ public class pluginConfiguration extends HttpServlet {
                                     case "sprintLengthRoadmapFeature":
                                         value = Double.parseDouble(parameterValue);
                                         maorLocal = mao.SetSprintLength(key, value);
+                                        break;
+                                    case "targetDate":
+                                        timeStamp = Long.parseLong(parameterValue);
+                                        maorLocal = mao.SetTargetDate(key, new java.util.Date(timeStamp));
                                         break;
                                     default:
                                         //unknown parameter

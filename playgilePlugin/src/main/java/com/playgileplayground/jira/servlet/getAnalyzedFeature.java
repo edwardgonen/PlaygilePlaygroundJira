@@ -155,6 +155,7 @@ class GetAnalyzedFeatureResponse
     public String statusMessage = "";
     public String summary;
     public Date startDateRoadmapFeature;
+    public Date targetDate;
     public double plannedRoadmapFeatureVelocity;
     public double defaultNotEstimatedIssueValue;
     public double sprintLengthRoadmapFeature;
@@ -187,6 +188,8 @@ class GetAnalyzedFeatureResponse
         veryLargeStoriesNumber = roadmapFeatureAnalysis.analyzedStories.VeryLargeStoriesNumber;
         estimatedStoriesNumber = roadmapFeatureAnalysis.analyzedStories.EstimatedStoriesNumber;
         sprintLengthRoadmapFeature = roadmapFeatureAnalysis.sprintLengthRoadmapFeature;
+
+        targetDate = roadmapFeatureAnalysis.targetDate;
 
 
         qualityScore = roadmapFeatureAnalysis.qualityScore * 100.0; //percents

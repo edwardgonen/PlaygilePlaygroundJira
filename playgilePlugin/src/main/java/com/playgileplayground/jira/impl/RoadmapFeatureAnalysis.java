@@ -47,7 +47,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public ArrayList<Double> interpolatedVelocityPoints;
     public ProjectProgressResult projectProgressResult;
     public AnalyzedStories analyzedStories = new AnalyzedStories();
-    public double qualityScore;
+    public int qualityScore;
 
 
 
@@ -55,6 +55,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public double defaultNotEstimatedIssueValue;
     public Date startDateRoadmapFeature = null;
     public double sprintLengthRoadmapFeature = 0;
+    public Date targetDate = null;
 
     public RoadmapFeatureAnalysis(
         Issue roadmapFeature,
@@ -204,6 +205,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     (int)sprintLengthRoadmapFeature,
                     historicalEstimationPairs);
 
+                //get target date
+                targetDate = getTargetDate();
+
                 //calculate quality score
                 qualityScore = getQualityScore();
                 result = true;
@@ -250,6 +254,26 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             result = (ArrayList<DataPair>)maor.Result;
         }
         return result;
+    }
+
+    private Date getTargetDate()
+    {
+        targetDate = null;
+        ManageActiveObjectsResult maor = mao.GetTargetDate(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            targetDate = (Date)maor.Result;
+            StatusText.getInstance().add(true, "Target date from DB is " + targetDate);
+        }
+        if (targetDate == null) {
+            //not configured - set to planned date
+            if (projectProgressResult != null) {
+                targetDate = projectProgressResult.idealProjectEnd;
+                StatusText.getInstance().add(true, "Target date set from planned date  is " + targetDate);
+            }
+        }
+        if (targetDate != null) targetDate = DateTimeUtils.getZeroTimeDate(targetDate);
+        StatusText.getInstance().add(true, "Detected start date is " + targetDate);
+        return targetDate;
     }
 
     private double getDefaultValueForNonEstimatedIssue()
@@ -429,66 +453,57 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     }
 
 
-    double getQualityScore()
+    int getQualityScore()
     {
-        double result = 0;
-
-        double VELOCITY_DIFFERENCT_PART = 0.1;
-        double COMPLETION_DATE_DIFFERENCE_PART = 0.50;
-        double ESTIMATED_STORIES_DIFFERENCE_PART = 0.40;
-        //total must be 0 - 1
-
+        int result = 0;
         /*
-        Estimated percentage 0 - 1
-        0 - <=0.25     0.05
-        >0.25 - <= 0.5 0.15
-        > 0.5 <= 0.8   0.50
-        > 0.8 <= 0.9   0.80
-        >0.9           1.00
+        	1 Red, 2 - Yellow, 3 - Green
 
-
-        (real date - predicted date) / sprint length
-        <= 1,      1.0
-        > 1- <= 2, 0.5
-        > 2-..     0.1
-
-        predicted velocity / real velocity percentage (0  - 1)
-        0 - <=0.25     0.10
-        >0.25 - <= 0.5 0.20
-        > 0.5 <= 0.8   0.50
-        > 0.8 <= 0.9   0.80
-        > 0.9          1
-
+        //delay
+        if (Expected end date <= Planned end date) DelayScore = 3;
+        else
+        {
+           DelayScore = ((Expected date - Planned date) / Plannedlength)
+           ---- up to 5%  green (3),  5-15% - yellow (2), > 15% - red (1)
+        }
         */
-        //veloctiy difference impact
-        double velocityDifference = plannedRoadmapFeatureVelocity / predictedVelocity;
-        double veloctiyDifferenceImpact = 1.0;
-        if (velocityDifference <= 0.25) veloctiyDifferenceImpact = 0.10;
-        else if (velocityDifference <= 0.5) veloctiyDifferenceImpact = 0.20;
-        else if (velocityDifference <= 0.8) veloctiyDifferenceImpact = 0.50;
-        else if (velocityDifference <= 0.9) veloctiyDifferenceImpact = 0.80;
+        int delayScore;
+        if (projectProgressResult.predictedProjectEnd.before(targetDate) || projectProgressResult.predictedProjectEnd.equals(targetDate))
+        {
+            delayScore = 3;
+        }
+        else
+        {
+            int differenceInDays = DateTimeUtils.AbsDays(projectProgressResult.predictedProjectEnd, targetDate);
+            double delay = (double)differenceInDays / (double)(DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature));
+            if (delay > 0 && delay <= 0.05) delayScore = 3;
+            else if (delay > 0.05 && delay < 0.15) delayScore = 2;
+            else delayScore = 1;
+        }
+        /*
+        //estimation ration
+        EstimationScore = (number of normal (>0 <13 SP) not closed stories) / (Total number of not closed stories)
+           ----- 90-100% - green (3), 60-80% - yellow (2) 0-60% Red (1)
+        */
+        int estimationScore;
+        double estimationRatio = (double)analyzedStories.EstimatedStoriesNumber /
+            (double)(analyzedStories.EstimatedStoriesNumber + analyzedStories.LargeStoriesNumber +
+                    analyzedStories.VeryLargeStoriesNumber + analyzedStories.NotEstimatedStoriesNumber);
+        if (estimationRatio >= 0.9) estimationScore = 3;
+        else if (estimationRatio >= 0.6 && estimationRatio < 0.9) estimationScore = 2;
+        else estimationScore = 1;
+        /*
 
-        //completion date difference impact
-        int completionDateDifference = DateTimeUtils.Days(projectProgressResult.predictedProjectEnd, projectProgressResult.idealProjectEnd) / (int) sprintLengthRoadmapFeature;
-        double completionDateDifferenceImpact = 1.0;
-        if (completionDateDifference > 2) completionDateDifferenceImpact = 0.1;
-        else if (completionDateDifference > 1) completionDateDifferenceImpact = 0.5;
+        BacklogReadinessScore = Number of "Open" stories / (Total number of not closed stories)
+                  0-10%  green (3), 10-30% yellow (2), 30-100% red (1)
 
-        //estimations impact
-        double totalIssues = analyzedStories.EstimatedStoriesNumber + analyzedStories.NotEstimatedStoriesNumber +
-            analyzedStories.VeryLargeStoriesNumber + analyzedStories.LargeStoriesNumber;
-        double estimationRatio = analyzedStories.EstimatedStoriesNumber / totalIssues;
-        double estimationRatioImpact = 1.0;
-        if (estimationRatio <= 0.25) estimationRatioImpact = 0.05;
-        else if (estimationRatio <= 0.5) estimationRatioImpact = 0.15;
-        else if (estimationRatio <= 0.8) estimationRatioImpact = 0.50;
-        else if (estimationRatio <= 0.9) estimationRatioImpact = 0.80;
+        Here we have 3 scores each can be 1, 2 or 3. The minimum between them will be the final color
+	    For example 1, 2, 2 -- 1 (red), 2, 3, 3 -- 2 (yellow) etc.
+         */
+        int readinessScore = 3;
+        //TODO - implement
 
-
-        result = VELOCITY_DIFFERENCT_PART * veloctiyDifferenceImpact +
-            COMPLETION_DATE_DIFFERENCE_PART * completionDateDifferenceImpact +
-            ESTIMATED_STORIES_DIFFERENCE_PART * estimationRatioImpact;
-
+        result = Math.min(delayScore, Math.min(estimationScore, readinessScore));
 
         return result;
     }
