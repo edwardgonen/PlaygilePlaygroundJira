@@ -7,6 +7,21 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <style>
+        .StatusBlock{
+        animation-name: slideRight;
+        -webkit-animation-name: slideRight; 
+        animation-duration: 2s; 
+        -webkit-animation-duration: 2s;   
+        visibility: visible !important; 
+        }
+        @keyframes slideRight {
+        0% {opacity: 0;}          
+        100% {opacity: 1;}   
+        }
+        @-webkit-keyframes slideRight {
+        0% {opacity: 0;}         
+        100% {opacity: 1;}
+        }
         .ButtonPlugin{
             box-sizing: border-box;
             transition: background-color .1s ease-out;
@@ -129,7 +144,7 @@ function init() {
                     initBuildPanels()
                 } else {
                     $panelBlock.empty();
-                    $panelBlock.append($(getTotalViewBlock(data)));
+                    $panelBlock.append($(getTotalViewBlock(data)).addClass('StatusBlock'));
                     console.log(data)
                     initBuildPanels()
                 }
@@ -309,6 +324,13 @@ function init() {
         var chartIssueDistribution = new google.visualization.PieChart(issueDistributionCell);
 
         chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+
+        ///////////////////////////////////
+         var $configButtnsCell = $(row.insertCell(6));
+         var $buttonEdit = $('<div class="ButtonPlugin">').text('Edit');
+         var $buttonDetail = $('<div class="ButtonPlugin">').text('Details');
+         $configButtnsCell.append($buttonEdit)
+         $configButtnsCell.append($buttonDetail)
 
         return table;
     }
