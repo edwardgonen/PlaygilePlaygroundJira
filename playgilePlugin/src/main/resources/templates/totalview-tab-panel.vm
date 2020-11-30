@@ -1,22 +1,37 @@
 <tr class="mod-header">
     <h3>Playgile Studio Total View for $project.name ($project.getKey())</h3>
-
+    
 <html>
 <head>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <style>
+        .ui-progressbar {
+          position: relative;
+        }
+        .progress-label {
+          position: absolute;
+          left: 50%;
+          top: 4px;
+          font-weight: bold;
+          text-shadow: 1px 1px 0 #fff;
+        }
         .StatusBlock{
         animation-name: slideRight;
         -webkit-animation-name: slideRight; 
         animation-duration: 2s; 
         -webkit-animation-duration: 2s;   
-        visibility: visible !important; 
+        visibility: visible !important;
+        border-radius: 20px;
+        transition:all 1s;
+        transition: all 0.4s;
         }
-        @keyframes slideRight {
-        0% {opacity: 0;}          
-        100% {opacity: 1;}   
+        .StatusBlock:hover {
+        transform: scale(1.02);
+        background: #2684ff0d;
+        border-radius: 20px;   
         }
         @-webkit-keyframes slideRight {
         0% {opacity: 0;}         
@@ -76,6 +91,7 @@
 #end
 
 #if ($allisok)
+<div id="progressbar"><div class="progress-label">Loading...</div></div>
 <div class="content">
         <div class="generalLoading">
             generalLoading
@@ -112,7 +128,12 @@ function init() {
 
     const $generalViewBlock = $('.generalViewBlock');
 
-    const $generalViewTable = $('.generalViewTable')
+    const $generalViewTable = $('.generalViewTable');
+    
+    const progressbar = $( "#progressbar" );
+    
+    const progressLabel = $( ".progress-label" );  
+    
 
     const STORE = {
         featureArray: [],
@@ -124,6 +145,7 @@ function init() {
 
     globalLoadingOFF()
 
+    buildProgressBar()
 
     doPost(FEATURES_URL, {}, function (data) {
         STORE.featureArray = data.featuresList
@@ -132,8 +154,10 @@ function init() {
     })
 
     function initBuildPanels() {
+        var loadingValue = parseInt(STORE.viewChildren.length/STORE.featureArray.length*100);
+            progressbar.progressbar( "value", loadingValue );
         if (STORE.featureArray.length != STORE.viewChildren.length) {
-            var featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey)
+        var featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
             var $panelBlock = $('<div>').text('Loading');
             $generalViewBlock.append($panelBlock)
             STORE.$currentBlockInLoading = $panelBlock;
@@ -268,7 +292,8 @@ function init() {
             hAxis: {
                 title: 'Story Points per Sprint',
                 minValue: 0
-            }
+            },
+            backgroundColor:'#ffffff00'
         };
         var chartVelocities = new google.visualization.BarChart(velocityCell);
         chartVelocities.draw(dataVelocities, optionsVelocities);
@@ -318,7 +343,8 @@ function init() {
 
         var optionsIssueDistribution = {
             title: 'Total ' + totalStories + ' issues',
-            legend: 'none'
+            legend: 'none',
+            backgroundColor:'#ffffff00'
         };
 
         var chartIssueDistribution = new google.visualization.PieChart(issueDistributionCell);
@@ -326,6 +352,7 @@ function init() {
         chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
 
         ///////////////////////////////////
+
          var $configButtnsCell = $(row.insertCell(6));
          var $buttonEdit = $('<div class="ButtonPlugin">').text('Edit');
          var $buttonDetail = $('<div class="ButtonPlugin">').text('Details');
@@ -333,6 +360,20 @@ function init() {
          $configButtnsCell.append($buttonDetail)
 
         return table;
+    }
+    function buildProgressBar(){
+        $( function() {
+            progressbar.progressbar({
+              value: false,
+              change: function() {
+                progressLabel.text( progressbar.progressbar( "value" ) + "%" );
+              },
+              complete: function() {
+                progressLabel.text( "All data loaded!" );
+                setTimeout(()=>{progressbar.hide()},3000)
+              }
+            });
+          } );
     }
     function normolizedInt(int) {
         if ((typeof int) == 'number') {
@@ -350,9 +391,4 @@ function init() {
 </script>
 </body>
 </html>
-<table>
-    <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
-        $statustext
-    </div>
-</table>
 </div>
