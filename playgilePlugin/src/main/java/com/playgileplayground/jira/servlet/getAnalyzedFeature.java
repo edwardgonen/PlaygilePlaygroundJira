@@ -192,7 +192,7 @@ class GetAnalyzedFeatureResponse
         targetDate = roadmapFeatureAnalysis.targetDate;
 
 
-        qualityScore = roadmapFeatureAnalysis.qualityScore * 100.0; //percents
+        qualityScore = roadmapFeatureAnalysis.qualityScore;
 
         progressDataSets = getEstimationsSet(roadmapFeatureAnalysis.projectProgressResult);
 

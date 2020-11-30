@@ -48,7 +48,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public ProjectProgressResult projectProgressResult;
     public AnalyzedStories analyzedStories = new AnalyzedStories();
     public int qualityScore;
-
+    public int numberOfOpenIssues;
 
 
     public double plannedRoadmapFeatureVelocity = 0;
@@ -114,6 +114,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 //get sprints for issue
                 projectMonitoringMisc.addIssueSprintsToList(playgileIssue.jiraIssue, playgileSprints);
 
+                if (playgileIssue.bIssueOpen) numberOfOpenIssues++;
+
                 allPlaygileIssues.add(playgileIssue);
 
                 //if issue is not completed yet, add to the list of futureIssues
@@ -127,8 +129,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     if (playgileIssue.storyPoints == 13) analyzedStories.LargeStoriesNumber++;
                     if (playgileIssue.storyPoints > 13) analyzedStories.VeryLargeStoriesNumber++;
                     if (playgileIssue.storyPoints <= 0) analyzedStories.NotEstimatedStoriesNumber++;
-
-
                 }
             }
 
@@ -205,7 +205,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     (int)sprintLengthRoadmapFeature,
                     historicalEstimationPairs);
 
-                //get target date
+                //get target date. I cannot do that before progress calculated, as in case it is not set in DB then I take it
+                //as planned project end
                 targetDate = getTargetDate();
 
                 //calculate quality score
@@ -455,7 +456,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
     int getQualityScore()
     {
-        int result = 0;
+        int result;
         /*
         	1 Red, 2 - Yellow, 3 - Green
 
@@ -497,12 +498,16 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         BacklogReadinessScore = Number of "Open" stories / (Total number of not closed stories)
                   0-10%  green (3), 10-30% yellow (2), 30-100% red (1)
 
+        */
+        int readinessScore = 3;
+        double readinessRatio = (double)numberOfOpenIssues / (double)futurePlaygileIssues.size();
+        if (readinessRatio >= 0.0 && readinessRatio < 0.1) readinessScore = 3;
+        else if (readinessRatio >= 0.1 && readinessRatio < 0.3) readinessScore = 2;
+        else readinessScore = 1;
+        /*
         Here we have 3 scores each can be 1, 2 or 3. The minimum between them will be the final color
 	    For example 1, 2, 2 -- 1 (red), 2, 3, 3 -- 2 (yellow) etc.
-         */
-        int readinessScore = 3;
-        //TODO - implement
-
+        */
         result = Math.min(delayScore, Math.min(estimationScore, readinessScore));
 
         return result;

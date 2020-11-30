@@ -603,11 +603,18 @@ public class ProjectMonitoringMisc {
         }
         return result;
     }
+
     public boolean isIssueCompleted(Issue issue)
     {
         Status issueStatus = issue.getStatus();
         StatusCategory statusCategory = issueStatus.getStatusCategory();
         return (statusCategory.getKey() == StatusCategory.COMPLETE);
+    }
+    public boolean isIssueOpen(Issue issue)
+    {
+        Status issueStatus = issue.getStatus();
+        StatusCategory statusCategory = issueStatus.getStatusCategory();
+        return (statusCategory.getKey().equalsIgnoreCase("open"));
     }
 
     public static String getExceptionTrace(Exception e)
