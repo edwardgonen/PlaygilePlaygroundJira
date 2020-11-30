@@ -98,14 +98,7 @@ public class getAnalyzedFeature extends HttpServlet {
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
-/*
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
-            if (roadmapFeatures == null) {
-                ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
-                servletMisc.serializeToJsonAndSend(ourResponse, resp);
-                return;
-            }
-*/
+
             ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
             //Issue selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, roadmapFeatureName);
 
