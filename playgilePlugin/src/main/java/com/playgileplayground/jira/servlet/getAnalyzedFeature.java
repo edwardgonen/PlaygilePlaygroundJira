@@ -88,6 +88,8 @@ public class getAnalyzedFeature extends HttpServlet {
                 return;
             }
 
+            boolean bSendLog = req.getParameter("sendLog") != null;
+
             //prepare to walk through the features
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
             JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
@@ -121,6 +123,10 @@ public class getAnalyzedFeature extends HttpServlet {
                 mao);
             if (roadmapFeatureAnalysis.analyzeRoadmapFeature()) { //we take all successfully analyzed features - started or non-started
                 ourResponse.fillTheFields(roadmapFeatureAnalysis);
+                if (bSendLog)
+                {
+                    ourResponse.logInfo = StatusText.getInstance().toString();
+                }
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
             } else //failed to analyze feature
             {
@@ -153,6 +159,7 @@ class GetAnalyzedFeatureResponse
 {
 
     public String statusMessage = "";
+    public String logInfo = "";
     public String summary;
     public Date startDateRoadmapFeature;
     public Date targetDate;
