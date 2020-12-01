@@ -157,6 +157,7 @@ class GetAnalyzedFeatureResponse
     public String statusMessage = "";
     public String logInfo = "";
     public String summary;
+    public String key;
     public Date startDateRoadmapFeature;
     public Date targetDate;
     public double plannedRoadmapFeatureVelocity;
@@ -178,6 +179,7 @@ class GetAnalyzedFeatureResponse
     public void fillTheFields(RoadmapFeatureAnalysis roadmapFeatureAnalysis)
     {
         summary = roadmapFeatureAnalysis.featureSummary;
+        key = roadmapFeatureAnalysis.featureKey;
         startDateRoadmapFeature = roadmapFeatureAnalysis.startDateRoadmapFeature;
         plannedRoadmapFeatureVelocity = roadmapFeatureAnalysis.plannedRoadmapFeatureVelocity;
         predictedVelocity = roadmapFeatureAnalysis.predictedVelocity;
