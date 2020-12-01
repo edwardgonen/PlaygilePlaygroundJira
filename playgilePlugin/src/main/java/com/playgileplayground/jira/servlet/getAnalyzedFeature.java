@@ -14,20 +14,13 @@ import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.atlassian.templaterenderer.TemplateRenderer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.playgileplayground.jira.api.ProjectMonitor;
-import com.playgileplayground.jira.impl.DateTimeUtils;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.DataPair;
 import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
@@ -37,7 +30,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Optional;
 
 @Scanned
 public class getAnalyzedFeature extends HttpServlet {
