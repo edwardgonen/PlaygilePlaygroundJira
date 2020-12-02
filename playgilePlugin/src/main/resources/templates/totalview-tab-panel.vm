@@ -130,7 +130,7 @@ function init() {
 
     const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
 
-    const BASE_URL = location.origin;
+    const BASE_URL = '$baseurl';//location.origin;
 
     const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?projectKey=' + PROJECT_NAME;
 
