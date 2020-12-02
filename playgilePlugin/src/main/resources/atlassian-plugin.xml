@@ -51,7 +51,7 @@
         <context-provider class="com.playgileplayground.jira.impl.ProjectPreparationImpl"/>
         <resource name="view" type="velocity" location="templates/projectpreparation-tab-panel.vm"/>
     </web-panel>
-    <web-resource key="playgilePlugin-resources" name="playgilePlugin Web Resources">
+    <!--web-resource key="playgilePlugin-resources" name="playgilePlugin Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         <resource type="download" name="playgilePlugin.css" location="/css/playgilePlugin.css"/>
         <resource type="download" name="playgilePlugin.js" location="/js/playgilePlugin.js"/>
@@ -70,7 +70,7 @@
         <description key="metrics--page.description">Playgile Project Monitor</description>
         <context-provider class="com.playgileplayground.jira.impl.ProjectMonitorImpl"/>
         <resource name="view" type="velocity" location="templates/metrics-tab-panel.vm"/>
-    </web-panel>
+    </web-panel-->
   <ao key="ao-module"> 
     <description>The configuration of the Active Objects service</description>  
     <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity>

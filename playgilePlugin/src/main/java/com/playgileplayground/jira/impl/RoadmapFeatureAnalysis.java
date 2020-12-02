@@ -131,7 +131,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     if (playgileIssue.storyPoints <= 0) analyzedStories.NotEstimatedStoriesNumber++;
                 }
             }
-
             //now we have everything in the cache - list of instantiated issues
             //let's process
             //sort sprints
@@ -355,104 +354,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         StatusText.getInstance().add(true, "Detected sprint length is rounded to " + sprintLengthRoadmapFeature);
 
     }
-
-    public void prepareDataForWeb(Map<String, Object> contextMap)
-    {
-        contextMap.put(ProjectMonitor.TEAMVELOCITY, plannedRoadmapFeatureVelocity);
-        //================================================================================
-        StringBuilder issuesDistributionString = new StringBuilder();
-        if (playgileSprints.size() > 0) {
-            for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
-                double roundTo2Digits = 100.0 * projectMonitoringMisc.roundToDecimalNumbers(overallIssuesDistributionInSprint[i], 2); //Math.round(overallIssuesDistributionInSprint[i] * 100.0) / 100.0;
-                issuesDistributionString.append(roundTo2Digits + ManageActiveObjects.PAIR_SEPARATOR);
-            }
-        }
-        contextMap.put(ProjectMonitor.ISSUESDISTRIBUTION, issuesDistributionString.toString());
-        //========================================================================================
-        //convert to strings
-        StringBuilder resultRows = new StringBuilder();
-        int index = 0;
-        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation)
-        {
-            resultRows.append(
-                DateTimeUtils.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
-                    sprintToConvert.sprintVelocity  + ManageActiveObjects.PAIR_SEPARATOR +
-                    interpolatedVelocityPoints.get(index++) + ManageActiveObjects.LINE_SEPARATOR
-            );
-        }
-        contextMap.put(ProjectMonitor.REALVELOCITIES, resultRows);
-        //============================================================================================
-        contextMap.put(ProjectMonitor.AVERAGEREALVELOCITY, (int)Math.round(predictedVelocity));
-        //==============================================================================================
-        //what is the longest array?
-        StringBuilder chartRows = new StringBuilder();
-        ProgressData longestList;
-        ProgressData shortestList;
-        boolean predictedIsLongest;
-        if (projectProgressResult.progressData.Length() >= projectProgressResult.idealData.Length()) {
-            longestList = projectProgressResult.progressData;
-            shortestList = projectProgressResult.idealData;
-            predictedIsLongest = true;
-        }
-        else
-        {
-            longestList = projectProgressResult.idealData;
-            shortestList = projectProgressResult.progressData;
-            predictedIsLongest = false;
-        }
-        DataPair tmpPredictedDataPair, tmpIdealDataPair;
-        for (int i = 0; i < longestList.Length(); i++)
-        {
-            if (predictedIsLongest) {
-                tmpPredictedDataPair = longestList.GetElementAtIndex(i);
-                tmpIdealDataPair = shortestList.GetElementAtIndex(i);
-            }
-            else
-            {
-                tmpPredictedDataPair = shortestList.GetElementAtIndex(i);
-                tmpIdealDataPair = longestList.GetElementAtIndex(i);
-            }
-            if (i >= shortestList.Length()) //no more elements in shortest
-            {
-                if (predictedIsLongest) {
-                    chartRows.append(
-                        DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                            "" + ManageActiveObjects.PAIR_SEPARATOR +
-                            tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
-                    );
-                }
-                else
-                {
-                    chartRows.append(
-                        DateTimeUtils.ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                            tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
-                            "" + ManageActiveObjects.LINE_SEPARATOR
-                    );
-                }
-            }
-            else //both records available
-            {
-                chartRows.append(
-                    DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                        tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
-                        tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
-                );
-            }
-        }
-        contextMap.put(ProjectMonitor.CHARTROWS, chartRows.toString());
-        //===========================================================================================================
-        contextMap.put(ProjectMonitor.IDEALENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.idealProjectEnd));
-        //make the logic of color
-        contextMap.put(ProjectMonitor.PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(projectProgressResult.progressDataColor));
-        contextMap.put(ProjectMonitor.PREDICTEDENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.predictedProjectEnd));
-
-        //=========================================================================================================================
-        contextMap.put(ProjectMonitor.NOTESTIMATEDSTORIES, analyzedStories.NotEstimatedStoriesNumber);
-        contextMap.put(ProjectMonitor.LARGESTORIES, analyzedStories.LargeStoriesNumber);
-        contextMap.put(ProjectMonitor.VERYLARGESTORIES, analyzedStories.VeryLargeStoriesNumber);
-        contextMap.put(ProjectMonitor.ESTIMATEDSTORIES, analyzedStories.EstimatedStoriesNumber);
-    }
-
 
     int getQualityScore()
     {
