@@ -109,12 +109,11 @@ public class pluginConfiguration extends HttpServlet {
 
             resp.setContentType("text/html;charset=utf-8");
 
-
             ao.executeInTransaction((TransactionCallback<Void>) () -> {
 
                 //if at least one our parameter is specified - save it
 
-                ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeatureKey);
+                ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, selectedRoadmapFeatureIssue.getSummary());
                 ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(key); //will not create if exists
                 if (maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
                     //set team velocity if available
