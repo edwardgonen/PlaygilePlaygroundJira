@@ -121,6 +121,24 @@
         height: 100%;
         text-align: -webkit-center;
         }
+        .editView{
+            background: white;
+            width: min-content;
+            height: 50vh;
+            margin-top: 11vh;
+            border-radius: 3%;
+            padding: 29px;
+        }
+        .editViewWrapper {
+        position: fixed;
+        z-index: 2;
+        background: #8080807a;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        text-align: -webkit-center;
+        }
         .ui-progressbar {
           position: relative;
         }
@@ -207,7 +225,9 @@
 <input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
 <div class="content">
     <div id="FadeBlock" class="fade"><div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div>
-        <div class="editView"></div>
+        <div class="editViewWrapper">
+            <div class="editView"></div>
+        </div>
         <div class="detailsView"></div>
         <div class="generalLoading">
             generalLoading
@@ -272,6 +292,8 @@ function init() {
     console.log('STORE');
     console.log(STORE)
 
+    $('.editViewWrapper').hide()
+
     globalLoadingOFF()
 
     buildProgressBar()
@@ -286,25 +308,25 @@ function init() {
         initBuildPanels()
     })
 
-    function initBuildPanels() {
-        let loadingValue = parseInt(STORE.viewChildren.length/STORE.featureArray.length*100);
-            progressbar.progressbar( "value", loadingValue );
+    
+    function initBuildPanels() {  
+        let loadingValue = 100/STORE.featureArray.length;  
         if (STORE.featureArray.length != STORE.viewChildren.length) {
             let featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
             let $panelBlock = $('<div>').text('Loading');
             $generalViewBlock.append($panelBlock)
             STORE.$currentBlockInLoading = $panelBlock;
             STORE.viewChildren.push($panelBlock);
+            initBuildPanels()
             doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
+                progressbar.progressbar( "value", progressbar.progressbar( "value")<90?progressbar.progressbar( "value")+loadingValue:100 );
                 if (!!data.statusMessage) {
                     $panelBlock.hide()
-                    initBuildPanels()
                 } else {
                     $panelBlock.empty();
                     $panelBlock.append($(getTotalViewBlock(data)).addClass('StatusBlock'));
                     $panelBlock.click(()=>{drawDeteilsView(data)})
                     console.log(data)
-                    initBuildPanels()
                 }
 
             })
@@ -488,17 +510,17 @@ function init() {
         ///////////////////////////////////
 
          var $configButtnsCell = $(row.insertCell(6));
-         var $buttonEdit = $('<div class="ButtonPlugin">').text('Edit');
-         var $buttonDetail = $('<div class="ButtonPlugin">').text('Details');
-         $configButtnsCell.append($buttonEdit).click((e)=>{e.preventDefault();createEditForm(featureData)})
-         $configButtnsCell.append($buttonDetail).click(()=>{drawDeteilsView(featureData)})
+         var $buttonEdit = $('<div class="ButtonPlugin">').text('Edit').click((e)=>{e.stopPropagation();createEditForm(featureData)});
+         var $buttonDetail = $('<div class="ButtonPlugin">').text('Details').click(()=>{drawDeteilsView(featureData)});
+         $configButtnsCell.append($buttonEdit)
+         $configButtnsCell.append($buttonDetail)
 
         return table;
     }
     function buildProgressBar(){
         $( function() {
             progressbar.progressbar({
-              value: false,
+              value: 0,
               change: function() {
                 progressLabel.text( progressbar.progressbar( "value" ) + "%" );
               },
@@ -548,16 +570,19 @@ function init() {
         var data = new google.visualization.DataTable();
         data.addColumn('date', 'Date');
         data.addColumn({type: 'string', role: 'annotation'});
+        data.addColumn({type: 'string', role: 'annotation'});
         data.addColumn('number', 'Initial Velocity');
         data.addColumn('number', 'Predicted Velocity');
 
         const LINES = featureData.progressDataSets
         LINES.forEach(function (line, index) {
             var date = new Date(line.date)
+            var targetDate = new Date(featureData.targetDate)
             var ideal = Math.round(parseFloat(line.idealEstimations)) || null;
             var predicted = parseFloat(line.predictedEstimations) || null;
-            let _annotation = date.toLocaleDateString()==TODAY_LOCAL_FORMAT? 'Remaining '+ideal+' SP ' :null;
-            data.addRow([date,_annotation, ideal, predicted]);
+            let _annotationRemaing = date.toLocaleDateString()==TODAY_LOCAL_FORMAT? 'Remaining '+ideal+' SP ' :null;
+            let _annotationTarget = date.toLocaleDateString()==targetDate.toLocaleDateString()? 'Target date' :null;
+            data.addRow([date,_annotationRemaing,_annotationTarget, ideal, predicted]);
         });
         var options = {
             title: 'Project Monitor\n'+
@@ -684,17 +709,21 @@ function init() {
         $detailsView.click(()=>{$detailsView.hide()})
     }
     function createEditForm(data){
-        var formArea = $('.editView')
+        var formArea = $('.editView').click((e)=>{e.stopPropagation()})
+        $('.editViewWrapper').click(closeEditPopup)
         formArea.empty()
+        $('.editViewWrapper').show()
         console.log(data)
         
-
+        var header = $('<div>').text(data.summary)
         var _input0 = getInputField(LABEL_1_TEXT,data.defaultNotEstimatedIssueValue)
         var _input1 = getInputField(LABEL_2_TEXT,data.plannedRoadmapFeatureVelocity)
         var _input2 = getInputField(LABEL_3_TEXT,data.sprintLengthRoadmapFeature)
         var _input3 = getInputDateField(LABEL_4_TEXT,data.startDateRoadmapFeature)
+        var _input4 = getInputDateField('Target date',data.targetDate)
 
-        var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click(()=>{
+        var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click((e)=>{
+            e.stopPropagation()
             var result = {};
             var check = 0
             if(checkCorrectInput(_input0.find('input').val())){ check++;
@@ -712,14 +741,22 @@ function init() {
             if(isTimeHaveDiff){ check++;
                 result.startDateRoadmapFeature = userDate
             }
+            var userDate4 = +new Date(_input4.find('input').val())
+            var isTimeHaveDiff4 = new Date(userDate4).toDateString()!=new Date(+data.targetDate).toDateString()
+            if(isTimeHaveDiff4){ check++;
+                result.targetDate = userDate4
+            }
 
             if(!check){return}
             result.roadmapFeature = data.key
-            getFeaturesDateAndBuild(result)
+            getFeaturesDateAndBuild(result,closeEditPopup)
         })
 
-        formArea.append(_input0,_input1,_input2,_input3,_saveButton)
-        
+        formArea.append(header,_input0,_input1,_input2,_input3,_input4,_saveButton)
+        function closeEditPopup(){
+            formArea.empty()
+            $('.editViewWrapper').hide()
+        }
     }
     function getInputField(text,value){
         var _label = $('<label>').text(text)
@@ -750,12 +787,13 @@ function init() {
     function checkCorrectInput(value){
         return !!(+value&&MIN_INPUT_SP<=value&&value<=MAX_INPUT_SP)
     }
-    function getFeaturesDateAndBuild(obj){
+    function getFeaturesDateAndBuild(obj,callback){
         fadeOn()
         jQuery.post( POST_UTL,obj)
             .done(function (data){
                 var jsonData = JSON.parse(data)
-                createEditForm(jsonData)
+                callback()
+                //createEditForm(jsonData)
                 fadeOff()
             })
             .fail(function (){
