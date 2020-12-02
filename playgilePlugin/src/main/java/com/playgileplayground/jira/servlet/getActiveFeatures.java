@@ -95,7 +95,7 @@ public class getActiveFeatures extends HttpServlet {
             }
 
             //prepare list of short feature descriptors
-            if (roadmapFeatures != null && roadmapFeatures.size() > 0)
+            if (roadmapFeatures.size() > 0)
             {
                 //convert to string list
                 for (Issue feature : roadmapFeatures)
