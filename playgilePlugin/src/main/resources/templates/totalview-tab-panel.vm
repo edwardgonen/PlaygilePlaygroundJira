@@ -750,7 +750,8 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                 function drawDeteilsView(featureData) {
                     let $detailsView = $('.detailsView');
                     $detailsView.show()
-                    let html = `<div>Click anywhere to close</div>
+                    let html = `<h1>${featureData.summary}</h1>
+                    <div>Click anywhere to close</div>
         <div style="width:80%; height:35vh; display: inline-flex;">        
         <div id="curve_chart" style="width:50%; height:100%; padding:5px"></div>
         <div id="velocity_chart" style="width:50%; height:100%;  padding:5px"></div>
@@ -759,7 +760,6 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
         <div id="issue_distribution" style="width:50%; height:100%;  padding:5px"></div>
         </div>`
                     $detailsView.html(html);
-                    $detailsView.prepend($('h1').text(featureData.summary))
                     let $curve_chart = $detailsView.find('#curve_chart')
                     let $velocity_chart = $detailsView.find('#velocity_chart')
                     let $piechart = $detailsView.find('#piechart')
