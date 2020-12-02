@@ -9,6 +9,69 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
+            /* The switch - the box around the slider */
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+
+            /* Hide default HTML checkbox */
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            /* The slider */
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                -webkit-transition: .4s;
+                transition: .4s;
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                -webkit-transition: .4s;
+                transition: .4s;
+            }
+
+            input:checked+.slider {
+                background-color: #2196F3;
+            }
+
+            input:focus+.slider {
+                box-shadow: 0 0 1px #2196F3;
+            }
+
+            input:checked+.slider:before {
+                -webkit-transform: translateX(26px);
+                -ms-transform: translateX(26px);
+                transform: translateX(26px);
+            }
+
+            /* Rounded sliders */
+            .slider.round {
+                border-radius: 34px;
+            }
+
+            .slider.round:before {
+                border-radius: 50%;
+            }
+
             label {
                 white-space: nowrap;
             }
@@ -259,6 +322,7 @@
             }
 
             .ButtonPlugin {
+                width: -webkit-fill-available;
                 box-sizing: border-box;
                 transition: background-color .1s ease-out;
                 border-radius: 3.01px;
@@ -347,6 +411,13 @@
         </div>
         <table id="roadmap-features-table" ; width="100%">
         </table>
+        <div style="align-items: center; display: inline-flex;">
+            <div>Debug Mode</div>
+            <label class="switch">
+                <input class="debugSwitch" type="checkbox">
+                <span class="slider round"></span>
+            </label>
+        </div>
 
 
         #end
@@ -360,13 +431,15 @@
             function init() {
                 console.log('loaded resources playgilePlugin and init v1');
 
+                const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
+
                 const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
 
                 const BASE_URL = '$baseurl';
 
-                const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?projectKey=' + PROJECT_NAME;
+                const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
 
-                const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?projectKey=' + PROJECT_NAME + '&roadmapFeature=';
+                const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&roadmapFeature=';
 
                 const GET_URL = location.origin + location.pathname + '?projectKey=' + PROJECT_NAME
                 const POST_UTL = location.origin + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME
@@ -409,6 +482,13 @@
                 fadeOff()
 
                 $('.detailsView').hide()
+
+                let $debugSwitch = $('.debugSwitch');
+                $debugSwitch[0].checked = !!eval(localStorage.pluginDebugMode)
+                $('.switch').click(() => {
+                    localStorage.pluginDebugMode = $debugSwitch[0].checked
+                    location.reload()
+                })
 
                 doPost(FEATURES_URL, {}, function (data) {
                     STORE.featureArray = data.featuresList
@@ -456,6 +536,15 @@
                     jQuery.post(url, postData)
                         .done(function (textData) {
                             var jsonData = JSON.parse(textData)
+                            if (!!jsonData.logInfo) {
+                                console.warn(
+                                    `
+url: ${url}
+body: ${jsonData}
+statusMessage: ${jsonData.statusMessage}
+logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
+`)
+                            }
                             if (!!jsonData.statusMessage) { traceDataMessageError(jsonData) }
                             callback(jsonData)
                             globalLoadingOFF()
@@ -618,7 +707,7 @@
                     ///////////////////////////////////
 
                     var $configButtnsCell = $(row.insertCell(6));
-                    var $buttonEdit = $('<div class="ButtonPlugin">').text('Edit').click((e) => { e.stopPropagation(); createEditForm(featureData) });
+                    var $buttonEdit = $('<div class="ButtonPlugin">').text('Config').click((e) => { e.stopPropagation(); createEditForm(featureData) });
                     var $buttonDetail = $('<div class="ButtonPlugin">').text('Details').click(() => { drawDeteilsView(featureData) });
                     $configButtnsCell.append($buttonEdit)
                     $configButtnsCell.append($buttonDetail)
@@ -687,17 +776,17 @@
                         let date = new Date(line.date)
                         let targetDate = new Date(featureData.targetDate)
                         let ideal = null;
-                        if(Number.isFinite(line.idealEstimations)){
+                        if (Number.isFinite(line.idealEstimations)) {
                             ideal = Math.round(parseFloat(line.idealEstimations));
-                            if(line.idealEstimations==0&&LINES[index-1].idealEstimations==0){
-                                ideal = null; 
+                            if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
+                                ideal = null;
                             }
                         }
                         let predicted = null;
-                        if(Number.isFinite(line.predictedEstimations)){
+                        if (Number.isFinite(line.predictedEstimations)) {
                             predicted = Math.round(parseFloat(line.predictedEstimations))
-                            if(line.predictedEstimations==0&&LINES[index-1].predictedEstimations==0){
-                                predicted = null; 
+                            if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
+                                predicted = null;
                             }
                         }
                         let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
@@ -705,9 +794,9 @@
                         data.addRow([date, _annotationRemaing, _annotationTarget, ideal, predicted]);
                     });
 
-                    let lastDate = new Date(LINES[LINES.length-1].date);
+                    let lastDate = new Date(LINES[LINES.length - 1].date);
                     let targetDate = new Date(featureData.targetDate);
-                    if(lastDate<targetDate){
+                    if (lastDate < targetDate) {
                         data.addRow([targetDate, null, 'Target date', null, null]);
                     }
 
@@ -947,8 +1036,6 @@
                     })
                 }
             }
-
-
         </script>
     </body>
 
