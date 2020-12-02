@@ -487,8 +487,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
            ----- 90-100% - green (3), 60-80% - yellow (2) 0-60% Red (1)
         */
         int estimationScore;
-        double estimationRatio = (double)analyzedStories.EstimatedStoriesNumber /
-            (double)(analyzedStories.EstimatedStoriesNumber + analyzedStories.LargeStoriesNumber +
+        double estimationRatio = analyzedStories.EstimatedStoriesNumber /
+            (analyzedStories.EstimatedStoriesNumber + analyzedStories.LargeStoriesNumber +
                     analyzedStories.VeryLargeStoriesNumber + analyzedStories.NotEstimatedStoriesNumber);
         if (estimationRatio >= 0.9) estimationScore = 3;
         else if (estimationRatio >= 0.6 && estimationRatio < 0.9) estimationScore = 2;
