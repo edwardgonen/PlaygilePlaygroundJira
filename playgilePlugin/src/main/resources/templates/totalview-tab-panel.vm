@@ -127,7 +127,7 @@
                 text-decoration: none;
                 user-select: none;
                 background: rgb(212, 75, 56);
-                padding: .7em 1.5em;
+                padding: 1.7vh 5.5vh;
                 outline: none;
                 margin-top: 10%;
             }
@@ -266,7 +266,7 @@
                 background: white;
                 width: min-content;
                 height: min-content;
-                margin-top: 11vh;
+                margin-top: 1vh;
                 border-radius: 3%;
                 padding: 29px;
             }
@@ -759,6 +759,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
         <div id="issue_distribution" style="width:50%; height:100%;  padding:5px"></div>
         </div>`
                     $detailsView.html(html);
+                    $detailsView.prepend($('h1').text(featureData.summary))
                     let $curve_chart = $detailsView.find('#curve_chart')
                     let $velocity_chart = $detailsView.find('#velocity_chart')
                     let $piechart = $detailsView.find('#piechart')
