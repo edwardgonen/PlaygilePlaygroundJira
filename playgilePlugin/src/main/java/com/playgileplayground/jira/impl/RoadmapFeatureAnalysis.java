@@ -38,7 +38,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public String projectKey;
     public String messageToDisplay;
     public ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
-    Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
+    public Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
     public double[] overallIssuesDistributionInSprint = new double[ProjectMonitor.DISTRIBUTION_SIZE];
     public List<PlaygileIssue> allPlaygileIssues = new ArrayList<>();
     public List<PlaygileIssue> futurePlaygileIssues = new ArrayList<>();
@@ -47,14 +47,15 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public ArrayList<Double> interpolatedVelocityPoints;
     public ProjectProgressResult projectProgressResult;
     public AnalyzedStories analyzedStories = new AnalyzedStories();
-    public double qualityScore;
-
+    public int qualityScore;
+    public int numberOfOpenIssues;
 
 
     public double plannedRoadmapFeatureVelocity = 0;
     public double defaultNotEstimatedIssueValue;
     public Date startDateRoadmapFeature = null;
     public double sprintLengthRoadmapFeature = 0;
+    public Date targetDate = null;
 
     public RoadmapFeatureAnalysis(
         Issue roadmapFeature,
@@ -113,6 +114,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 //get sprints for issue
                 projectMonitoringMisc.addIssueSprintsToList(playgileIssue.jiraIssue, playgileSprints);
 
+                if (playgileIssue.bIssueOpen) numberOfOpenIssues++;
+
                 allPlaygileIssues.add(playgileIssue);
 
                 //if issue is not completed yet, add to the list of futureIssues
@@ -126,11 +129,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     if (playgileIssue.storyPoints == 13) analyzedStories.LargeStoriesNumber++;
                     if (playgileIssue.storyPoints > 13) analyzedStories.VeryLargeStoriesNumber++;
                     if (playgileIssue.storyPoints <= 0) analyzedStories.NotEstimatedStoriesNumber++;
-
-
                 }
             }
-
             //now we have everything in the cache - list of instantiated issues
             //let's process
             //sort sprints
@@ -204,6 +204,10 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     (int)sprintLengthRoadmapFeature,
                     historicalEstimationPairs);
 
+                //get target date. I cannot do that before progress calculated, as in case it is not set in DB then I take it
+                //as planned project end
+                targetDate = getTargetDate();
+
                 //calculate quality score
                 qualityScore = getQualityScore();
                 result = true;
@@ -250,6 +254,26 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             result = (ArrayList<DataPair>)maor.Result;
         }
         return result;
+    }
+
+    private Date getTargetDate()
+    {
+        targetDate = null;
+        ManageActiveObjectsResult maor = mao.GetTargetDate(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
+            targetDate = (Date)maor.Result;
+            StatusText.getInstance().add(true, "Target date from DB is " + targetDate);
+        }
+        if (targetDate == null) {
+            //not configured - set to planned date
+            if (projectProgressResult != null) {
+                targetDate = projectProgressResult.idealProjectEnd;
+                StatusText.getInstance().add(true, "Target date set from planned date  is " + targetDate);
+            }
+        }
+        if (targetDate != null) targetDate = DateTimeUtils.getZeroTimeDate(targetDate);
+        StatusText.getInstance().add(true, "Detected start date is " + targetDate);
+        return targetDate;
     }
 
     private double getDefaultValueForNonEstimatedIssue()
@@ -331,163 +355,61 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
     }
 
-    public void prepareDataForWeb(Map<String, Object> contextMap)
+    int getQualityScore()
     {
-        contextMap.put(ProjectMonitor.TEAMVELOCITY, plannedRoadmapFeatureVelocity);
-        //================================================================================
-        StringBuilder issuesDistributionString = new StringBuilder();
-        if (playgileSprints.size() > 0) {
-            for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
-                double roundTo2Digits = 100.0 * projectMonitoringMisc.roundToDecimalNumbers(overallIssuesDistributionInSprint[i], 2); //Math.round(overallIssuesDistributionInSprint[i] * 100.0) / 100.0;
-                issuesDistributionString.append(roundTo2Digits + ManageActiveObjects.PAIR_SEPARATOR);
-            }
-        }
-        contextMap.put(ProjectMonitor.ISSUESDISTRIBUTION, issuesDistributionString.toString());
-        //========================================================================================
-        //convert to strings
-        StringBuilder resultRows = new StringBuilder();
-        int index = 0;
-        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation)
+        int result;
+        /*
+        	1 Red, 2 - Yellow, 3 - Green
+
+        //delay
+        if (Expected end date <= Planned end date) DelayScore = 3;
+        else
         {
-            resultRows.append(
-                DateTimeUtils.ConvertDateToOurFormat(sprintToConvert.getEndDate()) + ManageActiveObjects.PAIR_SEPARATOR +
-                    sprintToConvert.sprintVelocity  + ManageActiveObjects.PAIR_SEPARATOR +
-                    interpolatedVelocityPoints.get(index++) + ManageActiveObjects.LINE_SEPARATOR
-            );
+           DelayScore = ((Expected date - Planned date) / Plannedlength)
+           ---- up to 5%  green (3),  5-15% - yellow (2), > 15% - red (1)
         }
-        contextMap.put(ProjectMonitor.REALVELOCITIES, resultRows);
-        //============================================================================================
-        contextMap.put(ProjectMonitor.AVERAGEREALVELOCITY, (int)Math.round(predictedVelocity));
-        //==============================================================================================
-        //what is the longest array?
-        StringBuilder chartRows = new StringBuilder();
-        ProgressData longestList;
-        ProgressData shortestList;
-        boolean predictedIsLongest;
-        if (projectProgressResult.progressData.Length() >= projectProgressResult.idealData.Length()) {
-            longestList = projectProgressResult.progressData;
-            shortestList = projectProgressResult.idealData;
-            predictedIsLongest = true;
+        */
+        int delayScore;
+        if (projectProgressResult.predictedProjectEnd.before(targetDate) || projectProgressResult.predictedProjectEnd.equals(targetDate))
+        {
+            delayScore = 3;
         }
         else
         {
-            longestList = projectProgressResult.idealData;
-            shortestList = projectProgressResult.progressData;
-            predictedIsLongest = false;
+            int differenceInDays = DateTimeUtils.AbsDays(projectProgressResult.predictedProjectEnd, targetDate);
+            double delay = (double)differenceInDays / (double)(DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature));
+            if (delay > 0 && delay <= 0.05) delayScore = 3;
+            else if (delay > 0.05 && delay < 0.15) delayScore = 2;
+            else delayScore = 1;
         }
-        DataPair tmpPredictedDataPair, tmpIdealDataPair;
-        for (int i = 0; i < longestList.Length(); i++)
-        {
-            if (predictedIsLongest) {
-                tmpPredictedDataPair = longestList.GetElementAtIndex(i);
-                tmpIdealDataPair = shortestList.GetElementAtIndex(i);
-            }
-            else
-            {
-                tmpPredictedDataPair = shortestList.GetElementAtIndex(i);
-                tmpIdealDataPair = longestList.GetElementAtIndex(i);
-            }
-            if (i >= shortestList.Length()) //no more elements in shortest
-            {
-                if (predictedIsLongest) {
-                    chartRows.append(
-                        DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                            "" + ManageActiveObjects.PAIR_SEPARATOR +
-                            tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
-                    );
-                }
-                else
-                {
-                    chartRows.append(
-                        DateTimeUtils.ConvertDateToOurFormat(tmpIdealDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                            tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
-                            "" + ManageActiveObjects.LINE_SEPARATOR
-                    );
-                }
-            }
-            else //both records available
-            {
-                chartRows.append(
-                    DateTimeUtils.ConvertDateToOurFormat(tmpPredictedDataPair.Date) + ManageActiveObjects.PAIR_SEPARATOR +
-                        tmpIdealDataPair.RemainingEstimation + ManageActiveObjects.PAIR_SEPARATOR +
-                        tmpPredictedDataPair.RemainingEstimation + ManageActiveObjects.LINE_SEPARATOR
-                );
-            }
-        }
-        contextMap.put(ProjectMonitor.CHARTROWS, chartRows.toString());
-        contextMap.put(ProjectMonitor.IDEALENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.idealProjectEnd));
-        //make the logic of color
-        contextMap.put(ProjectMonitor.PREDICTIONCOLOR, ProjectProgress.convertColorToHexadeimal(projectProgressResult.progressDataColor));
-        contextMap.put(ProjectMonitor.PREDICTEDENDOFPROJECT, DateTimeUtils.ConvertDateToOurFormat(projectProgressResult.predictedProjectEnd));
-
-        //=========================================================================================================================
-        contextMap.put(ProjectMonitor.NOTESTIMATEDSTORIES, analyzedStories.NotEstimatedStoriesNumber);
-        contextMap.put(ProjectMonitor.LARGESTORIES, analyzedStories.LargeStoriesNumber);
-        contextMap.put(ProjectMonitor.VERYLARGESTORIES, analyzedStories.VeryLargeStoriesNumber);
-        contextMap.put(ProjectMonitor.ESTIMATEDSTORIES, analyzedStories.EstimatedStoriesNumber);
-    }
-
-
-    double getQualityScore()
-    {
-        double result = 0;
-
-        double VELOCITY_DIFFERENCT_PART = 0.1;
-        double COMPLETION_DATE_DIFFERENCE_PART = 0.50;
-        double ESTIMATED_STORIES_DIFFERENCE_PART = 0.40;
-        //total must be 0 - 1
-
         /*
-        Estimated percentage 0 - 1
-        0 - <=0.25     0.05
-        >0.25 - <= 0.5 0.15
-        > 0.5 <= 0.8   0.50
-        > 0.8 <= 0.9   0.80
-        >0.9           1.00
+        //estimation ration
+        EstimationScore = (number of normal (>0 <13 SP) not closed stories) / (Total number of not closed stories)
+           ----- 90-100% - green (3), 60-80% - yellow (2) 0-60% Red (1)
+        */
+        int estimationScore;
+        double estimationRatio = analyzedStories.EstimatedStoriesNumber /
+            (analyzedStories.EstimatedStoriesNumber + analyzedStories.LargeStoriesNumber +
+                    analyzedStories.VeryLargeStoriesNumber + analyzedStories.NotEstimatedStoriesNumber);
+        if (estimationRatio >= 0.9) estimationScore = 3;
+        else if (estimationRatio >= 0.6 && estimationRatio < 0.9) estimationScore = 2;
+        else estimationScore = 1;
+        /*
 
-
-        (real date - predicted date) / sprint length
-        <= 1,      1.0
-        > 1- <= 2, 0.5
-        > 2-..     0.1
-
-        predicted velocity / real velocity percentage (0  - 1)
-        0 - <=0.25     0.10
-        >0.25 - <= 0.5 0.20
-        > 0.5 <= 0.8   0.50
-        > 0.8 <= 0.9   0.80
-        > 0.9          1
+        BacklogReadinessScore = Number of "Open" stories / (Total number of not closed stories)
+                  0-10%  green (3), 10-30% yellow (2), 30-100% red (1)
 
         */
-        //veloctiy difference impact
-        double velocityDifference = plannedRoadmapFeatureVelocity / predictedVelocity;
-        double veloctiyDifferenceImpact = 1.0;
-        if (velocityDifference <= 0.25) veloctiyDifferenceImpact = 0.10;
-        else if (velocityDifference <= 0.5) veloctiyDifferenceImpact = 0.20;
-        else if (velocityDifference <= 0.8) veloctiyDifferenceImpact = 0.50;
-        else if (velocityDifference <= 0.9) veloctiyDifferenceImpact = 0.80;
-
-        //completion date difference impact
-        int completionDateDifference = DateTimeUtils.Days(projectProgressResult.predictedProjectEnd, projectProgressResult.idealProjectEnd) / (int) sprintLengthRoadmapFeature;
-        double completionDateDifferenceImpact = 1.0;
-        if (completionDateDifference > 2) completionDateDifferenceImpact = 0.1;
-        else if (completionDateDifference > 1) completionDateDifferenceImpact = 0.5;
-
-        //estimations impact
-        double totalIssues = analyzedStories.EstimatedStoriesNumber + analyzedStories.NotEstimatedStoriesNumber +
-            analyzedStories.VeryLargeStoriesNumber + analyzedStories.LargeStoriesNumber;
-        double estimationRatio = analyzedStories.EstimatedStoriesNumber / totalIssues;
-        double estimationRatioImpact = 1.0;
-        if (estimationRatio <= 0.25) estimationRatioImpact = 0.05;
-        else if (estimationRatio <= 0.5) estimationRatioImpact = 0.15;
-        else if (estimationRatio <= 0.8) estimationRatioImpact = 0.50;
-        else if (estimationRatio <= 0.9) estimationRatioImpact = 0.80;
-
-
-        result = VELOCITY_DIFFERENCT_PART * veloctiyDifferenceImpact +
-            COMPLETION_DATE_DIFFERENCE_PART * completionDateDifferenceImpact +
-            ESTIMATED_STORIES_DIFFERENCE_PART * estimationRatioImpact;
-
+        int readinessScore = 3;
+        double readinessRatio = (double)numberOfOpenIssues / (double)futurePlaygileIssues.size();
+        if (readinessRatio >= 0.0 && readinessRatio < 0.1) readinessScore = 3;
+        else if (readinessRatio >= 0.1 && readinessRatio < 0.3) readinessScore = 2;
+        else readinessScore = 1;
+        /*
+        Here we have 3 scores each can be 1, 2 or 3. The minimum between them will be the final color
+	    For example 1, 2, 2 -- 1 (red), 2, 3, 3 -- 2 (yellow) etc.
+        */
+        result = Math.min(delayScore, Math.min(estimationScore, readinessScore));
 
         return result;
     }

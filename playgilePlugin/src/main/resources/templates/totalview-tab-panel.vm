@@ -1,256 +1,1038 @@
 <tr class="mod-header">
     <h3>Playgile Studio Total View for $project.name ($project.getKey())</h3>
 
-<html>
-<head>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.load('current', {'packages':['gauge']});
-        google.charts.load('current', {'packages':['timeline']});
-        google.charts.setOnLoadCallback(drawChart);
+    <html>
 
-        function drawChart() {
-            if (!$allisok) return; //no need to execute
-            /////////// project predictions
-            const LINE_SEPARATOR = "BOBRUISK";
-            const PAIR_SEPARATOR = "|";
-            const DATE_FORMAT = "MM/dd/yyyy";
-
-            //split by lines
-            var featureRows = '$featuresrows';
-            //split and parse
-            if (typeof featureRows === 'undefined' || featureRows === null)
-            {
-                alert("No rows for the page");
-                return;
+    <head>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <style>
+            /* The switch - the box around the slider */
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
             }
 
-            var lines = featureRows.split(LINE_SEPARATOR);
-            if (lines.length <= 0)
-            {
-                alert("Wrong rows format " + featureRows);
-                return;
+            /* Hide default HTML checkbox */
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
             }
-            // Find a <table> element with id="myTable":
-            var table = document.getElementById("roadmap-features-table");
-            var rowHeight = 100;
-            lines.forEach(function (line, index) {
-                if (line.length > 0)//non empty line
-                {
-                    //split by pair separator
-                    var items = line.split(PAIR_SEPARATOR);
-                    if (items.length < 11)
-                    {
-                        alert("Wrong line format " + line);
+
+            /* The slider */
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                -webkit-transition: .4s;
+                transition: .4s;
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                -webkit-transition: .4s;
+                transition: .4s;
+            }
+
+            input:checked+.slider {
+                background-color: #2196F3;
+            }
+
+            input:focus+.slider {
+                box-shadow: 0 0 1px #2196F3;
+            }
+
+            input:checked+.slider:before {
+                -webkit-transform: translateX(26px);
+                -ms-transform: translateX(26px);
+                transform: translateX(26px);
+            }
+
+            /* Rounded sliders */
+            .slider.round {
+                border-radius: 34px;
+            }
+
+            .slider.round:before {
+                border-radius: 50%;
+            }
+
+            label {
+                white-space: nowrap;
+            }
+
+            .wrongIput {
+                background: #ff000024;
+            }
+
+            input:invalid {
+                background: #ff000024;
+            }
+
+            input {
+                border: 2px solid rgba(220, 220, 220, 1);
+                color: #2980b9;
+                font-size: 16px;
+                box-shadow: 1px 1px 3px 1px rgba(200, 200, 200, 0.2) inset;
+                /* background-color: rgba(52, 152, 219, 0.1); */
+                padding: 1em;
+                width: 17em;
+                outline: none;
+                margin: 0;
+                -webkit-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+                -moz-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+                -o-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+                transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            }
+
+            .form-content {
+                padding: 20px;
+                inline-size: min-content;
+                font-size: 2em;
+            }
+
+            select {
+                border: 2px solid rgba(220, 220, 220, 1);
+                color: #2980b9;
+                font-size: 16px;
+                box-shadow: 1px 1px 3px 1px rgba(200, 200, 200, 0.2) inset;
+                /* background-color: rgba(52, 152, 219, 0.1); */
+                padding: 1em;
+                width: 500px;
+                outline: none;
+                margin: 0;
+                -webkit-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+                -moz-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+                -o-transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+                transition: all 200ms cubic-bezier(0.42, 0, 0.58, 1);
+            }
+
+            .saveButtun {
+                color: #fff;
+                text-decoration: none;
+                user-select: none;
+                background: rgb(212, 75, 56);
+                padding: 1.7vh 5.5vh;
+                outline: none;
+                margin-top: 10%;
+            }
+
+            .saveButtun:hover {
+                background: rgb(232, 95, 76);
+            }
+
+            .saveButtun:active {
+                background: rgb(152, 15, 0);
+            }
+
+            .fade {
+                min-height: 50vh;
+                text-align: center;
+                position: absolute;
+                background: black;
+                width: 100%;
+                height: 100%;
+                z-index: 999;
+                opacity: 0.3;
+                display: visible;
+            }
+
+            .ui-datepicker {
+                background: white
+            }
+
+            .lds-spinner {
+                color: official;
+                display: inline-block;
+                margin-top: 20vh;
+                width: 80px;
+                height: 80px;
+            }
+
+            .lds-spinner div {
+                transform-origin: 40px 40px;
+                animation: lds-spinner 1.2s linear infinite;
+            }
+
+            .lds-spinner div:after {
+                content: " ";
+                display: block;
+                position: absolute;
+                top: 3px;
+                left: 37px;
+                width: 6px;
+                height: 18px;
+                border-radius: 20%;
+                background: #fff;
+            }
+
+            .lds-spinner div:nth-child(1) {
+                transform: rotate(0deg);
+                animation-delay: -1.1s;
+            }
+
+            .lds-spinner div:nth-child(2) {
+                transform: rotate(30deg);
+                animation-delay: -1s;
+            }
+
+            .lds-spinner div:nth-child(3) {
+                transform: rotate(60deg);
+                animation-delay: -0.9s;
+            }
+
+            .lds-spinner div:nth-child(4) {
+                transform: rotate(90deg);
+                animation-delay: -0.8s;
+            }
+
+            .lds-spinner div:nth-child(5) {
+                transform: rotate(120deg);
+                animation-delay: -0.7s;
+            }
+
+            .lds-spinner div:nth-child(6) {
+                transform: rotate(150deg);
+                animation-delay: -0.6s;
+            }
+
+            .lds-spinner div:nth-child(7) {
+                transform: rotate(180deg);
+                animation-delay: -0.5s;
+            }
+
+            .lds-spinner div:nth-child(8) {
+                transform: rotate(210deg);
+                animation-delay: -0.4s;
+            }
+
+            .lds-spinner div:nth-child(9) {
+                transform: rotate(240deg);
+                animation-delay: -0.3s;
+            }
+
+            .lds-spinner div:nth-child(10) {
+                transform: rotate(270deg);
+                animation-delay: -0.2s;
+            }
+
+            .lds-spinner div:nth-child(11) {
+                transform: rotate(300deg);
+                animation-delay: -0.1s;
+            }
+
+            .lds-spinner div:nth-child(12) {
+                transform: rotate(330deg);
+                animation-delay: 0s;
+            }
+
+            @keyframes lds-spinner {
+                0% {
+                    opacity: 1;
+                }
+
+                100% {
+                    opacity: 0;
+                }
+            }
+
+            .detailsView {
+                position: fixed;
+                z-index: 2;
+                background: #8080807a;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                text-align: -webkit-center;
+            }
+
+            .editView {
+                background: white;
+                width: min-content;
+                height: min-content;
+                margin-top: 1vh;
+                border-radius: 3%;
+                padding: 29px;
+            }
+
+            .editViewWrapper {
+                position: fixed;
+                z-index: 2;
+                background: #8080807a;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                text-align: -webkit-center;
+            }
+
+            .ui-progressbar {
+                position: relative;
+            }
+
+            .progress-label {
+                position: absolute;
+                left: 50%;
+                top: 4px;
+                font-weight: bold;
+                text-shadow: 1px 1px 0 #fff;
+            }
+
+            .generalViewBlock {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .StatusBlock {
+                position: relative;
+                display: flex;
+                flex-wrap: wrap;
+                background: #2684ff0d;
+                margin: 5px;
+                display: flex;
+                height: 212px;
+                width: min-content;
+                padding: 5px;
+                animation-name: slideRight;
+                -webkit-animation-name: slideRight;
+                animation-duration: 1s;
+                -webkit-animation-duration: 1s;
+                visibility: visible !important;
+                border-radius: 20px;
+                transition: all 1s;
+                transition: all 0.4s;
+            }
+
+            .StatusBlock:hover {
+                transform: scale(1.02);
+                background: #2684ff1a;
+                /* 
+                backdrop-filter: sepia(1); */
+            }
+
+            .Qualityscore1 {
+                background: #ff2f2f38;
+                color: #ec3e40;
+            }
+
+            .Qualityscore1:hover {}
+
+            .Qualityscore2 {
+                background: #ffc82f38;
+                color: #f5d800;
+            }
+
+            .Qualityscore2:hover {}
+
+            .Qualityscore3 {
+                background: #34d12938;
+                color: #01a46d;
+            }
+
+            .Qualityscore3:hover {}
+
+            .StatusBlockDivBtn {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+            }
+
+            @-webkit-keyframes slideRight {
+                0% {
+                    opacity: 0;
+                }
+
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            .ButtonPluginWrapper {
+                position: absolute;
+                /* top: 0; */
+                right: 0;
+                /* background: white;*/
+            }
+
+            .ButtonPlugin {
+                transform: scale(1.5);
+                /* font-size: 2vh; */
+                margin: 11px;
+                /* padding: 8px; */
+                /* margin: 10px; */
+                /* background: white; */
+                /* width: -webkit-fill-available; */
+                /* box-sizing: border-box; */
+                /* transition: background-color .1s ease-out; */
+                /* border-radius: 3.01px; */
+                /* cursor: pointer; */
+                /* font-family: inherit; */
+                /* font-size: 14px; */
+                /* font-variant: normal; */
+                /* font-weight: 400; */
+                /* background-image: none; */
+                /* background-color: rgba(9,30,66,.08); */
+                /* border: 1px solid transparent; */
+                /* color: #344563; */
+                /* text-decoration: none; */
+                /* display: inline-block; */
+                /* height: 2.14285714em; */
+                /* line-height: 1.42857143em; */
+                /* margin: 0; */
+                /* padding: 4px 10px; */
+                /* vertical-align: baseline; */
+                /* white-space: nowrap; */
+                /* position: relative; */
+                /* color: #deebff; */
+                /* background-color: #2684ff; */
+                /* border: 0; */
+                /* line-height: 1.57142857; */
+                /* margin: 5px 0 0 10px; */
+                /* padding: 4px 10px; */
+                /* background-image: none; */
+                /* text-decoration: none; */
+                /* font-weight: 600;*/
+            }
+        </style>
+    </head>
+
+    <body>
+        #if (!$allisok)
+        <script>
+            var dialog = new AJS.Dialog({
+                id: "message-status-dialog",
+                closeOnOutsideClick: false
+            });
+            dialog.addHeader("Playgile Studio View");
+            dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
+
+            dialog.addButton("OK", function (dialog) {
+                dialog.hide();
+            }, "#");
+            dialog.show();
+        </script>
+        <h1 style="color:red">$messagetodisplay</h1>
+        #end
+
+        #if ($allisok)
+        <div id="progressbar">
+            <div class="progress-label">Loading...</div>
+        </div>
+        <input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
+        <div class="content">
+            <div id="FadeBlock" class="fade">
+                <div class="lds-spinner">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+            <div class="editViewWrapper">
+                <div class="editView"></div>
+            </div>
+            <div class="detailsView"></div>
+            <div class="generalLoading">
+                generalLoading
+            </div>
+            <div class="generalViewBlock">
+            </div>
+        </div>
+        <table id="roadmap-features-table" ; width="100%">
+        </table>
+        <div style="align-items: center; display: inline-flex;">
+            <div>Debug Mode</div>
+            <label class="switch">
+                <input class="debugSwitch" type="checkbox">
+                <span class="slider round"></span>
+            </label>
+        </div>
+
+
+        #end
+        <script>
+            window.onload = function () {
+                google.charts.load('current', { 'packages': ['corechart'] });
+                google.charts.load('current', { 'packages': ['gauge'] });
+                google.charts.load('current', { 'packages': ['timeline'] });
+                google.charts.setOnLoadCallback(init);
+            };
+            function init() {
+                console.log('loaded resources playgilePlugin and init v1');
+
+                const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
+
+                const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
+
+                const BASE_URL = '$baseurl';
+
+                const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
+
+                const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&roadmapFeature=';
+
+                const GET_URL = location.origin + location.pathname + '?projectKey=' + PROJECT_NAME
+                const POST_UTL = location.origin + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME
+                const PROJECT = PROJECT_NAME
+                const MIN_INPUT_SP = 0;
+                const MAX_INPUT_SP = 200;
+                const LABEL_1_TEXT = 'Default value for not estimated issues'
+                const LABEL_2_TEXT = 'Originally planned velocity'
+                const LABEL_3_TEXT = 'Sprint length in days'
+                const LABEL_4_TEXT = 'Roadmap Feature start date'
+
+                const $generalLoading = $('.generalLoading');
+
+                const $generalViewBlock = $('.generalViewBlock');
+
+                const $generalViewTable = $('.generalViewTable');
+
+                const progressbar = $("#progressbar");
+
+                const progressLabel = $(".progress-label");
+
+                const $featureSearch = $(".FeatureSearch").on('input', featureSearchOnChange)
+
+                const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString()
+
+                const STORE = {
+                    featureArray: [],
+                    viewChildren: [],
+                    $currentBlockInLoading: null
+                };
+                console.log('STORE');
+                console.log(STORE)
+
+                $('.editViewWrapper').hide()
+
+                globalLoadingOFF()
+
+                buildProgressBar()
+
+                fadeOff()
+
+                $('.detailsView').hide()
+
+                let $debugSwitch = $('.debugSwitch');
+                $debugSwitch[0].checked = !!eval(localStorage.pluginDebugMode)
+                $('.switch').click(() => {
+                    localStorage.pluginDebugMode = $debugSwitch[0].checked
+                    location.reload()
+                })
+
+                doPost(FEATURES_URL, {}, function (data) {
+                    STORE.featureArray = data.featuresList
+                    console.log(data)
+                    initBuildPanels()
+                })
+
+
+                function initBuildPanels() {
+                    let loadingValue = 100 / STORE.featureArray.length;
+                    if (STORE.featureArray.length != STORE.viewChildren.length) {
+                        let featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
+                        let $panelBlock = $('<div>')
+                        $generalViewBlock.append($panelBlock)
+                        STORE.$currentBlockInLoading = $panelBlock;
+                        STORE.viewChildren.push($panelBlock);
+                        initBuildPanels()
+                        doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
+                            progressbar.progressbar("value", progressbar.progressbar("value") < 90 ? progressbar.progressbar("value") + loadingValue : 100);
+                            if (!!data.statusMessage) {
+                                $panelBlock.hide()
+                            } else {
+                                $panelBlock.empty();
+                                $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
+                                $panelBlock.click(() => { drawDeteilsView(data) })
+                                console.log(data)
+                            }
+
+                        })
                     }
 
-                    //add new row to table
-                    // Create an empty <tr> element and add it to the 1st position of the table:
-                    var row = table.insertRow(index);
 
-                    //////////////////////////////////////////
-                    var createClickHandler =
-                            function(row)
-                            {
-                                return function() {
-                                    var cell = row.getElementsByTagName("td")[2];
-                                    var encodedFeatureName = encodeURIComponent(cell.innerText);
-                                    jQuery.ajax({
-                                        type: "GET",
-                                        async: false,
-                                        url: '$baseurl' + "/plugins/servlet/activeobjectsaccess?projectKey=" + '$project.getKey()'
-                                        + "&roadmapfeature=" + encodedFeatureName + "&user=" + '$currentuser',
-                                        success: function(data) {
-                                            var newUrl = window.location.href.replace('totalview', 'metrics');
-                                            window.location.href = newUrl;
-                                        },
-                                        error: function() {
-                                            alert("error");
-                                            //console.log('error', arguments);
-                                        }
-                                    });
-                                };
-                            };
-
-                    row.onclick = createClickHandler(row);
-
-                    //////////////////////////////////////////
-
-                    var featureStatus = parseFloat(items[1]);
-                    var featureStatusCell = row.insertCell(0);
-                    featureStatusCell.width = 100;
-                    featureStatusCell.height = rowHeight;
-                    featureStatusCell.id = "feature-status" + index;
-                    var dataStatusGauge = google.visualization.arrayToDataTable([
-                        ['Label', 'Value'],
-                        ['Risk', 100 - featureStatus],
-                    ]);
-/*
-                    var featureStatusGaugeOptions = {
-                        width: 100, height: rowHeight,
-                        redFrom: 0, redTo: 50,
-                        yellowFrom:50, yellowTo: 70,
-                        greenFrom: 70, greenTo: 100,
-                        minorTicks: 5
-                    };
-*/
-                    var featureStatusGaugeOptions = {
-                        width: 100, height: rowHeight,
-                        redFrom: 50, redTo: 100,
-                        yellowFrom: 25, yellowTo: 50,
-                        greenFrom: 0, greenTo: 25,
-                        minorTicks: 0
-                    };
-
-                    var featureStautsGauge = new google.visualization.Gauge(document.getElementById(featureStatusCell.id));
-
-                    featureStautsGauge.draw(dataStatusGauge, featureStatusGaugeOptions);
-
-                    ///////////////////////////////////////////////////////////////
-
-                    var featureName = items[0];
-                    var featureNameCell = row.insertCell(1);
-                    featureNameCell.width = 120;
-                    featureNameCell.height = rowHeight;
-                    featureNameCell.innerText = featureName;
-                    featureNameCell.id = "feature-name";
-
-
-                    /////////////////////////////////////////////////////////////////////////
-
-                    var startDate = new Date(items[2]);
-                    var startDateCell = row.insertCell(2);
-                    startDateCell.width = 120;
-                    startDateCell.height = rowHeight;
-                    startDateCell.innerText = 'Started on ' + startDate.toDateString();
-
-                    ////////////////////////////////////////////////////////////////////////
-
-                    var teamVelocity = parseFloat(items[3]);
-                    var projectVelocity = parseFloat(items[4]);
-                    var velocityCell = row.insertCell(3);
-                    velocityCell.width = '40%';
-                    velocityCell.height = rowHeight;
-                    velocityCell.id = "velocities" + index;
-
-                    var dataVelocities = google.visualization.arrayToDataTable([
-                        ['', 'Predicted', 'Real'],
-                        ['', teamVelocity, projectVelocity]
-                    ]);
-
-                    var optionsVelocities = {
-                        title: 'Velocities',
-                        legend: 'none',
-                        chartArea: {width: '50%'},
-                        colors: ['#4285f4', '#009900'],
-                        bar: {groupWidth: "60%"},
-                        hAxis: {
-                            title: 'Story Points per Sprint',
-                            minValue: 0
-                        }
-                    };
-                    var chartVelocities = new google.visualization.BarChart(document.getElementById(velocityCell.id));
-                    chartVelocities.draw(dataVelocities, optionsVelocities);
-
-
-                    //////////////////////////////////////////////////////////////////////////
-
-                    var idealEndOfProject = new Date(items[5]);
-                    var predictedEndOfProject = new Date(items[6]);
-                    var projectEndCell = row.insertCell(4);
-                    projectEndCell.width = '20%';
-                    projectEndCell.height = rowHeight;
-                    projectEndCell.id = "project-end" + index;
-
-                    var dataProjectEnd = new google.visualization.DataTable();
-                    dataProjectEnd.addColumn('string', '');
-                    dataProjectEnd.addColumn('date', 'Start');
-                    dataProjectEnd.addColumn('date', 'End');
-
-                    dataProjectEnd.addRows([
-                        ['Predicted', startDate, idealEndOfProject],
-                        ['Real', startDate, predictedEndOfProject],
-                    ]);
-
-                    var optionsProjectEnd = {
-                        height: rowHeight,
-                        colors: ['#4285f4', items[11]],
-                        timeline: {
-                            rowLabelStyle: { fontSize: 10 },
-                            barLabelStyle: { fontSize: 5 }
-                        }
-                    };
-
-                    var chartProjectEnd = new google.visualization.Timeline(document.getElementById(projectEndCell.id));
-                    chartProjectEnd.draw(dataProjectEnd, optionsProjectEnd);
-
-                    ////////////////////////////////////////////////////////////////////
-                    var notEstimatedNumber = parseFloat(items[7]);
-                    var largeStoriesNumber =  parseFloat(items[8]);
-                    var veryLargeStoriesNumber =  parseFloat(items[9]);
-                    var estimatedStoriesNumber =  parseFloat(items[10]);
-
-                    var issueDistributionCell = row.insertCell(5);
-                    issueDistributionCell.width = '10%';
-                    issueDistributionCell.height = rowHeight;
-                    issueDistributionCell.id = "issues-estimation" + index;
-
-                    var dataIssueDistribution = new google.visualization.DataTable();
-
-                    dataIssueDistribution.addColumn('string', 'Category');
-                    dataIssueDistribution.addColumn('number', 'Value');
-
-                    dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
-                    dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
-                    dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
-                    dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
-
-                    var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
-
-                    var optionsIssueDistribution = {
-                        title: 'Total ' + totalStories + ' issues',
-                        legend: 'none'
-                    };
-
-                    var chartIssueDistribution = new google.visualization.PieChart(document.getElementById(issueDistributionCell.id));
-
-                    chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
                 }
-            });
 
-        }
-    </script>
-</head>
-<body>
-#if (!$allisok)
-<script>
-    var dialog = new AJS.Dialog({
-        id: "message-status-dialog",
-        closeOnOutsideClick: false
-    });
+                function globalLoadingON() {
+                    $generalLoading.show()
+                }
 
-    dialog.addHeader("Playgile Studio View");
-    dialog.addPanel("Panel 1", '<h1 style="color:red">$messagetodisplay</h1>', "panel-body");
+                function globalLoadingOFF() {
+                    $generalLoading.hide()
+                }
 
-    dialog.addButton("OK", function (dialog) {
-        dialog.hide();
-    }, "#");
-    dialog.show();
-</script>
-<h1 style="color:red">$messagetodisplay</h1>
-#end
+                function doPost(url, postData, callback) {
+                    globalLoadingON()
+                    jQuery.post(url, postData)
+                        .done(function (textData) {
+                            var jsonData = JSON.parse(textData)
+                            if (!!jsonData.logInfo) {
+                                console.warn(
+                                    `
+url: ${url}
+body: ${jsonData}
+statusMessage: ${jsonData.statusMessage}
+logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
+`)
+                            }
+                            if (!!jsonData.statusMessage) { traceDataMessageError(jsonData) }
+                            callback(jsonData)
+                            globalLoadingOFF()
+                        })
+                        .fail(function (err) {
+                            alert("POST error")
+                            globalLoadingOFF()
+                        })
+                }
+                function traceDataMessageError(data) {
+                    console.log('----------------data.statusMessage----ERROR---------------')
+                    console.log(data.statusMessage)
+                    console.log(data)
+                }
 
-#if ($allisok)
-<table id="roadmap-features-table"; width="100%">
-</table>
+                function getTotalViewBlock(featureData) {
 
-#end
-</body>
-</html>
-<table>
-    <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
-        $statustext
+                    const SUMMARY = featureData.summary;//[0]
+
+                    const QUALITY_SCORE = normolizedInt(featureData.qualityScore);//[1]
+
+                    const START_DATE_ROADMAP_FEATURE = normolizedDate(featureData.startDateRoadmapFeature);//[2]
+
+                    const PLANNED_VELOCITY = normolizedInt(featureData.plannedRoadmapFeatureVelocity);//[3]
+
+                    //NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
+                    const PROJECT_VELOCITY = normolizedInt(13);//[4] I dont know how find it
+
+                    const IDEAL_PROJECT_END = normolizedDate(featureData.idealProjectEnd);//[5]
+
+                    const PREDICTED_PROJECT_END = normolizedDate(featureData.predictedProjectEnd);//[6]
+
+                    const NOT_ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.notEstimatedStoriesNumber);//[7]
+
+                    const LARGE_STORIES_NUMBER = normolizedInt(featureData.largeStoriesNumber);//[8]
+
+                    const VERY_LARGE_STORIES_NUMBER = normolizedInt(featureData.veryLargeStoriesNumber);//[9]
+
+                    const ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.estimatedStoriesNumber);//[10]
+
+                    const TARGET_DATE = normolizedDate(featureData.targetDate)
+
+                    const LINE_COLOR1 = '#4285f4'
+                    const LINE_COLOR2 = "#cccc00"//[11]
+
+
+                    const ROW_HEIGHT = 100;
+                    const ROW_WIDTH = 100;
+                    const LABEL = 'Label';
+                    const VALUE = 'Value';
+                    const RISK = 'Risk'
+
+                    var table = document.createElement('div');
+                    /////////////////////////////////////////////////////////////
+                    table.className = `StatusBlock`
+                    ///////////////////////////////////////////////////////////////
+                    var featureNameCell = document.createElement('h2');
+                    table.append(featureNameCell)
+                    featureNameCell.style.width = '100%';
+                    featureNameCell.innerText = SUMMARY;
+                    ////////////////////////////////////////////////////////////////////
+                    var startDateCell = document.createElement('div');
+                    table.append(startDateCell);
+                    startDateCell.className = `Qualityscore${QUALITY_SCORE}`
+                    startDateCell.style.margin = '23px'
+                    startDateCell.style.alignSelf = 'center'
+                    startDateCell.style.fontWeight = 'bold'
+                    startDateCell.style.width = "250px";
+                    startDateCell.style.background = 'transparent'
+                    let p1 = document.createElement('p');
+                    p1.innerText = 'Started on: ' + START_DATE_ROADMAP_FEATURE.toDateString().slice(4);
+                    let p2 = document.createElement('p');
+                    p2.innerText = 'Target date: ' + TARGET_DATE.toDateString().slice(4)
+                    let p3 = document.createElement('p');
+                    p3.innerText = 'Predicted end: ' + PREDICTED_PROJECT_END.toDateString().slice(4)
+                    startDateCell.append(p1, p2, p3)
+                    ///////////////////////////////////////
+                    let progressDiv = document.createElement('div');
+                    progressDiv.style.alignSelf = 'center';
+                    progressDiv.style.width = "200px";
+                    startDateCell.append(progressDiv)
+                    let $progressDiv = $(progressDiv);
+                    let TODAY = new Date()
+                    let progressValue = (TODAY - START_DATE_ROADMAP_FEATURE) / (PREDICTED_PROJECT_END - START_DATE_ROADMAP_FEATURE) * 100;
+                    let progressCreateFn = function (event, ui) { $(this).find('.ui-widget-header').addClass(`Qualityscore${QUALITY_SCORE}`) }
+                    $(function () {
+                        $progressDiv.progressbar({
+                            value: progressValue,
+                            create: progressCreateFn
+                        });
+                    });
+                    //(new Date() - START_DATE_ROADMAP_FEATURE)/(PREDICTED_PROJECT_END-START_DATE_ROADMAP_FEATURE)
+                    //(today date - start project) / (predicted end - start project)
+                    ///////////////////////////////////
+                    var configButtnsCell = document.createElement('div');
+                    configButtnsCell.className = 'ButtonPluginWrapper';
+                    table.append(configButtnsCell)
+                    var $configButtnsCell = $(configButtnsCell).addClass('StatusBlockDivBtn');
+                    var $buttonEdit = $('<div class="ButtonPlugin aui-icon aui-icon-small aui-iconfont-configure">')
+                        .click((e) => { e.stopPropagation(); createEditForm(featureData) });
+                    $configButtnsCell.append($buttonEdit)
+
+                    return table
+                }
+                function buildProgressBar() {
+                    $(function () {
+                        progressbar.progressbar({
+                            value: 0,
+                            change: function () {
+                                progressLabel.text(parseInt(progressbar.progressbar("value")) + "%");
+                            },
+                            complete: function () {
+                                progressLabel.text("All data loaded!");
+                                setTimeout(() => { progressbar.hide() }, 3000)
+                            }
+                        });
+                    });
+                }
+                function featureSearchOnChange(e) {
+                    var searchValue = e.currentTarget.value.toUpperCase()
+                    STORE.viewChildren.forEach((elem) => {
+                        if (elem.find('h2')[0]) {
+                            var text = elem.find('h2')[0].innerText;
+                            !searchValue.length || text.toUpperCase().indexOf(searchValue) >= 0 ? elem.show() : elem.hide()
+                        }
+                    })
+                }
+                function normolizedInt(int) {
+                    if ((typeof int) == 'number') {
+                        return parseFloat(int)
+                    } else {
+                        return null
+                    }
+                }
+                function normolizedDate(date) {
+                    return (new Date(date))
+                }
+                function drawDeteilsView(featureData) {
+                        let $detailsView = $('.detailsView');
+                        $detailsView.show()
+                    try {
+                        let html = `<h1>${featureData.summary}</h1>
+                    <div>Click anywhere to close</div>
+        <div style="width:80%; height:35vh; display: inline-flex;">        
+        <div id="curve_chart" style="width:50%; height:100%; padding:5px"></div>
+        <div id="velocity_chart" style="width:50%; height:100%;  padding:5px"></div>
+        </div><div style="width:80%; height:35vh; display: inline-flex;">
+        <div id="piechart" style="width:50%; height:100%;  padding:5px"></div>
+        <div id="issue_distribution" style="width:50%; height:100%;  padding:5px"></div>
+        </div>`
+                        $detailsView.html(html);
+                        let $curve_chart = $detailsView.find('#curve_chart')
+                        let $velocity_chart = $detailsView.find('#velocity_chart')
+                        let $piechart = $detailsView.find('#piechart')
+                        let $issue_distribution = $detailsView.find('#issue_distribution')
+
+                        var data = new google.visualization.DataTable();
+                        data.addColumn('date', 'Date');
+                        data.addColumn({ type: 'string', role: 'annotation' });
+                        data.addColumn({ type: 'string', role: 'annotation' });
+                        data.addColumn('number', 'Initial Velocity');
+                        data.addColumn('number', 'Predicted Velocity');
+
+                        const LINES = featureData.progressDataSets
+                        LINES.forEach(function (line, index) {
+                            let date = new Date(line.date)
+                            let targetDate = new Date(featureData.targetDate)
+                            let ideal = null;
+                            if (Number.isFinite(line.idealEstimations)) {
+                                ideal = Math.round(parseFloat(line.idealEstimations));
+                                if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
+                                    ideal = null;
+                                }
+                            }
+                            let predicted = null;
+                            if (Number.isFinite(line.predictedEstimations)) {
+                                predicted = Math.round(parseFloat(line.predictedEstimations))
+                                if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
+                                    predicted = null;
+                                }
+                            }
+                            let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
+                            let _annotationTarget = date.toLocaleDateString() == targetDate.toLocaleDateString() ? 'Target date' : null;
+                            data.addRow([date, _annotationRemaing, _annotationTarget, ideal, predicted]);
+                        });
+
+                        let lastDate = new Date(LINES[LINES.length - 1].date);
+                        let targetDate = new Date(featureData.targetDate);
+                        if (lastDate < targetDate) {
+                            data.addRow([targetDate, null, 'Target date', null, null]);
+                        }
+
+                        var options = {
+                            title: 'Project Monitor\n' +
+                                'Predicted completion is ' + new Date(featureData.targetDate).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ' SP',
+                            lineWidth: 3,
+                            series: {
+                                0: { lineDashStyle: [0, 0] },
+                                1: { lineDashStyle: [2, 2], color: '#009900' }
+                            },
+                            width: '100%',
+                            height: '100%',
+                            annotations: {
+                                style: 'line',
+                                textStyle: {
+                                    fontName: 'sans-serif',
+                                    fontSize: 12
+                                }
+                            },
+                            vAxes: [
+                                {
+                                    title: 'Story Points',
+                                    viewWindow: {
+                                        min: 0
+                                    }
+                                }
+                            ],
+                            curveType: 'function',
+                            legend: { position: 'bottom' },
+                            backgroundColor: '#f4f5f7'
+                        };
+                        var chart = new google.visualization.LineChart($curve_chart[0]);
+                        chart.draw(data, options);
+                        //////////////////
+                        var dataIssueDistribution = new google.visualization.DataTable();
+
+                        dataIssueDistribution.addColumn('string', 'Category');
+                        dataIssueDistribution.addColumn('number', 'Value');
+                        var notEstimatedNumber = featureData.notEstimatedStoriesNumber || 0;
+                        var largeStoriesNumber = featureData.largeStoriesNumber || 0;
+                        var veryLargeStoriesNumber = featureData.veryLargeStoriesNumber || 0;
+                        var estimatedStoriesNumber = featureData.estimatedStoriesNumber || 0;
+                        dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
+                        dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
+                        dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
+                        dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
+                        var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
+                        var optionsIssueDistribution = {
+                            title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
+                            backgroundColor: '#f4f5f7',
+                            width: '100%',
+                            height: '100%'
+                        };
+                        var chartIssueDistribution = new google.visualization.PieChart($piechart[0]);
+                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                        //////////////////
+                        var dataVelocity = new google.visualization.DataTable();
+                        dataVelocity.addColumn('date', 'Date');
+                        dataVelocity.addColumn('number', 'Actual Velocity');
+                        dataVelocity.addColumn('number', 'Predicted Velocity');
+                        var velocityChartRows = featureData.velocityDataSets;
+                        velocityChartRows.forEach(function (line, index) {
+                            var date = new Date(line.date);
+                            var realVelocity = line.realVelocity || 0;
+                            var linearVelocity = line.interpolatedVelocity || 0;
+                            dataVelocity.addRow([date, realVelocity, linearVelocity]);
+
+                        });
+                        var optionsVelocityChart = {
+                            title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + featureData.predictedVelocity,
+                            lineWidth: 3,
+                            width: '100%',
+                            height: '100%',
+                            series: {
+                                0: { lineDashStyle: [0, 0] },
+                                1: { lineDashStyle: [10, 2], color: 'black' }
+                            },
+                            vAxes: {
+                                0: {
+                                    title: 'Story Points per Sprint',
+                                    viewWindow: {
+                                        min: 0
+                                    }
+                                }
+                            },
+                            curveType: 'function',
+                            legend: { position: 'bottom' },
+                            backgroundColor: '#f4f5f7'
+                        };
+                        var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
+                        chartVelocity.draw(dataVelocity, optionsVelocityChart);
+                        ////////////////////////////////
+                        var distributionResult = featureData.overallIssuesDistributionInSprint;
+                        var firstQ = parseFloat(distributionResult[0]) || 0;
+                        var secondQ = parseFloat(distributionResult[1]) || 0;
+                        var thirdQ = parseFloat(distributionResult[2]) || 0;
+                        var fourthQ = parseFloat(distributionResult[3]) || 0;
+                        var dataIssueDistribution = google.visualization.arrayToDataTable([
+                            ["Segment", "Distribution", { role: "style" }],
+                            ["1/4 of sprint", firstQ * 100, "#3366CC"],
+                            ["2/4 of sprint", secondQ * 100, "#3366CC"],
+                            ["3/4 of sprint", thirdQ * 100, "#3366CC"],
+                            ["End of sprint", fourthQ * 100, "#3366CC"]
+                        ]);
+                        var optionsIssueDistribution = {
+                            width: '100%',
+                            height: '100%',
+                            title: "Average Issue Closure Distribution (%) in a typical sprint",
+                            bar: { groupWidth: "90%" },
+                            legend: { position: "bottom" },
+                            vAxes: {
+                                0: {
+                                    title: 'Percentage of closed issues',
+                                    viewWindow: {
+                                        min: 0
+                                    }
+                                }
+                            },
+                            backgroundColor: '#f4f5f7'
+                        };
+                        var chartIssueDistribution = new google.visualization.ColumnChart($issue_distribution[0]);
+                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                        /////////////
+
+                        $detailsView.click(() => { $detailsView.hide() })
+                    } catch (error) {
+                        $detailsView.hide()
+                        alert('No stories for this feature')
+                    }
+
+                }
+                function createEditForm(data) {
+                    var formArea = $('.editView').click((e) => { e.stopPropagation() })
+                    $('.editViewWrapper').click(closeEditPopup)
+                    formArea.empty()
+                    $('.editViewWrapper').show()
+                    console.log(data)
+
+                    var header = $('<h2>').text(data.summary)
+                    var _input0 = getInputField(LABEL_1_TEXT, data.defaultNotEstimatedIssueValue)
+                    var _input1 = getInputField(LABEL_2_TEXT, data.plannedRoadmapFeatureVelocity)
+                    var _input2 = getInputField(LABEL_3_TEXT, data.sprintLengthRoadmapFeature)
+                    var _input3 = getInputDateField(LABEL_4_TEXT, data.startDateRoadmapFeature)
+                    var _input4 = getInputDateField('Target date', data.targetDate)
+
+                    var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click((e) => {
+                        e.stopPropagation()
+                        var result = {};
+                        var check = 0
+                        if (checkCorrectInput(_input0.find('input').val())) {
+                            check++;
+                            result.defaultNotEstimatedIssueValue = _input0.find('input').val()
+                        }
+                        if (checkCorrectInput(_input1.find('input').val())) {
+                            check++;
+                            result.plannedRoadmapFeatureVelocity = _input1.find('input').val()
+                        }
+                        if (checkCorrectInput(_input2.find('input').val())) {
+                            check++;
+                            result.sprintLengthRoadmapFeature = _input2.find('input').val()
+                        }
+
+                        var userDate = +new Date(_input3.find('input').val())
+                        var isTimeHaveDiff = new Date(userDate).toDateString() != new Date(+data.startDateRoadmapFeature).toDateString()
+                        if (isTimeHaveDiff) {
+                            check++;
+                            result.startDateRoadmapFeature = userDate
+                        }
+                        var userDate4 = +new Date(_input4.find('input').val())
+                        var isTimeHaveDiff4 = new Date(userDate4).toDateString() != new Date(+data.targetDate).toDateString()
+                        if (isTimeHaveDiff4) {
+                            check++;
+                            result.targetDate = userDate4
+                        }
+
+                        if (!check) { return }
+                        result.roadmapFeature = data.key
+                        getFeaturesDateAndBuild(result, closeEditPopup)
+                    })
+
+                    formArea.append(header, _input0, _input1, _input2, _input3, _input4, _saveButton)
+                    function closeEditPopup() {
+                        formArea.empty()
+                        $('.editViewWrapper').hide()
+                    }
+                }
+                function getInputField(text, value) {
+                    var _label = $('<label>').text(text)
+                    var _input = $('<input>')
+                        .prop({
+                            placeholder: value,
+                            type: 'number'
+                        })
+                        .on('input', function () {
+                            let val = +$(this).val();
+                            checkCorrectInput(val) ? $(this).removeClass('wrongIput') : $(this).addClass('wrongIput')
+                        })
+                    return $('<div>').append(_label, _input)
+                }
+                function getInputDateField(text, value) {
+                    var _label = $('<label>').text(text)
+                    var _input = $('<input>')
+                        .prop({
+                            type: 'date'
+                        })
+                    _input.prop({ valueAsNumber: +value })
+                    return $('<div>').append(_label, _input)
+                }
+
+                function fadeOn() { FadeBlock.style.display = 'block' }
+                function fadeOff() { FadeBlock.style.display = 'none' }
+
+                function checkCorrectInput(value) {
+                    return !!(+value && MIN_INPUT_SP <= value && value <= MAX_INPUT_SP)
+                }
+                function getFeaturesDateAndBuild(obj, callback) {
+                    fadeOn()
+                    jQuery.post(POST_UTL, obj)
+                        .done(function (data) {
+                            var jsonData = JSON.parse(data)
+                            callback()
+                            rebuildPanelBlock(obj.roadmapFeature)
+                            fadeOff()
+                        })
+                        .fail(function () {
+                            fadeOff()
+                            alert("POST error")
+                        })
+                }
+                function rebuildPanelBlock(featureKey) {
+                    let encodedFeatureKey = encodeURIComponent(featureKey);
+                    doPost(GET_FEATURE_DATA_URL + encodedFeatureKey, {}, function (data) {
+                        let panelIndex = STORE.featureArray.findIndex((elem) => elem.featureKey == data.key);
+                        if (panelIndex < 0) { return };
+                        let $panelBlock = STORE.viewChildren[panelIndex];
+                        $panelBlock.empty();
+                        $panelBlock.hide();
+                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
+                        $panelBlock.click(() => { drawDeteilsView(data) })
+                        $panelBlock.show()
+                    })
+                }
+            }
+        </script>
+    </body>
+
+    </html>
     </div>
-</table>
-</div>

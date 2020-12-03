@@ -53,7 +53,20 @@ public class ProjectMonitoringMisc {
         }
         return roadmapFeaturesNames;
     }
-
+    public ArrayList<String> getAllRoadmapFeatureKeys(List<Issue> features)
+    {
+        ArrayList<String> roadmapFeaturesNames = new ArrayList<>();
+        if (features != null && features.size() > 0)
+        {
+            //convert to string list
+            for (Issue feature : features)
+            {
+                roadmapFeaturesNames.add(feature.getKey());
+            }
+            Collections.sort(roadmapFeaturesNames);//sort alphabetically for better user experience
+        }
+        return roadmapFeaturesNames;
+    }
 
 
     public void addIssueSprintsToList(Issue issue, ArrayList<PlaygileSprint> playgileSprints)
@@ -590,21 +603,28 @@ public class ProjectMonitoringMisc {
         }
         return result;
     }
+
     public boolean isIssueCompleted(Issue issue)
     {
         Status issueStatus = issue.getStatus();
         StatusCategory statusCategory = issueStatus.getStatusCategory();
         return (statusCategory.getKey() == StatusCategory.COMPLETE);
     }
+    public boolean isIssueOpen(Issue issue)
+    {
+        Status issueStatus = issue.getStatus();
+        StatusCategory statusCategory = issueStatus.getStatusCategory();
+        return (statusCategory.getKey().equalsIgnoreCase("open"));
+    }
 
-    public String getExceptionTrace(Exception e)
+    public static String getExceptionTrace(Exception e)
     {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return sw.toString();
     }
-    public Map<String, Object> returnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
+    public static Map<String, Object> returnContextMapToVelocityTemplate(Map<String, Object> contextMap, boolean bAllisOk, String messageToDisplay)
     {
         contextMap.put(ProjectMonitor.ALLISOK, bAllisOk);
         contextMap.put(ProjectMonitor.MESSAGETODISPLAY, messageToDisplay);

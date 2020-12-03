@@ -21,6 +21,7 @@ public class PlaygileIssue {
     public String issueSummary;
     public boolean bIssueCompleted;
     public boolean bOurIssueType;
+    public boolean bIssueOpen;
     public Issue jiraIssue;
     public double storyPoints;
     public Date resolutionDate;
@@ -42,6 +43,7 @@ public class PlaygileIssue {
             issueSummary = jiraIssue.getSummary();
             bIssueCompleted = projectMonitoringMisc.isIssueCompleted(jiraIssue);
             bOurIssueType = projectMonitoringMisc.isIssueOneOfOurs(jiraIssue);
+            bIssueOpen = projectMonitoringMisc.isIssueOpen(jiraIssue);
             storyPoints = jiraInterface.getStoryPointsForIssue(jiraIssue);
             bIssueCompleted = projectMonitoringMisc.isIssueCompleted(jiraIssue);
             resolutionDate = jiraIssue.getResolutionDate();

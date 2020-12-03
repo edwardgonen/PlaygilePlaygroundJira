@@ -68,11 +68,17 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
         ArrayList<RoadmapFeatureDescriptor> roadmapFeatureDescriptors = new ArrayList<>();
         JiraQueryResult jqr;
 
-
         JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
+        ApplicationUser applicationUser = jac.getLoggedInUser();
+        if (applicationUser == null)
+        {
+            bAllisOk = false;
+            messageToDisplay = "User Authentication Failure";
+            return ReturnContextMapToVelocityTemplate(contextMap, bAllisOk, messageToDisplay);
+        }
+
         String baseUrl = ComponentAccessor.getApplicationProperties().getString(APKeys.JIRA_BASEURL);
         contextMap.put(BASEURL, baseUrl);
-        ApplicationUser applicationUser = jac.getLoggedInUser();
         contextMap.put(CURRENTUSER, applicationUser.getKey());
 
         JiraInterface jiraInterface = new JiraInterface(applicationUser,  searchService);
@@ -84,7 +90,6 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
         //start the real work
         if(null != currentProject) {
             contextMap.put(PROJECT, currentProject);
-            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
             ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
             //get list of roadmap features
             List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
