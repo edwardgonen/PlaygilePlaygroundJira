@@ -32,4 +32,6 @@ public interface PrjStatEntity extends Entity {
     void setRoadmapFeature(String name);
     double getDefNotEstimdIssueValue();
     void setDefNotEstimdIssueValue(double defNotEstimdIssueValue);
+    Date getTargetDate();
+    void setTargetDate(Date targetDate);
 }

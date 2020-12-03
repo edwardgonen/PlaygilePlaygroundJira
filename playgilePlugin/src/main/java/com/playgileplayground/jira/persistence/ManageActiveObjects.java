@@ -164,6 +164,39 @@ public final class ManageActiveObjects{
     }
 
     @Transactional
+    public ManageActiveObjectsResult SetTargetDate(ManageActiveObjectsEntityKey key, Date startedDate)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {
+            prjStatEntity.setTargetDate(startedDate);
+            prjStatEntity.save();
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+    @Transactional
+    public ManageActiveObjectsResult GetTargetDate(ManageActiveObjectsEntityKey key)
+    {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if(prjStatEntity != null) {
+            result.Result = prjStatEntity.getTargetDate();
+            result.Message = "Target date: " + result.Result;
+        }
+        else
+        {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+        return result;
+    }
+
+    @Transactional
     public ManageActiveObjectsResult SetSprintLength(ManageActiveObjectsEntityKey key, double sprintLength)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
