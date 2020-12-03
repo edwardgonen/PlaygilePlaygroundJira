@@ -4,8 +4,11 @@ import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playgileplayground.jira.impl.DateTimeUtils;
-import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.impl.StatusText;
+import com.playgileplayground.jira.projectprogress.DateAndValues;
 import org.apache.commons.lang.time.DateUtils;
 
 import javax.inject.Inject;
@@ -374,7 +377,7 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
-            ArrayList<DataPair> remainingEstimations = GetDataRemainingEstimationsList(prjStatEntity);
+            ArrayList<DateAndValues> remainingEstimations = GetHistoricalDateAndValuesList(prjStatEntity);
             result.Result = remainingEstimations;
             result.Message = "List returned";
         }
@@ -387,29 +390,37 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult AddRemainingEstimationsRecord(ManageActiveObjectsEntityKey key, Date date, double remainingEstimations)
+    public ManageActiveObjectsResult AddLatestHistoricalRecord(ManageActiveObjectsEntityKey key, DateAndValues dateAndValues)
     {
         //this method does not compress data. If we want to compress data please replace this by the method right below this method (..compressed)
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
-            ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            ArrayList<DateAndValues> existingData = GetHistoricalDateAndValuesList(prjStatEntity);
             //sort - just in case
             Collections.sort(existingData);
             //now compress - i.e. leave last 2 weeks on a daily basis, rest use only 2 weeks basis
             //do we have such date?
-            for (DataPair dataPair : existingData) {
-                if (DateUtils.isSameDay(dataPair.Date, date)) {
-                    dataPair.RemainingEstimation = remainingEstimations;
-                    SetDateRemainingEstimationsList(existingData, prjStatEntity);
+            for (DateAndValues tmpDateAndValues : existingData) {
+                if (DateUtils.isSameDay(tmpDateAndValues.Date, dateAndValues.Date)) {
+                    tmpDateAndValues.Date = dateAndValues.Date;
+                    tmpDateAndValues.Estimation = dateAndValues.Estimation;
+                    tmpDateAndValues.TotalIssues = dateAndValues.TotalIssues;
+                    tmpDateAndValues.OpenIssues = dateAndValues.OpenIssues;
+                    SaveDateAndValuesList(existingData, prjStatEntity);
                     prjStatEntity.save();
                     result.Message = "Data updated";
                     return result;
                 }
             }
-            existingData.add(new DataPair(date, remainingEstimations));
-            SetDateRemainingEstimationsList(existingData, prjStatEntity);
+            DateAndValues lastDateAndValues = new DateAndValues();
+            lastDateAndValues.Date = dateAndValues.Date;
+            lastDateAndValues.Estimation = dateAndValues.Estimation;
+            lastDateAndValues.TotalIssues = dateAndValues.TotalIssues;
+            lastDateAndValues.OpenIssues = dateAndValues.OpenIssues;
+            existingData.add(lastDateAndValues);
+            SaveDateAndValuesList(existingData, prjStatEntity);
             result.Message = "Data added";
         }
         else
@@ -427,7 +438,7 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
-            ArrayList<DataPair> existingData = GetDataRemainingEstimationsList(prjStatEntity);
+            ArrayList<DateAndValues> existingData = GetHistoricalDateAndValuesList(prjStatEntity);
             if (existingData.size() == 0)
             {
                 result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_ESTIMATIONS_YET;
@@ -439,13 +450,13 @@ public final class ManageActiveObjects{
             //now compress - i.e. leave last 2 weeks on a daily basis, rest use only 2 weeks basis
 
             //let's get the first date and the last date
-            ArrayList<DataPair> compressedList = new ArrayList<>();
+            ArrayList<DateAndValues> compressedList = new ArrayList<>();
             //how many full sprints we have?
             //we compress every 14 days
             int segmentSize = 14;
 
-            DataPair firstRecord = existingData.get(0);
-            DataPair lastRecord = existingData.get(existingData.size() - 1);
+            DateAndValues firstRecord = existingData.get(0);
+            DateAndValues lastRecord = existingData.get(existingData.size() - 1);
             int fullSprints = DateTimeUtils.Days(lastRecord.Date, firstRecord.Date) / segmentSize;
             int partialSprintDays = DateTimeUtils.Days(lastRecord.Date, firstRecord.Date) % segmentSize;
             //find the start of last segment as current date minus 2 weeks
@@ -463,8 +474,8 @@ public final class ManageActiveObjects{
 
 
             if (totalCompressedSegments > 0) {
-                DataPair[] segmentsData = new DataPair[totalCompressedSegments];
-                for (DataPair dataPair : existingData) {
+                DateAndValues[] segmentsData = new DateAndValues[totalCompressedSegments];
+                for (DateAndValues dataPair : existingData) {
                     if (dataPair.Date.compareTo(startOfLastSegment) < 0) //only compress if we are not yet beyond start of last segment
                     {
                         int segmentNumber = DateTimeUtils.Days(dataPair.Date, firstRecord.Date) / segmentSize;
@@ -483,16 +494,16 @@ public final class ManageActiveObjects{
             }
 
             //do we have such date?
-            for (DataPair dataPair : compressedList) {
+            for (DateAndValues dataPair : compressedList) {
                 if (DateUtils.isSameDay(dataPair.Date, date)) {
-                    dataPair.RemainingEstimation = remainingEstimations;
-                    SetDateRemainingEstimationsList(compressedList, prjStatEntity);
+                    dataPair.Estimation = remainingEstimations;
+                    SaveDateAndValuesList(compressedList, prjStatEntity);
                     result.Message = "Data updated";
                     return result;
                 }
             }
-            compressedList.add(new DataPair(date, remainingEstimations));
-            SetDateRemainingEstimationsList(compressedList, prjStatEntity);
+            compressedList.add(new DateAndValues(date, remainingEstimations));
+            SaveDateAndValuesList(compressedList, prjStatEntity);
             result.Message = "Data added";
         }
         else
@@ -545,28 +556,40 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ArrayList<DataPair> GetDataRemainingEstimationsList(PrjStatEntity entity)
+    public ArrayList<DateAndValues> GetHistoricalDateAndValuesList(PrjStatEntity entity)
     {
-        ArrayList<DataPair> list = new ArrayList<>();
+        ArrayList<DateAndValues> list = new ArrayList<>();
         String allEstimationsListAsString = entity.getRemainingStoriesEstimations();
 
         if (allEstimationsListAsString == null) return list; //first time, so the list does not exists
-        //parse it
-        String[] entries = allEstimationsListAsString.split(LINE_SEPARATOR);
-        if (entries.length > 0)
+
+        //for backward compatibility check if the string starts with number - i.e. it is old format, otherwise - JSON
+        if (!Character.isDigit(allEstimationsListAsString.charAt(0)))
         {
-            for (String entry : entries)
+            //json
+            ObjectMapper jsonMapper = new ObjectMapper();
+            try {
+                list = jsonMapper.readValue(allEstimationsListAsString, new TypeReference<ArrayList<DateAndValues>>(){});
+            }
+            catch (Exception e)
             {
-                String[] pairParts = entry.split(PAIR_SEPARATOR);
-                if (pairParts.length > 0)
-                {
-                    try {
-                        Date tmpDate = new SimpleDateFormat(DATE_FORMAT).parse(pairParts[0]);
-                        Double tmpRemainingEstimation = Double.parseDouble(pairParts[1]);
-                        list.add(new DataPair(tmpDate, tmpRemainingEstimation));
-                    }
-                    catch (ParseException e) {
-                        //ignore
+                StatusText.getInstance().add(true, "Failed to deserialize DateAndValues");
+            }
+        }
+        else { //old format
+            //parse it
+            String[] entries = allEstimationsListAsString.split(LINE_SEPARATOR);
+            if (entries.length > 0) {
+                for (String entry : entries) {
+                    String[] pairParts = entry.split(PAIR_SEPARATOR);
+                    if (pairParts.length > 0) {
+                        try {
+                            Date tmpDate = new SimpleDateFormat(DATE_FORMAT).parse(pairParts[0]);
+                            Double tmpRemainingEstimation = Double.parseDouble(pairParts[1]);
+                            list.add(new DateAndValues(tmpDate, tmpRemainingEstimation));
+                        } catch (ParseException e) {
+                            //ignore
+                        }
                     }
                 }
             }
@@ -574,13 +597,18 @@ public final class ManageActiveObjects{
         return list;
     }
     @Transactional
-    private void SetDateRemainingEstimationsList(ArrayList<DataPair> list, PrjStatEntity entity)
+    private void SaveDateAndValuesList(ArrayList<DateAndValues> list, PrjStatEntity entity)
     {
-        StringBuilder outputString = new StringBuilder();
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-        list.forEach((dataPair) -> outputString.append(formatter.format(dataPair.Date) + PAIR_SEPARATOR + dataPair.RemainingEstimation + LINE_SEPARATOR));
-        entity.setRemainingStoriesEstimations(outputString.toString());
-        entity.save();
+        ObjectMapper jsonMapper = new ObjectMapper();
+        try {
+            String outputString = jsonMapper.writeValueAsString(list);
+            entity.setRemainingStoriesEstimations(outputString);
+            entity.save();
+        }
+        catch (Exception e)
+        {
+            StatusText.getInstance().add(true, "Failed to serialize DateAndValues");
+        }
     }
     @Transactional
     private PrjStatEntity GetProjectEntity(ManageActiveObjectsEntityKey key)

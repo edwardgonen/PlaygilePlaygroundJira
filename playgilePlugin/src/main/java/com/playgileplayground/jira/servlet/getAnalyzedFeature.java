@@ -21,7 +21,7 @@ import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
@@ -222,7 +222,7 @@ class GetAnalyzedFeatureResponse
             shortestList = projectProgressResult.progressData;
             predictedIsLongest = false;
         }
-        DataPair tmpPredictedDataPair, tmpIdealDataPair;
+        DateAndValues tmpPredictedDataPair, tmpIdealDataPair;
         for (int i = 0; i < longestList.Length(); i++)
         {
             if (predictedIsLongest) {
@@ -241,20 +241,20 @@ class GetAnalyzedFeatureResponse
                 if (predictedIsLongest) {
                     pds.date = tmpPredictedDataPair.Date;
                     pds.idealEstimations = 0;
-                    pds.predictedEstimations = tmpPredictedDataPair.RemainingEstimation;
+                    pds.predictedEstimations = tmpPredictedDataPair.Estimation;
                 }
                 else
                 {
                     pds.date = tmpIdealDataPair.Date;
-                    pds.idealEstimations = tmpIdealDataPair.RemainingEstimation;
+                    pds.idealEstimations = tmpIdealDataPair.Estimation;
                     pds.predictedEstimations = 0;
                 }
             }
             else //both records available
             {
                 pds.date = tmpPredictedDataPair.Date;
-                pds.idealEstimations = tmpIdealDataPair.RemainingEstimation;
-                pds.predictedEstimations = tmpPredictedDataPair.RemainingEstimation;
+                pds.idealEstimations = tmpIdealDataPair.Estimation;
+                pds.predictedEstimations = tmpPredictedDataPair.Estimation;
             }
             result.add(pds);
         }

@@ -1,7 +1,6 @@
 package com.playgileplayground.jira.projectprogress;
 
 import com.playgileplayground.jira.impl.DateTimeUtils;
-import com.playgileplayground.jira.impl.StatusText;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ public class ProjectProgress
     private ProgressData _progressData;
     private ProgressData _idealData;
 
-    public ProjectProgressResult Initiate(double teamVelocity, double projectVelocity, int sprintLength, ArrayList<DataPair> remainingEstimations)
+    public ProjectProgressResult Initiate(double teamVelocity, double projectVelocity, int sprintLength, ArrayList<DateAndValues> remainingEstimations)
     {
         ProjectProgressResult result = new ProjectProgressResult();
 
@@ -47,7 +46,7 @@ public class ProjectProgress
         double dailyIdealVelocity = _teamVelocity / (double)SprintLength;
         Date lastDateInProjectData =
             _progressData.GetEstimationDatesList().get(_progressData.GetEstimationDatesList().size() - 1);
-        DataPair tmpPair;
+        DateAndValues tmpPair;
         int daysLeftSinceLastUpdateTillEndOfSprint = SprintLength - 1 - DateTimeUtils.AbsDays(lastDateInProjectData, startProjectDate) % SprintLength;
         Date closestSprintEnd =
             DateTimeUtils.AddDays(lastDateInProjectData, daysLeftSinceLastUpdateTillEndOfSprint);
@@ -62,10 +61,10 @@ public class ProjectProgress
             double remainingWorkIRecentSprintIdeal = dailyIdealVelocity * ((double)(daysLeftSinceLastUpdateTillEndOfSprint));
             endSprintExpectation = Math.max(_progressData.GetEstimationValuesList().get(_progressData.GetEstimationValuesList().size() -1 ) - remainingWorkInRecentSprint, 0);
             endSprintExpectatonIdeal = Math.max(_idealData.GetEstimationValuesList().get(_idealData.GetEstimationValuesList().size() -1 ) - remainingWorkIRecentSprintIdeal, 0);
-            tmpPair = new DataPair(closestSprintEnd, endSprintExpectation);
+            tmpPair = new DateAndValues(closestSprintEnd, endSprintExpectation);
             _progressData.AddDataPair(tmpPair);
 
-            tmpPair = new DataPair(closestSprintEnd, endSprintExpectatonIdeal);
+            tmpPair = new DateAndValues(closestSprintEnd, endSprintExpectatonIdeal);
             _idealData.AddDataPair(tmpPair);
         }
         else //we are the last day of sprint - so the sprint ends with the same value as we have the last
@@ -97,7 +96,7 @@ public class ProjectProgress
         //end of the project for each set is the first date where the estimation is 0
         for (int i = _idealData.GetEstimationValuesList().size() - 1; i > 0; i--)
         {
-            if (_idealData.GetElementAtIndex(i).RemainingEstimation <= 0 && _idealData.GetElementAtIndex(i - 1).RemainingEstimation > 0)
+            if (_idealData.GetElementAtIndex(i).Estimation <= 0 && _idealData.GetElementAtIndex(i - 1).Estimation > 0)
             {
                 idealProjectEnd = _idealData.GetElementAtIndex(i).Date;
                 break;
@@ -108,7 +107,7 @@ public class ProjectProgress
         //end of the project for each set is the first date where the estimation is 0
         for (int i = _progressData.GetEstimationValuesList().size() - 1; i > 0; i--)
         {
-            if (_progressData.GetElementAtIndex(i).RemainingEstimation <= 0 && _progressData.GetElementAtIndex(i - 1).RemainingEstimation > 0)
+            if (_progressData.GetElementAtIndex(i).Estimation <= 0 && _progressData.GetElementAtIndex(i - 1).Estimation > 0)
             {
                 predictedProjectEnd = _progressData.GetElementAtIndex(i).Date;
                 break;
@@ -119,14 +118,6 @@ public class ProjectProgress
         result.idealProjectEnd = idealProjectEnd;
         result.predictedProjectEnd = predictedProjectEnd;
 
-        //logic of color
-        //TODO move color logic to client
-        int differenceInDays = DateTimeUtils.Days(predictedProjectEnd, idealProjectEnd);
-        if (differenceInDays <= 7) result.progressDataColor = new Color(0,153,0);//dark green
-        else
-        if (differenceInDays > 7 && differenceInDays < 30) result.progressDataColor = new Color(204,204,0);//dark yellow;
-        else result.progressDataColor = Color.RED;
-
         return result;
     }
 
@@ -135,7 +126,7 @@ public class ProjectProgress
         boolean result = continueAddingPoints;
         if (continueAddingPoints)
         {
-            DataPair tmpPair = new DataPair(date, Math.max(estimation, 0));
+            DateAndValues tmpPair = new DateAndValues(date, Math.max(estimation, 0));
             if (estimation <= 0) result = false;
             data.AddDataPair(tmpPair);
         }

@@ -10,8 +10,7 @@ import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
-import com.playgileplayground.jira.projectprogress.DataPair;
-import com.playgileplayground.jira.projectprogress.ProgressData;
+import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
@@ -49,6 +48,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public AnalyzedStories analyzedStories = new AnalyzedStories();
     public int qualityScore;
     public int numberOfOpenIssues;
+    public int numberOfTotalIssues;
 
 
     public double plannedRoadmapFeatureVelocity = 0;
@@ -100,6 +100,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
+            numberOfTotalIssues = issues.size();
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);
 
@@ -170,7 +171,12 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             Date timeStamp = DateTimeUtils.getCurrentDate();
             remainingTotalEstimations = projectMonitoringMisc.roundToDecimalNumbers(remainingTotalEstimations, 2);
             StatusText.getInstance().add(true, "Current time and estimations to add to list " + timeStamp + " " + remainingTotalEstimations);
-            ManageActiveObjectsResult maor = mao.AddRemainingEstimationsRecord(new ManageActiveObjectsEntityKey(projectKey, featureSummary), timeStamp, remainingTotalEstimations);
+            DateAndValues dateAndValues = new DateAndValues();
+            dateAndValues.Date = timeStamp;
+            dateAndValues.Estimation = remainingTotalEstimations;
+            dateAndValues.TotalIssues = numberOfTotalIssues;
+            dateAndValues.OpenIssues = numberOfOpenIssues;
+            mao.AddLatestHistoricalRecord(new ManageActiveObjectsEntityKey(projectKey, featureSummary), dateAndValues);
 
 
             //get real velocities
@@ -195,7 +201,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             }
 
             //now do predictions
-            ArrayList<DataPair> historicalEstimationPairs = getHistoricalEstimations();
+            ArrayList<DateAndValues> historicalEstimationPairs = getHistoricalEstimations();
             if (historicalEstimationPairs != null)
             {
                 ProjectProgress projectProgress = new ProjectProgress();
@@ -246,12 +252,12 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         return featureKey + " " + featureSummary;
     }
 
-    private ArrayList<DataPair> getHistoricalEstimations()
+    private ArrayList<DateAndValues> getHistoricalEstimations()
     {
-        ArrayList<DataPair> result = null;
+        ArrayList<DateAndValues> result = null;
         ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            result = (ArrayList<DataPair>)maor.Result;
+            result = (ArrayList<DateAndValues>)maor.Result;
         }
         return result;
     }

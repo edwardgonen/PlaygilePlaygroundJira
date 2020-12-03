@@ -48,7 +48,7 @@ public class servletMisc {
 
     static String serializeToJsonAndSend(Object object, HttpServletResponse resp)
     {
-        String result = null;
+        String result;
         ObjectMapper jsonMapper = new ObjectMapper();
         try {
             result = jsonMapper.writeValueAsString(object);

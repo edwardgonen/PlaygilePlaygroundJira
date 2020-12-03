@@ -612,9 +612,7 @@ public class ProjectMonitoringMisc {
     }
     public boolean isIssueOpen(Issue issue)
     {
-        Status issueStatus = issue.getStatus();
-        StatusCategory statusCategory = issueStatus.getStatusCategory();
-        return (statusCategory.getKey().equalsIgnoreCase("open"));
+        return (issue.getStatus().getName().equalsIgnoreCase("open"));
     }
 
     public static String getExceptionTrace(Exception e)
