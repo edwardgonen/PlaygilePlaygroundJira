@@ -349,7 +349,7 @@
 
             .StatusBlockDivBtn {
                 position: absolute;
-                /* top: 0; */
+                bottom: 0;
                 right: 0;
             }
 
@@ -668,11 +668,11 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                     startDateCell.style.width = "250px";
                     startDateCell.style.background = 'transparent'
                     let p1 = document.createElement('p');
-                    p1.innerText = 'Started on: ' + START_DATE_ROADMAP_FEATURE.toDateString().slice(4, -1);
+                    p1.innerText = 'Started on: ' + START_DATE_ROADMAP_FEATURE.toDateString().slice(4);
                     let p2 = document.createElement('p');
-                    p2.innerText = 'Target date: ' + TARGET_DATE.toDateString().slice(4, -1)
+                    p2.innerText = 'Target date: ' + TARGET_DATE.toDateString().slice(4)
                     let p3 = document.createElement('p');
-                    p3.innerText = 'Predicted end: ' + PREDICTED_PROJECT_END.toDateString().slice(4, -1)
+                    p3.innerText = 'Predicted end: ' + PREDICTED_PROJECT_END.toDateString().slice(4)
                     startDateCell.append(p1, p2, p3)
                     ///////////////////////////////////////
                     let progressDiv = document.createElement('div');
@@ -736,9 +736,10 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                     return (new Date(date))
                 }
                 function drawDeteilsView(featureData) {
-                    let $detailsView = $('.detailsView');
-                    $detailsView.show()
-                    let html = `<h1>${featureData.summary}</h1>
+                        let $detailsView = $('.detailsView');
+                        $detailsView.show()
+                    try {
+                        let html = `<h1>${featureData.summary}</h1>
                     <div>Click anywhere to close</div>
         <div style="width:80%; height:35vh; display: inline-flex;">        
         <div id="curve_chart" style="width:50%; height:100%; padding:5px"></div>
@@ -747,171 +748,176 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
         <div id="piechart" style="width:50%; height:100%;  padding:5px"></div>
         <div id="issue_distribution" style="width:50%; height:100%;  padding:5px"></div>
         </div>`
-                    $detailsView.html(html);
-                    let $curve_chart = $detailsView.find('#curve_chart')
-                    let $velocity_chart = $detailsView.find('#velocity_chart')
-                    let $piechart = $detailsView.find('#piechart')
-                    let $issue_distribution = $detailsView.find('#issue_distribution')
+                        $detailsView.html(html);
+                        let $curve_chart = $detailsView.find('#curve_chart')
+                        let $velocity_chart = $detailsView.find('#velocity_chart')
+                        let $piechart = $detailsView.find('#piechart')
+                        let $issue_distribution = $detailsView.find('#issue_distribution')
 
-                    var data = new google.visualization.DataTable();
-                    data.addColumn('date', 'Date');
-                    data.addColumn({ type: 'string', role: 'annotation' });
-                    data.addColumn({ type: 'string', role: 'annotation' });
-                    data.addColumn('number', 'Initial Velocity');
-                    data.addColumn('number', 'Predicted Velocity');
+                        var data = new google.visualization.DataTable();
+                        data.addColumn('date', 'Date');
+                        data.addColumn({ type: 'string', role: 'annotation' });
+                        data.addColumn({ type: 'string', role: 'annotation' });
+                        data.addColumn('number', 'Initial Velocity');
+                        data.addColumn('number', 'Predicted Velocity');
 
-                    const LINES = featureData.progressDataSets
-                    LINES.forEach(function (line, index) {
-                        let date = new Date(line.date)
-                        let targetDate = new Date(featureData.targetDate)
-                        let ideal = null;
-                        if (Number.isFinite(line.idealEstimations)) {
-                            ideal = Math.round(parseFloat(line.idealEstimations));
-                            if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
-                                ideal = null;
+                        const LINES = featureData.progressDataSets
+                        LINES.forEach(function (line, index) {
+                            let date = new Date(line.date)
+                            let targetDate = new Date(featureData.targetDate)
+                            let ideal = null;
+                            if (Number.isFinite(line.idealEstimations)) {
+                                ideal = Math.round(parseFloat(line.idealEstimations));
+                                if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
+                                    ideal = null;
+                                }
                             }
-                        }
-                        let predicted = null;
-                        if (Number.isFinite(line.predictedEstimations)) {
-                            predicted = Math.round(parseFloat(line.predictedEstimations))
-                            if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
-                                predicted = null;
+                            let predicted = null;
+                            if (Number.isFinite(line.predictedEstimations)) {
+                                predicted = Math.round(parseFloat(line.predictedEstimations))
+                                if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
+                                    predicted = null;
+                                }
                             }
-                        }
-                        let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
-                        let _annotationTarget = date.toLocaleDateString() == targetDate.toLocaleDateString() ? 'Target date' : null;
-                        data.addRow([date, _annotationRemaing, _annotationTarget, ideal, predicted]);
-                    });
+                            let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
+                            let _annotationTarget = date.toLocaleDateString() == targetDate.toLocaleDateString() ? 'Target date' : null;
+                            data.addRow([date, _annotationRemaing, _annotationTarget, ideal, predicted]);
+                        });
 
-                    let lastDate = new Date(LINES[LINES.length - 1].date);
-                    let targetDate = new Date(featureData.targetDate);
-                    if (lastDate < targetDate) {
-                        data.addRow([targetDate, null, 'Target date', null, null]);
+                        let lastDate = new Date(LINES[LINES.length - 1].date);
+                        let targetDate = new Date(featureData.targetDate);
+                        if (lastDate < targetDate) {
+                            data.addRow([targetDate, null, 'Target date', null, null]);
+                        }
+
+                        var options = {
+                            title: 'Project Monitor\n' +
+                                'Predicted completion is ' + new Date(featureData.targetDate).toLocaleDateString() + ' based on velocity of' + featureData.plannedRoadmapFeatureVelocity + ' SP',
+                            lineWidth: 3,
+                            series: {
+                                0: { lineDashStyle: [0, 0] },
+                                1: { lineDashStyle: [2, 2], color: '#009900' }
+                            },
+                            width: '100%',
+                            height: '100%',
+                            annotations: {
+                                style: 'line',
+                                textStyle: {
+                                    fontName: 'sans-serif',
+                                    fontSize: 12
+                                }
+                            },
+                            vAxes: [
+                                {
+                                    title: 'Story Points',
+                                    viewWindow: {
+                                        min: 0
+                                    }
+                                }
+                            ],
+                            curveType: 'function',
+                            legend: { position: 'bottom' },
+                            backgroundColor: '#f4f5f7'
+                        };
+                        var chart = new google.visualization.LineChart($curve_chart[0]);
+                        chart.draw(data, options);
+                        //////////////////
+                        var dataIssueDistribution = new google.visualization.DataTable();
+
+                        dataIssueDistribution.addColumn('string', 'Category');
+                        dataIssueDistribution.addColumn('number', 'Value');
+                        var notEstimatedNumber = featureData.notEstimatedStoriesNumber || 0;
+                        var largeStoriesNumber = featureData.largeStoriesNumber || 0;
+                        var veryLargeStoriesNumber = featureData.veryLargeStoriesNumber || 0;
+                        var estimatedStoriesNumber = featureData.estimatedStoriesNumber || 0;
+                        dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
+                        dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
+                        dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
+                        dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
+                        var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
+                        var optionsIssueDistribution = {
+                            title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
+                            backgroundColor: '#f4f5f7',
+                            width: '100%',
+                            height: '100%'
+                        };
+                        var chartIssueDistribution = new google.visualization.PieChart($piechart[0]);
+                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                        //////////////////
+                        var dataVelocity = new google.visualization.DataTable();
+                        dataVelocity.addColumn('date', 'Date');
+                        dataVelocity.addColumn('number', 'Actual Velocity');
+                        dataVelocity.addColumn('number', 'Predicted Velocity');
+                        var velocityChartRows = featureData.velocityDataSets;
+                        velocityChartRows.forEach(function (line, index) {
+                            var date = new Date(line.date);
+                            var realVelocity = line.realVelocity || 0;
+                            var linearVelocity = line.interpolatedVelocity || 0;
+                            dataVelocity.addRow([date, realVelocity, linearVelocity]);
+
+                        });
+                        var optionsVelocityChart = {
+                            title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + '$averagerealvelocity',
+                            lineWidth: 3,
+                            width: '100%',
+                            height: '100%',
+                            series: {
+                                0: { lineDashStyle: [0, 0] },
+                                1: { lineDashStyle: [10, 2], color: 'black' }
+                            },
+                            vAxes: {
+                                0: {
+                                    title: 'Story Points per Sprint',
+                                    viewWindow: {
+                                        min: 0
+                                    }
+                                }
+                            },
+                            curveType: 'function',
+                            legend: { position: 'bottom' },
+                            backgroundColor: '#f4f5f7'
+                        };
+                        var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
+                        chartVelocity.draw(dataVelocity, optionsVelocityChart);
+                        ////////////////////////////////
+                        var distributionResult = featureData.overallIssuesDistributionInSprint;
+                        var firstQ = parseFloat(distributionResult[0]) || 0;
+                        var secondQ = parseFloat(distributionResult[1]) || 0;
+                        var thirdQ = parseFloat(distributionResult[2]) || 0;
+                        var fourthQ = parseFloat(distributionResult[3]) || 0;
+                        var dataIssueDistribution = google.visualization.arrayToDataTable([
+                            ["Segment", "Distribution", { role: "style" }],
+                            ["1/4 of sprint", firstQ * 100, "#3366CC"],
+                            ["2/4 of sprint", secondQ * 100, "#3366CC"],
+                            ["3/4 of sprint", thirdQ * 100, "#3366CC"],
+                            ["End of sprint", fourthQ * 100, "#3366CC"]
+                        ]);
+                        var optionsIssueDistribution = {
+                            width: '100%',
+                            height: '100%',
+                            title: "Average Issue Closure Distribution (%) in a typical sprint",
+                            bar: { groupWidth: "90%" },
+                            legend: { position: "bottom" },
+                            vAxes: {
+                                0: {
+                                    title: 'Percentage of closed issues',
+                                    viewWindow: {
+                                        min: 0
+                                    }
+                                }
+                            },
+                            backgroundColor: '#f4f5f7'
+                        };
+                        var chartIssueDistribution = new google.visualization.ColumnChart($issue_distribution[0]);
+                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                        /////////////
+
+                        $detailsView.click(() => { $detailsView.hide() })
+                    } catch (error) {
+                        $detailsView.hide()
+                        alert('No stories for this feature')
                     }
 
-                    var options = {
-                        title: 'Project Monitor\n' +
-                            'Predicted completion is ' + new Date(featureData.targetDate).toLocaleDateString() + ' based on velocity of' + featureData.plannedRoadmapFeatureVelocity + ' SP',
-                        lineWidth: 3,
-                        series: {
-                            0: { lineDashStyle: [0, 0] },
-                            1: { lineDashStyle: [2, 2], color: '#009900' }
-                        },
-                        width: '100%',
-                        height: '100%',
-                        annotations: {
-                            style: 'line',
-                            textStyle: {
-                                fontName: 'sans-serif',
-                                fontSize: 12
-                            }
-                        },
-                        vAxes: [
-                            {
-                                title: 'Story Points',
-                                viewWindow: {
-                                    min: 0
-                                }
-                            }
-                        ],
-                        curveType: 'function',
-                        legend: { position: 'bottom' },
-                        backgroundColor: '#f4f5f7'
-                    };
-                    var chart = new google.visualization.LineChart($curve_chart[0]);
-                    chart.draw(data, options);
-                    //////////////////
-                    var dataIssueDistribution = new google.visualization.DataTable();
-
-                    dataIssueDistribution.addColumn('string', 'Category');
-                    dataIssueDistribution.addColumn('number', 'Value');
-                    var notEstimatedNumber = featureData.notEstimatedStoriesNumber || 0;
-                    var largeStoriesNumber = featureData.largeStoriesNumber || 0;
-                    var veryLargeStoriesNumber = featureData.veryLargeStoriesNumber || 0;
-                    var estimatedStoriesNumber = featureData.estimatedStoriesNumber || 0;
-                    dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
-                    dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
-                    dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
-                    dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
-                    var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
-                    var optionsIssueDistribution = {
-                        title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
-                        backgroundColor: '#f4f5f7',
-                        width: '100%',
-                        height: '100%'
-                    };
-                    var chartIssueDistribution = new google.visualization.PieChart($piechart[0]);
-                    chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
-                    //////////////////
-                    var dataVelocity = new google.visualization.DataTable();
-                    dataVelocity.addColumn('date', 'Date');
-                    dataVelocity.addColumn('number', 'Actual Velocity');
-                    dataVelocity.addColumn('number', 'Predicted Velocity');
-                    var velocityChartRows = featureData.velocityDataSets;
-                    velocityChartRows.forEach(function (line, index) {
-                        var date = new Date(line.date);
-                        var realVelocity = line.realVelocity || 0;
-                        var linearVelocity = line.interpolatedVelocity || 0;
-                        dataVelocity.addRow([date, realVelocity, linearVelocity]);
-
-                    });
-                    var optionsVelocityChart = {
-                        title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + '$averagerealvelocity',
-                        lineWidth: 3,
-                        width: '100%',
-                        height: '100%',
-                        series: {
-                            0: { lineDashStyle: [0, 0] },
-                            1: { lineDashStyle: [10, 2], color: 'black' }
-                        },
-                        vAxes: {
-                            0: {
-                                title: 'Story Points per Sprint',
-                                viewWindow: {
-                                    min: 0
-                                }
-                            }
-                        },
-                        curveType: 'function',
-                        legend: { position: 'bottom' },
-                        backgroundColor: '#f4f5f7'
-                    };
-                    var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
-                    chartVelocity.draw(dataVelocity, optionsVelocityChart);
-                    ////////////////////////////////
-                    var distributionResult = featureData.overallIssuesDistributionInSprint;
-                    var firstQ = parseFloat(distributionResult[0]) || 0;
-                    var secondQ = parseFloat(distributionResult[1]) || 0;
-                    var thirdQ = parseFloat(distributionResult[2]) || 0;
-                    var fourthQ = parseFloat(distributionResult[3]) || 0;
-                    var dataIssueDistribution = google.visualization.arrayToDataTable([
-                        ["Segment", "Distribution", { role: "style" }],
-                        ["1/4 of sprint", firstQ * 100, "#3366CC"],
-                        ["2/4 of sprint", secondQ * 100, "#3366CC"],
-                        ["3/4 of sprint", thirdQ * 100, "#3366CC"],
-                        ["End of sprint", fourthQ * 100, "#3366CC"]
-                    ]);
-                    var optionsIssueDistribution = {
-                        width: '100%',
-                        height: '100%',
-                        title: "Average Issue Closure Distribution (%) in a typical sprint",
-                        bar: { groupWidth: "90%" },
-                        legend: { position: "bottom" },
-                        vAxes: {
-                            0: {
-                                title: 'Percentage of closed issues',
-                                viewWindow: {
-                                    min: 0
-                                }
-                            }
-                        },
-                        backgroundColor: '#f4f5f7'
-                    };
-                    var chartIssueDistribution = new google.visualization.ColumnChart($issue_distribution[0]);
-                    chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
-                    /////////////
-
-                    $detailsView.click(() => { $detailsView.hide() })
                 }
                 function createEditForm(data) {
                     var formArea = $('.editView').click((e) => { e.stopPropagation() })
