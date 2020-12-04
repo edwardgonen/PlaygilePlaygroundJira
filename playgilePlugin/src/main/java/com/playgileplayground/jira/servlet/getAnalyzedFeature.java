@@ -15,6 +15,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.playgileplayground.jira.impl.FeatureScore;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
@@ -145,6 +146,12 @@ class ProgressDataSet
     public double predictedEstimations;
     public double idealEstimations;
 }
+class IssueCountsDataSet
+{
+    public Date date;
+    public int openIssues;
+    public int totalIssues;
+}
 class VelocitiesDataSet
 {
     public Date date;
@@ -172,9 +179,10 @@ class GetAnalyzedFeatureResponse
     public double veryLargeStoriesNumber;
     public double estimatedStoriesNumber;
 
-    public double qualityScore;
+    public FeatureScore qualityScore;
     public ArrayList<ProgressDataSet> progressDataSets;
     public ArrayList<VelocitiesDataSet> velocityDataSets;
+    public ArrayList<IssueCountsDataSet> issueCountsDataSets;
 
     public void fillTheFields(RoadmapFeatureAnalysis roadmapFeatureAnalysis)
     {
@@ -196,13 +204,14 @@ class GetAnalyzedFeatureResponse
 
         targetDate = roadmapFeatureAnalysis.targetDate;
 
-
         qualityScore = roadmapFeatureAnalysis.qualityScore;
 
         progressDataSets = getEstimationsSet(roadmapFeatureAnalysis.projectProgressResult);
 
         velocityDataSets = getRealInterpolatedVelocities(roadmapFeatureAnalysis.artificialTimeWindowsForVelocityCalculation,
             roadmapFeatureAnalysis.interpolatedVelocityPoints);
+
+        issueCountsDataSets = getHistoricalIssuesCounts(roadmapFeatureAnalysis.historicalDateAndValues);
     }
 
     ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult)
@@ -271,6 +280,18 @@ class GetAnalyzedFeatureResponse
             vds.realVelocity = sprintToConvert.sprintVelocity;
             vds.interpolatedVelocity = interpolatedVelocityPoints.get(index++);
             result.add(vds);
+        }
+        return result;
+    }
+    ArrayList<IssueCountsDataSet> getHistoricalIssuesCounts(ArrayList<DateAndValues> historicalDateAndValues)
+    {
+        ArrayList<IssueCountsDataSet> result = new ArrayList<>();
+        for (DateAndValues dateAndValues : historicalDateAndValues) {
+            IssueCountsDataSet icds = new IssueCountsDataSet();
+            icds.date = dateAndValues.Date;
+            icds.openIssues = dateAndValues.OpenIssues;
+            icds.totalIssues = dateAndValues.TotalIssues;
+            result.add(icds);
         }
         return result;
     }

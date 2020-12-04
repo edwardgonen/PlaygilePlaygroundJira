@@ -26,6 +26,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     Project currentProject;
     ProjectMonitoringMisc projectMonitoringMisc;
     ManageActiveObjects mao;
+    int numberOfOpenIssues;
+    int numberOfTotalIssues;
+
 
     boolean bRoadmapFeatureAnalyzed = false;
 
@@ -46,10 +49,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public ArrayList<Double> interpolatedVelocityPoints;
     public ProjectProgressResult projectProgressResult;
     public AnalyzedStories analyzedStories = new AnalyzedStories();
-    public int qualityScore;
-    public int numberOfOpenIssues;
-    public int numberOfTotalIssues;
-
+    public FeatureScore qualityScore;
+    public ArrayList<DateAndValues> historicalDateAndValues;
 
     public double plannedRoadmapFeatureVelocity = 0;
     public double defaultNotEstimatedIssueValue;
@@ -201,14 +202,14 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             }
 
             //now do predictions
-            ArrayList<DateAndValues> historicalEstimationPairs = getHistoricalEstimations();
-            if (historicalEstimationPairs != null)
+            historicalDateAndValues = getHistoricalEstimations();
+            if (historicalDateAndValues != null)
             {
                 ProjectProgress projectProgress = new ProjectProgress();
                 projectProgressResult = projectProgress.Initiate(plannedRoadmapFeatureVelocity,
                     predictedVelocity,
                     (int)sprintLengthRoadmapFeature,
-                    historicalEstimationPairs);
+                    historicalDateAndValues);
 
                 //get target date. I cannot do that before progress calculated, as in case it is not set in DB then I take it
                 //as planned project end
@@ -216,6 +217,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
                 //calculate quality score
                 qualityScore = getQualityScore();
+
                 result = true;
             }
             else
@@ -361,9 +363,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
     }
 
-    int getQualityScore()
+    FeatureScore getQualityScore()
     {
-        int result;
+        FeatureScore result = new FeatureScore();
         /*
         	1 Red, 2 - Yellow, 3 - Green
 
@@ -375,47 +377,45 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
            ---- up to 5%  green (3),  5-15% - yellow (2), > 15% - red (1)
         }
         */
-        int delayScore;
         if (projectProgressResult.predictedProjectEnd.before(targetDate) || projectProgressResult.predictedProjectEnd.equals(targetDate))
         {
-            delayScore = 3;
+            result.delayScore = 3;
         }
         else
         {
             int differenceInDays = DateTimeUtils.AbsDays(projectProgressResult.predictedProjectEnd, targetDate);
             double delay = (double)differenceInDays / (double)(DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature));
-            if (delay > 0 && delay <= 0.05) delayScore = 3;
-            else if (delay > 0.05 && delay < 0.15) delayScore = 2;
-            else delayScore = 1;
+            if (delay > 0 && delay <= 0.05) result.delayScore = 3;
+            else if (delay > 0.05 && delay < 0.15) result.delayScore = 2;
+            else result.delayScore = 1;
         }
         /*
         //estimation ration
         EstimationScore = (number of normal (>0 <13 SP) not closed stories) / (Total number of not closed stories)
            ----- 90-100% - green (3), 60-80% - yellow (2) 0-60% Red (1)
         */
-        int estimationScore;
         double estimationRatio = analyzedStories.EstimatedStoriesNumber /
             (analyzedStories.EstimatedStoriesNumber + analyzedStories.LargeStoriesNumber +
                     analyzedStories.VeryLargeStoriesNumber + analyzedStories.NotEstimatedStoriesNumber);
-        if (estimationRatio >= 0.9) estimationScore = 3;
-        else if (estimationRatio >= 0.6 && estimationRatio < 0.9) estimationScore = 2;
-        else estimationScore = 1;
+        if (estimationRatio >= 0.9) result.estimationScore = 3;
+        else if (estimationRatio >= 0.6 && estimationRatio < 0.9) result.estimationScore = 2;
+        else result.estimationScore = 1;
         /*
 
         BacklogReadinessScore = Number of "Open" stories / (Total number of not closed stories)
                   0-10%  green (3), 10-30% yellow (2), 30-100% red (1)
 
         */
-        int readinessScore = 3;
+        result.readinessScore = 3;
         double readinessRatio = (double)numberOfOpenIssues / (double)futurePlaygileIssues.size();
-        if (readinessRatio >= 0.0 && readinessRatio < 0.1) readinessScore = 3;
-        else if (readinessRatio >= 0.1 && readinessRatio < 0.3) readinessScore = 2;
-        else readinessScore = 1;
+        if (readinessRatio >= 0.0 && readinessRatio < 0.1) result.readinessScore = 3;
+        else if (readinessRatio >= 0.1 && readinessRatio < 0.3) result.readinessScore = 2;
+        else result.readinessScore = 1;
         /*
         Here we have 3 scores each can be 1, 2 or 3. The minimum between them will be the final color
 	    For example 1, 2, 2 -- 1 (red), 2, 3, 3 -- 2 (yellow) etc.
         */
-        result = Math.min(delayScore, Math.min(estimationScore, readinessScore));
+        result.totalScore = Math.min(result.delayScore, Math.min(result.estimationScore, result.readinessScore));
 
         return result;
     }
