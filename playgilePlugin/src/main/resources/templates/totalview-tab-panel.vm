@@ -739,7 +739,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         let $detailsView = $('.detailsView');
                         $detailsView.show()
                     try {
-                        let html = `<h1 style="background-color:#67677d;color:white;">${featureData.summary}</h1>
+                        let html = `<h1 style="background-color:#67677d;color:white;">${featureData.summary} by ${featureData.teamName} team</h1>
                     <div>Click anywhere to close</div>
         <div style="width:80%; height:35vh; display: inline-flex;">        
         <div id="curve_chart" style="width:50%; height:100%; padding:5px"></div>

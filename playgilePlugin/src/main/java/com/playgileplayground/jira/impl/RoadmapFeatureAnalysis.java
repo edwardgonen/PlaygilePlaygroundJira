@@ -57,6 +57,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public Date startDateRoadmapFeature = null;
     public double sprintLengthRoadmapFeature = 0;
     public Date targetDate = null;
+    public String teamName = "";
 
     public RoadmapFeatureAnalysis(
         Issue roadmapFeature,
@@ -93,11 +94,13 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
     public boolean analyzeRoadmapFeature()
     {
-        boolean result = false;
+        boolean result;
 
         defaultNotEstimatedIssueValue = getDefaultValueForNonEstimatedIssue();
         //get list of issues and convert them to PlaygileIssues
         StatusText.getInstance().add(true, "Start analysis for " + featureKey + " " + featureSummary);
+        //get team name.
+        teamName = jiraInterface.getTeamNameForIssue(roadmapFeature);
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
