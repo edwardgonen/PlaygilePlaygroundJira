@@ -168,7 +168,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
             //add current estimation to the list of estimations
             //tmpDate = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT).parse("6/23/2020");
-            Date timeStamp = DateTimeUtils.getCurrentDate();
+            Date timeStamp = DateTimeUtils.getZeroTimeDate(DateTimeUtils.getCurrentDate());
             remainingTotalEstimations = projectMonitoringMisc.roundToDecimalNumbers(remainingTotalEstimations, 2);
             StatusText.getInstance().add(true, "Current time and estimations to add to list " + timeStamp + " " + remainingTotalEstimations);
             DateAndValues dateAndValues = new DateAndValues();
