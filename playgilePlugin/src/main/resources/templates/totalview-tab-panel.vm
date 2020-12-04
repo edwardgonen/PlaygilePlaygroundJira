@@ -617,7 +617,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
 
                     const SUMMARY = featureData.summary;//[0]
 
-                    const QUALITY_SCORE = normolizedInt(featureData.qualityScore);//[1]
+                    const QUALITY_SCORE = normolizedInt(featureData.qualityScore.totalScore);//[1]
 
                     const START_DATE_ROADMAP_FEATURE = normolizedDate(featureData.startDateRoadmapFeature);//[2]
 
