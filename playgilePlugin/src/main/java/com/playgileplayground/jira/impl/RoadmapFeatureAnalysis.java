@@ -38,7 +38,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public String featureSummary;
     public String featureKey;
     public String projectKey;
-    public String messageToDisplay;
     public ArrayList<PlaygileSprint> playgileSprints = new ArrayList<>();
     public Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation;
     public double[] overallIssuesDistributionInSprint = new double[ProjectMonitor.DISTRIBUTION_SIZE];
@@ -220,7 +219,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
                 //calculate quality score
                 qualityScore = getQualityScore();
-
+                StatusText.getInstance().add(true, "Finished processing " + featureSummary);
                 result = true;
             }
             else
@@ -233,8 +232,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         else
         {
             StatusText.getInstance().add(true, "Failed to retrieve any project issues for " + featureSummary);
-            messageToDisplay = "Failed to retrieve any project's issues for Roadmap Feature" +
-                ". Please make sure the Roadmap Feature has the right structure (epics, linked epics etc.)";
             result = false;
         }
 
