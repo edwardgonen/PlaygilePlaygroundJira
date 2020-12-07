@@ -386,7 +386,12 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         int differenceInDays = DateTimeUtils.AbsDays(projectProgressResult.predictedProjectEnd, targetDate);
         double delay = (double)differenceInDays / (double)(DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature));
         delay = projectMonitoringMisc.roundToDecimalNumbers(delay, 1);
-        if (delay >= 0 && delay <= lowDelayPercentage) {
+        if (delay <= 0)
+        {
+            result.delayScore = 3;
+            result.delayScoreComment = "No delay is expected";
+        }
+        else if (delay > 0 && delay <= lowDelayPercentage) {
             result.delayScore = 3;
             result.delayScoreComment = "Small delay of " + delay * 100.0 + "%";
         }
