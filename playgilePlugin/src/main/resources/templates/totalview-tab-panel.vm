@@ -510,6 +510,8 @@
 
                 const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
 
+                const SEARCH_DATA = localStorage.searchData ? JSON.parse(localStorage.searchData) : { featureSearch: '' };
+
                 const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
 
                 const BASE_URL = '$baseurl';
@@ -538,7 +540,7 @@
 
                 const progressLabel = $(".progress-label");
 
-                const $featureSearch = $(".FeatureSearch").on('input', featureSearchOnChange)
+                const $featureSearch = $(".FeatureSearch").val(SEARCH_DATA.featureSearch).on('input', (e) => { featureSearchOnChange(e.currentTarget.value) })
 
                 const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString()
 
@@ -592,6 +594,8 @@
                                 $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
                                 $panelBlock.click(() => { drawDeteilsView(data) })
                                 console.log(data)
+
+                                if (SEARCH_DATA.featureSearch) { featureSearchOnChange(SEARCH_DATA.featureSearch) }
                             }
 
                         })
@@ -740,8 +744,11 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         });
                     });
                 }
-                function featureSearchOnChange(e) {
-                    var searchValue = e.currentTarget.value.toUpperCase()
+                function featureSearchOnChange(value) {
+                    var searchValue = value.toUpperCase()
+                    SEARCH_DATA.featureSearch = value;
+                    localStorage.searchData = JSON.stringify(SEARCH_DATA)
+
                     STORE.viewChildren.forEach((elem) => {
                         if (elem.find('h2')[0]) {
                             var text = elem.find('h2')[0].innerText;
