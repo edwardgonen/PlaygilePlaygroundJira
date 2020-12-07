@@ -423,6 +423,16 @@ public class JiraInterface {
         }
         return result;
     }
+    public String getTeamNameForIssue(Issue issue)
+    {
+        String result = "";
+        String[] values = getSpecificCustomFields(issue, "Team");
+        if (values != null && values.length > 0)
+        {
+            result = values[0];
+        }
+        return result;
+    }
     public double getStoryPointsForIssue(Issue issue)
     {
         double result = -1;

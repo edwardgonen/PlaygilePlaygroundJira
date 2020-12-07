@@ -17,6 +17,7 @@ package com.playgileplayground.jira.servlet;
     import com.atlassian.templaterenderer.TemplateRenderer;
     import com.playgileplayground.jira.api.ProjectMonitor;
     import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+    import com.playgileplayground.jira.impl.StatusText;
     import com.playgileplayground.jira.jiraissues.JiraInterface;
     import com.playgileplayground.jira.persistence.ManageActiveObjects;
 
@@ -56,8 +57,8 @@ public class getActiveFeatures extends HttpServlet {
     }
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        StatusText.getInstance().reset();
         GetActiveFeaturesResponse ourResponse = new GetActiveFeaturesResponse();
-
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();

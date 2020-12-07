@@ -15,13 +15,14 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.playgileplayground.jira.impl.FeatureScore;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.projectprogress.DataPair;
+import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
@@ -64,6 +65,7 @@ public class getAnalyzedFeature extends HttpServlet {
     }
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp, boolean bItIsPost) throws ServletException, IOException {
+        StatusText.getInstance().reset();
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
             //first check user
@@ -145,6 +147,12 @@ class ProgressDataSet
     public double predictedEstimations;
     public double idealEstimations;
 }
+class IssueCountsDataSet
+{
+    public Date date;
+    public int openIssues;
+    public int totalIssues;
+}
 class VelocitiesDataSet
 {
     public Date date;
@@ -158,6 +166,7 @@ class GetAnalyzedFeatureResponse
     public String logInfo = "";
     public String summary;
     public String key;
+    public String teamName = "";
     public Date startDateRoadmapFeature;
     public Date targetDate;
     public double plannedRoadmapFeatureVelocity;
@@ -172,14 +181,16 @@ class GetAnalyzedFeatureResponse
     public double veryLargeStoriesNumber;
     public double estimatedStoriesNumber;
 
-    public double qualityScore;
+    public FeatureScore qualityScore;
     public ArrayList<ProgressDataSet> progressDataSets;
     public ArrayList<VelocitiesDataSet> velocityDataSets;
+    public ArrayList<IssueCountsDataSet> issueCountsDataSets;
 
     public void fillTheFields(RoadmapFeatureAnalysis roadmapFeatureAnalysis)
     {
         summary = roadmapFeatureAnalysis.featureSummary;
         key = roadmapFeatureAnalysis.featureKey;
+        teamName = roadmapFeatureAnalysis.teamName;
         startDateRoadmapFeature = roadmapFeatureAnalysis.startDateRoadmapFeature;
         plannedRoadmapFeatureVelocity = roadmapFeatureAnalysis.plannedRoadmapFeatureVelocity;
         predictedVelocity = roadmapFeatureAnalysis.predictedVelocity;
@@ -196,13 +207,14 @@ class GetAnalyzedFeatureResponse
 
         targetDate = roadmapFeatureAnalysis.targetDate;
 
-
         qualityScore = roadmapFeatureAnalysis.qualityScore;
 
         progressDataSets = getEstimationsSet(roadmapFeatureAnalysis.projectProgressResult);
 
         velocityDataSets = getRealInterpolatedVelocities(roadmapFeatureAnalysis.artificialTimeWindowsForVelocityCalculation,
             roadmapFeatureAnalysis.interpolatedVelocityPoints);
+
+        issueCountsDataSets = getHistoricalIssuesCounts(roadmapFeatureAnalysis.historicalDateAndValues);
     }
 
     ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult)
@@ -222,7 +234,7 @@ class GetAnalyzedFeatureResponse
             shortestList = projectProgressResult.progressData;
             predictedIsLongest = false;
         }
-        DataPair tmpPredictedDataPair, tmpIdealDataPair;
+        DateAndValues tmpPredictedDataPair, tmpIdealDataPair;
         for (int i = 0; i < longestList.Length(); i++)
         {
             if (predictedIsLongest) {
@@ -241,20 +253,20 @@ class GetAnalyzedFeatureResponse
                 if (predictedIsLongest) {
                     pds.date = tmpPredictedDataPair.Date;
                     pds.idealEstimations = 0;
-                    pds.predictedEstimations = tmpPredictedDataPair.RemainingEstimation;
+                    pds.predictedEstimations = tmpPredictedDataPair.Estimation;
                 }
                 else
                 {
                     pds.date = tmpIdealDataPair.Date;
-                    pds.idealEstimations = tmpIdealDataPair.RemainingEstimation;
+                    pds.idealEstimations = tmpIdealDataPair.Estimation;
                     pds.predictedEstimations = 0;
                 }
             }
             else //both records available
             {
                 pds.date = tmpPredictedDataPair.Date;
-                pds.idealEstimations = tmpIdealDataPair.RemainingEstimation;
-                pds.predictedEstimations = tmpPredictedDataPair.RemainingEstimation;
+                pds.idealEstimations = tmpIdealDataPair.Estimation;
+                pds.predictedEstimations = tmpPredictedDataPair.Estimation;
             }
             result.add(pds);
         }
@@ -271,6 +283,18 @@ class GetAnalyzedFeatureResponse
             vds.realVelocity = sprintToConvert.sprintVelocity;
             vds.interpolatedVelocity = interpolatedVelocityPoints.get(index++);
             result.add(vds);
+        }
+        return result;
+    }
+    ArrayList<IssueCountsDataSet> getHistoricalIssuesCounts(ArrayList<DateAndValues> historicalDateAndValues)
+    {
+        ArrayList<IssueCountsDataSet> result = new ArrayList<>();
+        for (DateAndValues dateAndValues : historicalDateAndValues) {
+            IssueCountsDataSet icds = new IssueCountsDataSet();
+            icds.date = dateAndValues.Date;
+            icds.openIssues = dateAndValues.OpenIssues;
+            icds.totalIssues = dateAndValues.TotalIssues;
+            result.add(icds);
         }
         return result;
     }

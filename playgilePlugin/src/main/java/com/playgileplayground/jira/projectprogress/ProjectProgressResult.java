@@ -14,7 +14,6 @@ public class ProjectProgressResult {
     public Date predictedProjectEnd;
     public ProgressData progressData;
     public ProgressData idealData;
-    public Color progressDataColor;
 
 
     public ProjectProgressResult()
