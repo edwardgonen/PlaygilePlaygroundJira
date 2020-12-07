@@ -65,6 +65,7 @@ public class getAnalyzedFeature extends HttpServlet {
     }
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp, boolean bItIsPost) throws ServletException, IOException {
+        StatusText.getInstance().reset();
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
             //first check user
