@@ -9,6 +9,31 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
+            .resetSearchBtn {
+                align-self: center;
+            }
+
+            .resetSearchBtn:hover {
+                transform: scale(1.1);
+                transition: all 0.5s;
+            }
+
+            .svg-icon {
+                width: 2em;
+                height: 2em;
+            }
+
+            .svg-icon path,
+            .svg-icon polygon,
+            .svg-icon rect {
+                fill: #4691f6;
+            }
+
+            .svg-icon circle {
+                stroke: #4691f6;
+                stroke-width: 1;
+            }
+
             /* The switch - the box around the slider */
             .switch {
                 position: relative;
@@ -458,7 +483,20 @@
         <div id="progressbar">
             <div class="progress-label">Loading...</div>
         </div>
-        <input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
+        <div style="display: flex;">
+            <input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
+            <select class="TeamsSearch"></select>
+            <div class="resetSearchBtn"><svg class="svg-icon current" data-name="trash" width="30px" height="30px"
+                    viewBox="0 0 30 30">
+                    <path fill="none" d="M10.83,12.498H9.162v10.009h1.668V12.498z M20.839,12.498h-1.668v10.009h1.668V12.498z M27.512,4.99h-8.341
+                V2.488c0-0.461-0.374-0.834-0.834-0.834h-6.673c-0.461,0-0.834,0.373-0.834,0.834V4.99H2.488c-0.461,0-0.834,0.373-0.834,0.834
+                c0,0.461,0.373,0.834,0.834,0.834h1.668v20.019c0,0.921,0.747,1.668,1.668,1.668h18.351c0.921,0,1.668-0.747,1.668-1.668V6.659
+                h1.668c0.461,0,0.834-0.373,0.834-0.834C28.346,5.363,27.973,4.99,27.512,4.99z M12.498,3.322h5.004V4.99h-5.004V3.322z
+                 M24.176,25.844c0,0.461-0.374,0.834-0.834,0.834H6.659c-0.461,0-0.834-0.373-0.834-0.834V6.659h18.351V25.844z M15.834,10.829
+                h-1.668v11.678h1.668V10.829z"></path>
+                </svg>
+            </div>
+        </div>
         <div class="content">
             <div id="FadeBlock" class="fade">
                 <div class="lds-spinner">
@@ -510,7 +548,10 @@
 
                 const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
 
-                const SEARCH_DATA = localStorage.searchData ? JSON.parse(localStorage.searchData) : { featureSearch: '' };
+                if (!localStorage.searchData) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
+                if (!JSON.parse(localStorage.searchData).teamName) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
+
+                const SEARCH_DATA = JSON.parse(localStorage.searchData);
 
                 const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
 
@@ -542,12 +583,17 @@
 
                 const $featureSearch = $(".FeatureSearch").val(SEARCH_DATA.featureSearch).on('input', (e) => { featureSearchOnChange(e.currentTarget.value) })
 
+                const $teamsSearch = $(".TeamsSearch").on('input', (e) => { teamsSearchOnChange(e.currentTarget.value) })
+
+                const $resetSearchBtn = $('.resetSearchBtn').click(resetSearch);
+
                 const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString()
 
                 const STORE = {
                     featureArray: [],
                     viewChildren: [],
-                    $currentBlockInLoading: null
+                    $currentBlockInLoading: null,
+                    teams: {}
                 };
                 console.log('STORE');
                 console.log(STORE)
@@ -591,17 +637,28 @@
                                 $panelBlock.hide()
                             } else {
                                 $panelBlock.empty();
-                                $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
+                                $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
                                 $panelBlock.click(() => { drawDeteilsView(data) })
                                 console.log(data)
+                                STORE.teams[data.teamName] = true
+                                updateTeamsSearch()
 
-                                if (SEARCH_DATA.featureSearch) { featureSearchOnChange(SEARCH_DATA.featureSearch) }
+                                genericSortFeature()
                             }
 
                         })
                     }
 
 
+                }
+                function updateTeamsSearch() {
+                    var _currentVal = SEARCH_DATA.teamName
+                    $teamsSearch.empty()
+                    $teamsSearch.append($('<option>').text(''))
+                    for (const key in STORE.teams) {
+                        $teamsSearch.append($('<option>').text(key))
+                    }
+                    $teamsSearch.val(_currentVal)
                 }
 
                 function globalLoadingON() {
@@ -744,15 +801,38 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         });
                     });
                 }
+                function resetSearch() {
+                    localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' });
+                    $teamsSearch.val('')
+                    $featureSearch.val('')
+                    genericSortFeature()
+                }
                 function featureSearchOnChange(value) {
-                    var searchValue = value.toUpperCase()
-                    SEARCH_DATA.featureSearch = value;
-                    localStorage.searchData = JSON.stringify(SEARCH_DATA)
+                    var searchData = JSON.parse(localStorage.searchData)
+                    searchData.featureSearch = value;
+                    localStorage.searchData = JSON.stringify(searchData)
 
+                    genericSortFeature()
+                }
+                function teamsSearchOnChange(value) {
+                    var searchData = JSON.parse(localStorage.searchData)
+                    searchData.teamName = value;
+                    localStorage.searchData = JSON.stringify(searchData)
+
+                    genericSortFeature()
+                }
+                function genericSortFeature() {
+                    var searchData = JSON.parse(localStorage.searchData);
+                    var featureNameSearch = searchData.featureSearch.toUpperCase();
+                    var teamNameSearch = searchData.teamName
                     STORE.viewChildren.forEach((elem) => {
                         if (elem.find('h2')[0]) {
+                            let result1 = false;
+                            let result2 = false;
                             var text = elem.find('h2')[0].innerText;
-                            !searchValue.length || text.toUpperCase().indexOf(searchValue) >= 0 ? elem.show() : elem.hide()
+                            if (!featureNameSearch.length || text.toUpperCase().indexOf(featureNameSearch) >= 0) { result1 = true };
+                            if (!teamNameSearch.length || elem.children().data().teamName.toUpperCase().indexOf(teamNameSearch) >= 0) { result2 = true };
+                            result1 && result2 ? elem.show() : elem.hide()
                         }
                     })
                 }
@@ -1148,7 +1228,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         let $panelBlock = STORE.viewChildren[panelIndex];
                         $panelBlock.empty();
                         $panelBlock.hide();
-                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
+                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
                         $panelBlock.click(() => { drawDeteilsView(data) })
                         $panelBlock.show()
                     })
