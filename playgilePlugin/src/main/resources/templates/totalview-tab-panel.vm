@@ -333,6 +333,14 @@
 
             .Qualityscore1:hover {}
 
+            .QualityscoreText1 {
+                color: #ec3e40;
+            }
+
+            .QualityscoreHeader1 {
+                background: #ec3e40;
+            }
+
             .Qualityscore2 {
                 background: #ffc82f38;
                 color: #f5d800;
@@ -340,12 +348,28 @@
 
             .Qualityscore2:hover {}
 
+            .QualityscoreText2 {
+                color: #f5d800;
+            }
+
+            .QualityscoreHeader2 {
+                background: #f5d800;
+            }
+
             .Qualityscore3 {
                 background: #34d12938;
                 color: #01a46d;
             }
 
             .Qualityscore3:hover {}
+
+            .QualityscoreText3 {
+                color: #01a46d;
+            }
+
+            .QualityscoreHeader3 {
+                background: #01a46d;
+            }
 
             .StatusBlockDivBtn {
                 position: absolute;
@@ -736,24 +760,49 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                     return (new Date(date))
                 }
                 function drawDeteilsView(featureData) {
-                        let $detailsView = $('.detailsView');
-                        $detailsView.show()
+                    let $detailsView = $('.detailsView');
+                    $detailsView.show()
                     try {
-                        let html = `<h1 style="background-color:#67677d;color:white;">${featureData.summary} by ${featureData.teamName} team</h1>
+                        let html = `<h1 class=QualityscoreHeader${featureData.qualityScore.totalScore} style="color:white;">
+                        <a style="color: white;" href="${BASE_URL}/browse/${featureData.key}" target="_blank">${featureData.summary} by ${featureData.teamName} team</a>
+                        </h1>
                     <div>Click anywhere to close</div>
-        <div style="width:80%; height:35vh; display: inline-flex;">        
-        <div id="curve_chart" style="width:50%; height:100%; padding:5px"></div>
-        <div id="velocity_chart" style="width:50%; height:100%;  padding:5px"></div>
-        </div><div style="width:80%; height:35vh; display: inline-flex;">
-        <div id="piechart" style="width:50%; height:100%;  padding:5px"></div>
-        <div id="issue_distribution" style="width:50%; height:100%;  padding:5px"></div>
-        </div>`
+                    <div style="width:90%; height:40vh; display: inline-flex;">   
+                        <div id="curve_chart" style="width:33%; height:100%; padding:5px"></div>
+                        <div id="velocity_chart" style="width:33%; height:100%;  padding:5px"></div>
+                        <div id="piechart" style="width:33%; height:100%;  padding:5px"></div>
+                    </div>
+                    <div style="width:90%; height:40vh; display: inline-flex;">
+                            <div id="open_total_chart" style="width:33%; height:100%;  padding:5px"></div>
+                            <div id="quality_score_chart" style="width:33%; height:100%;  margin:5px; background:#f4f5f7">
+                                <div style="width:100%; height:33%; display: inline-flex;">
+                                    <div id="gauge0" style="width:33%; height:90%;"></div>
+                                    <div class="gaugeDescr0" style="width:77%; height:100%; text-align: left; margin: 5px;"></div>
+                                </div>
+                                <div style="width:100%; height:33%; display: inline-flex;">
+                                    <div id="gauge1" style="width:33%; height:90%;"></div>
+                                    <div class="gaugeDescr1" style="width:77%; height:100%; text-align: left; margin: 5px;"></div>
+                                </div>
+                                <div style="width:100%; height:33%; display: inline-flex;">
+                                    <div id="gauge2" style="width:33%; height:90%;"></div>
+                                    <div class="gaugeDescr2" style="width:77%; height:100%; text-align: left; margin: 5px;"></div>
+                                </div>
+                            </div>
+                            <div id="issue_distribution" style="width:33%; height:100%;  padding:5px"></div>
+                    </div>`
                         $detailsView.html(html);
-                        let $curve_chart = $detailsView.find('#curve_chart')
-                        let $velocity_chart = $detailsView.find('#velocity_chart')
-                        let $piechart = $detailsView.find('#piechart')
-                        let $issue_distribution = $detailsView.find('#issue_distribution')
+                        let $curve_chart = $detailsView.find('#curve_chart');
+                        let $velocity_chart = $detailsView.find('#velocity_chart');
+                        let $piechart = $detailsView.find('#piechart');
+                        let $open_total_chart = $detailsView.find('#open_total_chart');
+                        let $qualityScoreChart = $detailsView.find('#quality_score_chart');
+                        let $gauge0 = $detailsView.find('#gauge0');
+                        let $gauge1 = $detailsView.find('#gauge1');
+                        let $gauge2 = $detailsView.find('#gauge2');
+                        let $issue_distribution = $detailsView.find('#issue_distribution');
 
+
+                        //////////////////curve_chart///////////////////////
                         var data = new google.visualization.DataTable();
                         data.addColumn('date', 'Date');
                         data.addColumn({ type: 'string', role: 'annotation' });
@@ -821,7 +870,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         };
                         var chart = new google.visualization.LineChart($curve_chart[0]);
                         chart.draw(data, options);
-                        //////////////////
+                        ///////piechart///////////
                         var dataIssueDistribution = new google.visualization.DataTable();
 
                         dataIssueDistribution.addColumn('string', 'Category');
@@ -843,7 +892,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         };
                         var chartIssueDistribution = new google.visualization.PieChart($piechart[0]);
                         chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
-                        //////////////////
+                        ///////////velocity_chart///////
                         var dataVelocity = new google.visualization.DataTable();
                         dataVelocity.addColumn('date', 'Date');
                         dataVelocity.addColumn('number', 'Actual Velocity');
@@ -879,7 +928,73 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         };
                         var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
                         chartVelocity.draw(dataVelocity, optionsVelocityChart);
-                        ////////////////////////////////
+                        //////////////////open_total_chart/////////////////////////
+                        var dataOpenTotalChart = new google.visualization.DataTable();
+                        dataOpenTotalChart.addColumn('date', 'Date');
+                        dataOpenTotalChart.addColumn('number', 'Open issues');
+                        dataOpenTotalChart.addColumn('number', 'Total issues');
+                        featureData.issueCountsDataSets.forEach((line) => {
+                            let date = new Date(line.date);
+                            let openIssues = line.openIssues;
+                            let totalIssues = line.totalIssues;
+                            dataOpenTotalChart.addRow([date, openIssues, totalIssues]);
+                        })
+                        let optionsOpenTotal = {
+                            title: 'Open/Total issues',
+                            lineWidth: 3,
+                            width: '100%',
+                            height: '100%'
+                        }
+                        var chartOpenTotal = new google.visualization.AreaChart($open_total_chart[0]);
+                        chartOpenTotal.draw(dataOpenTotalChart, optionsOpenTotal);
+                        ///////////////////qualityScoreChart/////////////////////////////
+                        let qualityScore = featureData.qualityScore
+                        let delay = qualityScore.delayScore
+                        let estimation = qualityScore.estimationScore
+                        let readiness = qualityScore.readinessScore
+                        var dataGauge0 = google.visualization.arrayToDataTable([
+                            ['Label', 'Value'],
+                            ['', delay]
+                        ]);
+                        var dataGauge1 = google.visualization.arrayToDataTable([
+                            ['Label', 'Value'],
+                            ['', estimation]
+                        ]);
+                        var dataGauge2 = google.visualization.arrayToDataTable([
+                            ['Label', 'Value'],
+                            ['', readiness]
+                        ]);
+
+                        var optionsQualityScoreChart = {
+                            greenFrom: 2.4, greenTo: 3.2,
+                            yellowFrom: 1.6, yellowTo: 2.4,
+                            redFrom: 0.8, redTo: 1.6,
+                            minorTicks: 5,
+                            min: 0.8,
+                            max: 3.2
+                        };
+
+                        var chartGauge0 = new google.visualization.Gauge($gauge0[0]);
+                        var chartGauge1 = new google.visualization.Gauge($gauge1[0]);
+                        var chartGauge2 = new google.visualization.Gauge($gauge2[0]);
+
+                        chartGauge0.draw(dataGauge0, optionsQualityScoreChart);
+                        chartGauge1.draw(dataGauge1, optionsQualityScoreChart);
+                        chartGauge2.draw(dataGauge2, optionsQualityScoreChart);
+
+                        $('.gaugeDescr0').html(`
+                            <h2 class=QualityscoreText${delay}>Delay</h2>
+                            <p>${qualityScore.delayScoreComment}</p>
+                        `)
+                        $('.gaugeDescr1').html(`
+                            <h2 class=QualityscoreText${estimation}>Estimations</h2>
+                            <p>${qualityScore.estimationScoreComment}</p>
+                        `)
+                        $('.gaugeDescr2').html(`
+                            <h2 class=QualityscoreText${readiness}>BL Readiness</h2>
+                            <p>${qualityScore.readinessScoreComment}</p>
+                        `)
+                        /////////////////issue_distribution///////////////
                         var distributionResult = featureData.overallIssuesDistributionInSprint;
                         var firstQ = parseFloat(distributionResult[0]) || 0;
                         var secondQ = parseFloat(distributionResult[1]) || 0;
@@ -915,6 +1030,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         $detailsView.click(() => { $detailsView.hide() })
                     } catch (error) {
                         $detailsView.hide()
+                        console.log(error)
                         alert('No stories for this feature')
                     }
 
