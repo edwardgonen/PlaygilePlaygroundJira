@@ -27,7 +27,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     ProjectMonitoringMisc projectMonitoringMisc;
     ManageActiveObjects mao;
     int numberOfOpenIssues;
-    int numberOfTotalIssues;
+    int numberOfTotalNotCompletedIssues;
 
 
     boolean bRoadmapFeatureAnalyzed = false;
@@ -103,7 +103,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
-            numberOfTotalIssues = issues.size();
+
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);
 
@@ -117,14 +117,12 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 //======================================================
                 //get sprints for issue
                 projectMonitoringMisc.addIssueSprintsToList(playgileIssue.jiraIssue, playgileSprints);
-
-                if (playgileIssue.bIssueOpen) numberOfOpenIssues++;
-
                 allPlaygileIssues.add(playgileIssue);
 
-                //if issue is not completed yet, add to the list of futureIssues
+                //if issue is not completed yet, add to the list of futureIssues and also check if it is open
                 if (!playgileIssue.bIssueCompleted && playgileIssue.bOurIssueType) {
                     futurePlaygileIssues.add(playgileIssue);
+                    numberOfTotalNotCompletedIssues++;
                     //adjust to default if needed
                     double estimationForIssue = playgileIssue.getAdjustedEstimationValue();
                     remainingTotalEstimations += estimationForIssue;
@@ -133,6 +131,11 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     if (playgileIssue.storyPoints == 13) analyzedStories.LargeStoriesNumber++;
                     if (playgileIssue.storyPoints > 13) analyzedStories.VeryLargeStoriesNumber++;
                     if (playgileIssue.storyPoints <= 0) analyzedStories.NotEstimatedStoriesNumber++;
+
+                    if (playgileIssue.bIssueOpen) {
+                        numberOfOpenIssues++;
+                        StatusText.getInstance().add(true, "Issue counted as open " + playgileIssue.issueKey + " " + playgileIssue.issueSummary + ". Open issues count is " + numberOfOpenIssues);
+                    }
                 }
             }
             //now we have everything in the cache - list of instantiated issues
@@ -177,7 +180,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             DateAndValues dateAndValues = new DateAndValues();
             dateAndValues.Date = timeStamp;
             dateAndValues.Estimation = remainingTotalEstimations;
-            dateAndValues.TotalIssues = numberOfTotalIssues;
+            dateAndValues.TotalIssues = numberOfTotalNotCompletedIssues;
             dateAndValues.OpenIssues = numberOfOpenIssues;
             mao.AddLatestHistoricalRecord(new ManageActiveObjectsEntityKey(projectKey, featureSummary), dateAndValues);
 
@@ -434,7 +437,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         double smallAmountOfOpenIssues = 0.1;
         double mediumAmountOfOpenIssues = 0.3;
         result.readinessScore = 3;
-        double readinessRatio = (double)numberOfOpenIssues / (double)futurePlaygileIssues.size();
+        double readinessRatio = (double)numberOfOpenIssues / (double) numberOfTotalNotCompletedIssues;
         readinessRatio = projectMonitoringMisc.roundToDecimalNumbers(readinessRatio, 1);
         if (readinessRatio >= 0.0 && readinessRatio < smallAmountOfOpenIssues) {
             result.readinessScore = 3;
