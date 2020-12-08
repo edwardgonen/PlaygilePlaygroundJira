@@ -433,6 +433,12 @@ http://localhost:2990/jira/plugins/servlet/activeObjectsAccessFeatureProperties?
 Configuration
 http://localhost:2990/jira/plugins/servlet/pluginConfiguration
 https://jira-sandbox.playtika.com//plugins/servlet/pluginConfiguration
+
+Get all active features
+https://jira-sandbox.playtika.com/plugins/servlet/getActiveFeatures?projectKey=SGH
+Get specific feature
+https://jira-sandbox.playtika.com/plugins/servlet/getAnalyzedFeature?projectKey=BINGOBLITZ&roadmapFeature=BINGOBLITZ-130778&sendLog=1
+
 ---------------- jira stop restart -----------
 
 /opt/atlassian/jira/bin/stop-jira.sh и start-jira.sh for sandbox

@@ -216,38 +216,6 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetProjectStartedFlag(ManageActiveObjectsEntityKey key)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {
-            result.Result = prjStatEntity.getProjectStartedFlag();
-            result.Message = "Started flag: " + result.Result;
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
-        }
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult SetProjectStartedFlag(ManageActiveObjectsEntityKey key, boolean startedFlag)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {
-            prjStatEntity.setProjectStartedFlag(startedFlag);
-            prjStatEntity.save();
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
-        }
-        return result;
-    }
-    @Transactional
     public ManageActiveObjectsResult GetProjectStartDate(ManageActiveObjectsEntityKey key)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -297,23 +265,6 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetProjectInitialEstimation(ManageActiveObjectsEntityKey key)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {
-            double initialEstimation = prjStatEntity.getInitialEstimation();
-            result.Result = initialEstimation;
-            result.Message = "Initial estimation " + initialEstimation;
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
-        }
-        return result;
-    }
-    @Transactional
     public ManageActiveObjectsResult SetTeamVelocity(ManageActiveObjectsEntityKey key, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -345,23 +296,6 @@ public final class ManageActiveObjects{
                 result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_SUCH_ENTRY;
                 result.Message = "Velocity is not set " + key.projectKey + " " + key.roadmapFeature;
             }
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
-        }
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult AddRoadmapFeature(ManageActiveObjectsEntityKey key, double teamVelocity)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {
-            prjStatEntity.setProjectTeamVelocity(teamVelocity);
-            prjStatEntity.save();
-            result.Message = "Data added";
         }
         else
         {
@@ -429,107 +363,6 @@ public final class ManageActiveObjects{
             result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
         }
 
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult AddRemainingEstimationsRecordCompressed(ManageActiveObjectsEntityKey key, Date date, double remainingEstimations)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {
-            //read the existing data
-            ArrayList<DateAndValues> existingData = GetHistoricalDateAndValuesList(prjStatEntity);
-            if (existingData.size() == 0)
-            {
-                result.Code = ManageActiveObjectsResult.STATUS_CODE_NO_ESTIMATIONS_YET;
-                result.Message = "No estimation stored yet";
-                return result;
-            }
-            //sort - just in case
-            Collections.sort(existingData);
-            //now compress - i.e. leave last 2 weeks on a daily basis, rest use only 2 weeks basis
-
-            //let's get the first date and the last date
-            ArrayList<DateAndValues> compressedList = new ArrayList<>();
-            //how many full sprints we have?
-            //we compress every 14 days
-            int segmentSize = 14;
-
-            DateAndValues firstRecord = existingData.get(0);
-            DateAndValues lastRecord = existingData.get(existingData.size() - 1);
-            int fullSprints = DateTimeUtils.Days(lastRecord.Date, firstRecord.Date) / segmentSize;
-            int partialSprintDays = DateTimeUtils.Days(lastRecord.Date, firstRecord.Date) % segmentSize;
-            //find the start of last segment as current date minus 2 weeks
-
-
-            Date startOfLastSegment = DateTimeUtils.AddDays(Calendar.getInstance().getTime(), -segmentSize);
-            if (startOfLastSegment.compareTo(firstRecord.Date) < 0)
-            {
-                startOfLastSegment = firstRecord.Date;
-            }
-            //how many compress segments we have?
-            int totalCompressedSegments;
-            if (partialSprintDays > 0) totalCompressedSegments = fullSprints + 1;
-            else totalCompressedSegments = fullSprints;
-
-
-            if (totalCompressedSegments > 0) {
-                DateAndValues[] segmentsData = new DateAndValues[totalCompressedSegments];
-                for (DateAndValues dataPair : existingData) {
-                    if (dataPair.Date.compareTo(startOfLastSegment) < 0) //only compress if we are not yet beyond start of last segment
-                    {
-                        int segmentNumber = DateTimeUtils.Days(dataPair.Date, firstRecord.Date) / segmentSize;
-                        segmentsData[segmentNumber] = dataPair;
-                    } else //last segment
-                    {
-                        //first - copy all segments if not copied yet
-                        if (compressedList.size() == 0) {
-                            for (int i = 0; i < totalCompressedSegments; i++) {
-                                if (segmentsData[i] != null) compressedList.add(segmentsData[i]);
-                            }
-                        }
-                        compressedList.add(dataPair);//add all data for the last sprint
-                    }
-                }
-            }
-
-            //do we have such date?
-            for (DateAndValues dataPair : compressedList) {
-                if (DateUtils.isSameDay(dataPair.Date, date)) {
-                    dataPair.Estimation = remainingEstimations;
-                    SaveDateAndValuesList(compressedList, prjStatEntity);
-                    result.Message = "Data updated";
-                    return result;
-                }
-            }
-            compressedList.add(new DateAndValues(date, remainingEstimations));
-            SaveDateAndValuesList(compressedList, prjStatEntity);
-            result.Message = "Data added";
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
-        }
-
-        return result;
-    }
-    @Transactional
-    public ManageActiveObjectsResult GetFirstProjectEntity(String projectKey)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey();
-        key.projectKey = projectKey;
-        PrjStatEntity entity =  GetProjectEntity(key);
-        if (entity != null)
-        {
-            result.Result = entity;
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey;
-        }
         return result;
     }
 
