@@ -9,7 +9,23 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
-            .FavoritesBlock {/* 
+            .FavoritesContent .StatusBlock {
+                background: #2684ff26;
+            }
+            #quality_score_chart p{
+                margin: 0;
+            }
+
+            ul {
+                padding: 0;
+            }
+
+            li {
+                list-style-type: none;
+            }
+
+            .FavoritesBlock {
+                /* 
                 position: relative; */
                 border: solid 1px gainsboro;
                 min-height: 4vh;
@@ -21,8 +37,12 @@
             .FavoritesHeaderLabel {
                 color: gainsboro;
                 position: relative;
-                top: -15px;
-                left: 77px;
+                top: -17px;
+                left: 46px;
+            }
+
+            .FavoritesHeaderLabelText {
+                position: absolute;
                 background: white;
                 width: min-content;
                 padding: 5px;
@@ -477,6 +497,14 @@
                 /* text-decoration: none; */
                 /* font-weight: 600;*/
             }
+
+            .FavoritesContent {
+                min-height: 6vh;
+                display: flex;
+                flex-wrap: wrap;
+                top: 17px;
+                left: 0;
+            }
         </style>
     </head>
 
@@ -517,8 +545,10 @@
             </div>
         </div>
         <div class="FavoritesBlock">
-            <div class="FavoritesHeaderLabel">Favorites</div>
-            <div class="FavoritesContent"></div>
+            <div class="FavoritesHeaderLabel">
+                <div class="FavoritesHeaderLabelText">Favorites</div>
+            </div>
+            <ul class="FavoritesContent connectedSortable "></ul>
         </div>
         <div class="content">
             <div id="FadeBlock" class="fade">
@@ -544,8 +574,8 @@
             <div class="generalLoading">
                 generalLoading
             </div>
-            <div class="generalViewBlock">
-            </div>
+            <ul class="generalViewBlock connectedSortable ">
+            </ul>
         </div>
         <table id="roadmap-features-table" ; width="100%">
         </table>
@@ -570,6 +600,9 @@
                 console.log('loaded resources playgilePlugin and init v1');
 
                 const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
+
+                if (!localStorage.pluginFavorites) { localStorage.pluginFavorites = '[]' }
+                var FAVORITES = JSON.parse(localStorage.pluginFavorites)
 
                 if (!localStorage.searchData) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
                 if (!JSON.parse(localStorage.searchData).teamName) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
@@ -649,7 +682,7 @@
                     let loadingValue = 100 / STORE.featureArray.length;
                     if (STORE.featureArray.length != STORE.viewChildren.length) {
                         let featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
-                        let $panelBlock = $('<div>')
+                        let $panelBlock = $('<li>')
                         $generalViewBlock.append($panelBlock)
                         STORE.$currentBlockInLoading = $panelBlock;
                         STORE.viewChildren.push($panelBlock);
@@ -662,8 +695,23 @@
                                 $panelBlock.empty();
                                 $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
                                 $panelBlock.click(() => { drawDeteilsView(data) })
+                                if (FAVORITES.includes(data.key)) { $panelBlock.detach().appendTo('.FavoritesContent') }
                                 console.log(data)
                                 STORE.teams[data.teamName] = true
+                                $(function () {
+                                    $(".generalViewBlock, .FavoritesContent").sortable({
+                                        connectWith: ".connectedSortable"
+                                    }).disableSelection();
+                                    $('.FavoritesContent').sortable({
+                                        deactivate: function (event, ui) {
+                                            var _$array = $('.FavoritesContent').children().map(function () { return $(this).children().data('featureKey') });
+                                            var _array = Array.from(_$array);
+                                            FAVORITES = _array
+                                            localStorage.pluginFavorites = JSON.stringify(_array)
+                                        }
+                                    })
+                                });
+
                                 updateTeamsSearch()
 
                                 genericSortFeature()
