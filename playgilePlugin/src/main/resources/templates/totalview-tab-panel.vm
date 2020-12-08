@@ -9,6 +9,25 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
+            .FavoritesBlock {/* 
+                position: relative; */
+                border: solid 1px gainsboro;
+                min-height: 4vh;
+                border-radius: 17px;
+                width: 100%;
+                margin: 20px 0px 10px 0px;
+            }
+
+            .FavoritesHeaderLabel {
+                color: gainsboro;
+                position: relative;
+                top: -15px;
+                left: 77px;
+                background: white;
+                width: min-content;
+                padding: 5px;
+            }
+
             .resetSearchBtn {
                 align-self: center;
             }
@@ -497,6 +516,10 @@
                 </svg>
             </div>
         </div>
+        <div class="FavoritesBlock">
+            <div class="FavoritesHeaderLabel">Favorites</div>
+            <div class="FavoritesContent"></div>
+        </div>
         <div class="content">
             <div id="FadeBlock" class="fade">
                 <div class="lds-spinner">
@@ -904,16 +927,16 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                             let ideal = null;
                             if (Number.isFinite(line.idealEstimations)) {
                                 ideal = Math.round(parseFloat(line.idealEstimations));
-                                if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
+                                /* if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
                                     ideal = null;
-                                }
+                                } */
                             }
                             let predicted = null;
                             if (Number.isFinite(line.predictedEstimations)) {
                                 predicted = Math.round(parseFloat(line.predictedEstimations))
-                                if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
+                                /* if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
                                     predicted = null;
-                                }
+                                } */
                             }
                             let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
                             let _annotationTarget = date.toLocaleDateString() == targetDate.toLocaleDateString() ? 'Target date' : null;
@@ -923,7 +946,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         let lastDate = new Date(LINES[LINES.length - 1].date);
                         let targetDate = new Date(featureData.targetDate);
                         if (lastDate < targetDate) {
-                            data.addRow([targetDate, null, 'Target date', null, null]);
+                            data.addRow([targetDate, null, 'Target date', 0, 0]);
                         }
 
                         var options = {
@@ -1229,6 +1252,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         $panelBlock.empty();
                         $panelBlock.hide();
                         $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
+                        $panelBlock.off('click')
                         $panelBlock.click(() => { drawDeteilsView(data) })
                         $panelBlock.show()
                     })
