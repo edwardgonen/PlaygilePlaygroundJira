@@ -1,5 +1,5 @@
 /**
- * Created by Ext_EdG on 11/12/2020.
+ * Created by on 11/12/2020.
  */
 package com.playgileplayground.jira.servlet;
 
@@ -53,15 +53,15 @@ public class getAnalyzedFeature extends HttpServlet {
     @Override
     @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req,  resp, false);
+        processRequest(req,  resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req, resp, true);
+        processRequest(req, resp);
     }
 
-    private void processRequest (HttpServletRequest req, HttpServletResponse resp, boolean bItIsPost) throws ServletException, IOException {
+    private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
@@ -127,14 +127,12 @@ public class getAnalyzedFeature extends HttpServlet {
             {
                 ourResponse.statusMessage = "Failed to analyze feature " + roadmapFeatureName;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
-                return;
             }
         }
         catch (Exception e)
         {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
-            return;
         }
     }
 }

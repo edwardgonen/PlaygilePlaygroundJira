@@ -13,12 +13,8 @@ import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
-
 import java.util.*;
 
-/**
- * Created by Ext_EdG on 11/19/2020.
- */
 public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis>, Comparable<RoadmapFeatureAnalysis> {
     Issue roadmapFeature;
     JiraInterface jiraInterface;
@@ -55,8 +51,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public double defaultNotEstimatedIssueValue;
     public Date startDateRoadmapFeature = null;
     public double sprintLengthRoadmapFeature = 0;
-    public Date targetDate = null;
-    public String teamName = "";
+    public Date targetDate;
+    public String teamName;
 
     public RoadmapFeatureAnalysis(
         Issue roadmapFeature,
@@ -78,6 +74,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         this.projectKey = currentProject.getKey();
         this.mao = mao;
 
+        targetDate = null;
+        teamName = "";
     }
 
     @Override
@@ -216,8 +214,10 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     (int)sprintLengthRoadmapFeature,
                     historicalDateAndValues);
 
-                //get target date. I cannot do that before progress calculated, as in case it is not set in DB then I take it
-                //as planned project end
+                /*
+                get target date. I cannot do that before progress calculated, as in case it is not set in DB then I take it
+                as planned project end
+                */
                 targetDate = getTargetDate();
 
                 //calculate quality score
@@ -241,22 +241,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         bRoadmapFeatureAnalyzed = result; //set to true if analyzed ok
         return result;
     }
-
-    public boolean isRoadmapFeatureStarted()
-    {
-        //active only if current date is after or equal to start date
-        boolean result = false;
-        if (bRoadmapFeatureAnalyzed)
-        {
-            result = DateTimeUtils.CompareZeroBasedDatesOnly(DateTimeUtils.getCurrentDate(), startDateRoadmapFeature) >= 0;
-        }
-        return result;
-    }
-    public String getRoadmapFeatureKeyAndSummary()
-    {
-        return featureKey + " " + featureSummary;
-    }
-
     private ArrayList<DateAndValues> getHistoricalEstimations()
     {
         ArrayList<DateAndValues> result = null;
@@ -384,7 +368,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         double mediumDelayPercentage = 0.15;
 
         int differenceInDays = DateTimeUtils.AbsDays(projectProgressResult.predictedProjectEnd, targetDate);
-        double delay = (double)differenceInDays / (double)(DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature));
+        double delay = (double)differenceInDays / (double) DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature);
         delay = projectMonitoringMisc.roundToDecimalNumbers(delay, 1);
         if (delay <= 0)
         {
