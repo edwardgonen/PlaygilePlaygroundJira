@@ -207,7 +207,7 @@ class GetAnalyzedFeatureResponse
         progressDataSets = getEstimationsSet(roadmapFeatureAnalysis.projectProgressResult);
 
         //for the right presentation of target line on chart in Web I need to add targetDate entry in the progress data set
-        progressDataSets = insertTargetDateInSet(progressDataSets, targetDate);
+        //progressDataSets = insertTargetDateInSet(progressDataSets, targetDate);
 
         velocityDataSets = getRealInterpolatedVelocities(roadmapFeatureAnalysis.artificialTimeWindowsForVelocityCalculation,
             roadmapFeatureAnalysis.interpolatedVelocityPoints);
@@ -260,6 +260,47 @@ class GetAnalyzedFeatureResponse
     ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult)
     {
         ArrayList<ProgressDataSet> result = new ArrayList<>();
+        for (int i = 0; i < projectProgressResult.idealData.Length(); i++)
+        {
+            ProgressDataSet pds = new ProgressDataSet();
+            DateAndValues tmpPredictedDataPair = projectProgressResult.progressData.GetElementAtIndex(i);
+            DateAndValues tmpIdealDataPair = projectProgressResult.idealData.GetElementAtIndex(i);
+            pds.date = tmpIdealDataPair.Date;
+            pds.idealEstimations = tmpIdealDataPair.Estimation;
+            pds.predictedEstimations = tmpPredictedDataPair.Estimation;
+            result.add(pds);
+        }
+        return result;
+    }
+    ArrayList<VelocitiesDataSet> getRealInterpolatedVelocities(Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation, ArrayList<Double> interpolatedVelocityPoints)
+    {
+        ArrayList<VelocitiesDataSet> result = new ArrayList<>();
+        int index = 0;
+        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation)
+        {
+            VelocitiesDataSet vds = new VelocitiesDataSet();
+            vds.date = sprintToConvert.getEndDate();
+            vds.realVelocity = sprintToConvert.sprintVelocity;
+            vds.interpolatedVelocity = interpolatedVelocityPoints.get(index++);
+            result.add(vds);
+        }
+        return result;
+    }
+    ArrayList<IssueCountsDataSet> getHistoricalIssuesCounts(ArrayList<DateAndValues> historicalDateAndValues)
+    {
+        ArrayList<IssueCountsDataSet> result = new ArrayList<>();
+        for (DateAndValues dateAndValues : historicalDateAndValues) {
+            IssueCountsDataSet icds = new IssueCountsDataSet();
+            icds.date = dateAndValues.Date;
+            icds.openIssues = dateAndValues.OpenIssues;
+            icds.totalIssues = dateAndValues.TotalIssues;
+            result.add(icds);
+        }
+        return result;
+    }
+    ArrayList<ProgressDataSet> getEstimationsSetOld(ProjectProgressResult projectProgressResult)
+    {
+        ArrayList<ProgressDataSet> result = new ArrayList<>();
         ProgressData longestList;
         ProgressData shortestList;
         boolean predictedIsLongest;
@@ -309,32 +350,6 @@ class GetAnalyzedFeatureResponse
                 pds.predictedEstimations = tmpPredictedDataPair.Estimation;
             }
             result.add(pds);
-        }
-        return result;
-    }
-    ArrayList<VelocitiesDataSet> getRealInterpolatedVelocities(Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation, ArrayList<Double> interpolatedVelocityPoints)
-    {
-        ArrayList<VelocitiesDataSet> result = new ArrayList<>();
-        int index = 0;
-        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation)
-        {
-            VelocitiesDataSet vds = new VelocitiesDataSet();
-            vds.date = sprintToConvert.getEndDate();
-            vds.realVelocity = sprintToConvert.sprintVelocity;
-            vds.interpolatedVelocity = interpolatedVelocityPoints.get(index++);
-            result.add(vds);
-        }
-        return result;
-    }
-    ArrayList<IssueCountsDataSet> getHistoricalIssuesCounts(ArrayList<DateAndValues> historicalDateAndValues)
-    {
-        ArrayList<IssueCountsDataSet> result = new ArrayList<>();
-        for (DateAndValues dateAndValues : historicalDateAndValues) {
-            IssueCountsDataSet icds = new IssueCountsDataSet();
-            icds.date = dateAndValues.Date;
-            icds.openIssues = dateAndValues.OpenIssues;
-            icds.totalIssues = dateAndValues.TotalIssues;
-            result.add(icds);
         }
         return result;
     }

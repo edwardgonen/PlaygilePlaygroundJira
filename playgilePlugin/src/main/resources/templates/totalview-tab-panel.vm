@@ -18,7 +18,8 @@
                 font-size: 23px;
                 display: block;
             }
-            .emptyFavoritesText{
+
+            .emptyFavoritesText {
                 display: none;
             }
 
@@ -984,14 +985,12 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         var data = new google.visualization.DataTable();
                         data.addColumn('date', 'Date');
                         data.addColumn({ type: 'string', role: 'annotation' });
-                        data.addColumn({ type: 'string', role: 'annotation' });
                         data.addColumn('number', 'Initial Velocity');
                         data.addColumn('number', 'Predicted Velocity');
 
                         const LINES = featureData.progressDataSets
                         LINES.forEach(function (line, index) {
                             let date = new Date(line.date)
-                            let targetDate = new Date(featureData.targetDate)
                             let ideal = null;
                             if (Number.isFinite(line.idealEstimations)) {
                                 ideal = Math.round(parseFloat(line.idealEstimations));
@@ -1007,15 +1006,15 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                                 } */
                             }
                             let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
-                            let _annotationTarget = date.toLocaleDateString() == targetDate.toLocaleDateString() ? 'Target date' : null;
-                            data.addRow([date, _annotationRemaing, _annotationTarget, ideal, predicted]);
+                            data.addRow([date, _annotationRemaing, ideal, predicted]);
                         });
 
                         let lastDate = new Date(LINES[LINES.length - 1].date);
                         let targetDate = new Date(featureData.targetDate);
                         if (lastDate < targetDate) {
-                            data.addRow([targetDate, null, 'Target date', 0, 0]);
+                            data.addRow([targetDate, null, 0, 0]);
                         }
+
 
                         var options = {
                             title: 'Project Monitor\n' +
@@ -1048,6 +1047,29 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         };
                         var chart = new google.visualization.LineChart($curve_chart[0]);
                         chart.draw(data, options);
+                        google.visualization.events.addListener(chart, 'ready', chartReadyHandler);
+                        function chartReadyHandler() {
+                            drawVAxisLine(chart, targetDate)
+                        }
+                        function drawVAxisLine(chart, value) {
+                            var layout = chart.getChartLayoutInterface();
+                            var chartArea = layout.getChartAreaBoundingBox();
+
+                            var svg = chart.getContainer().getElementsByTagName('svg')[0];
+                            var xLoc = layout.getXLocation(value)
+                            svg.appendChild(createLine(xLoc, chartArea.top, chartArea.height, 'red', 4)); // axis line 
+                        }
+                        function createLine(x1, y1, z, color, w) {
+                            console.log([arguments])
+                            var line = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                            line.setAttribute('x', x1);
+                            line.setAttribute('y', y1);
+                            line.setAttribute('width', 2);
+                            line.setAttribute('height', z);
+                            line.setAttribute('fill', color);
+                            //line.setAttribute('stroke-width', w);
+                            return line;
+                        }
                         ///////piechart///////////
                         var dataIssueDistribution = new google.visualization.DataTable();
 
