@@ -999,7 +999,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
 
                         var options = {
                             title: 'Project Monitor\n' +
-                                'Predicted completion is ' + new Date(featureData.targetDate).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ' SP',
+                                'Predicted completion is ' + new Date(featureData.predictedProjectEnd).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ' SP',
                             lineWidth: 3,
                             series: {
                                 0: { lineDashStyle: [0, 0] },
