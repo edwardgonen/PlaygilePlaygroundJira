@@ -9,10 +9,24 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
+            .FavoritesContent:empty~.emptyFavoritesText {
+                /* background: black; */
+                color: gainsboro;
+                position: relative;
+                top: -33px;
+                left: 46px;
+                font-size: 23px;
+                display: block;
+            }
+            .emptyFavoritesText{
+                display: none;
+            }
+
             .FavoritesContent .StatusBlock {
                 background: #2684ff26;
             }
-            #quality_score_chart p{
+
+            #quality_score_chart p {
                 margin: 0;
             }
 
@@ -549,6 +563,7 @@
                 <div class="FavoritesHeaderLabelText">Favorites</div>
             </div>
             <ul class="FavoritesContent connectedSortable "></ul>
+            <div class="emptyFavoritesText">Drag & Drop Features HERE</div>
         </div>
         <div class="content">
             <div id="FadeBlock" class="fade">
@@ -574,7 +589,12 @@
             <div class="generalLoading">
                 generalLoading
             </div>
-            <ul class="generalViewBlock connectedSortable ">
+            <div class="FavoritesBlock">
+                <div class="FavoritesHeaderLabel">
+                    <div class="FavoritesHeaderLabelText">All</div>
+                </div>
+                <ul class="generalViewBlock connectedSortable ">
+            </div>
             </ul>
         </div>
         <table id="roadmap-features-table" ; width="100%">
@@ -895,7 +915,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                 function genericSortFeature() {
                     var searchData = JSON.parse(localStorage.searchData);
                     var featureNameSearch = searchData.featureSearch.toUpperCase();
-                    var teamNameSearch = searchData.teamName
+                    var teamNameSearch = searchData.teamName.toUpperCase();
                     STORE.viewChildren.forEach((elem) => {
                         if (elem.find('h2')[0]) {
                             let result1 = false;
