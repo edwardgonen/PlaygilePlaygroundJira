@@ -1,5 +1,5 @@
 /**
- * Created by Ext_EdG on 11/12/2020.
+ * Created by on 11/12/2020.
  */
 package com.playgileplayground.jira.servlet;
 
@@ -125,7 +125,7 @@ public class pluginConfiguration extends HttpServlet {
                         parameterValue = Optional.ofNullable(req.getParameter(parameterName)).orElse("");
                         if (!parameterValue.isEmpty()) {
                             try {
-                                collectedStatus.append(" Setting " + parameterName + " to " + parameterValue);
+                                collectedStatus.append(" Setting ").append(parameterName).append(" to ").append(parameterValue);
                                 switch (parameterName) {
                                     case "plannedRoadmapFeatureVelocity":
                                         value = Double.parseDouble(parameterValue);
@@ -190,7 +190,6 @@ public class pluginConfiguration extends HttpServlet {
         {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
-            return;
         }
     }
 

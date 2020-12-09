@@ -9,6 +9,70 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
+            .FavoritesContent .StatusBlock {
+                background: #2684ff26;
+            }
+            #quality_score_chart p{
+                margin: 0;
+            }
+
+            ul {
+                padding: 0;
+            }
+
+            li {
+                list-style-type: none;
+            }
+
+            .FavoritesBlock {
+                /* 
+                position: relative; */
+                border: solid 1px gainsboro;
+                min-height: 4vh;
+                border-radius: 17px;
+                width: 100%;
+                margin: 20px 0px 10px 0px;
+            }
+
+            .FavoritesHeaderLabel {
+                color: gainsboro;
+                position: relative;
+                top: -17px;
+                left: 46px;
+            }
+
+            .FavoritesHeaderLabelText {
+                position: absolute;
+                background: white;
+                width: min-content;
+                padding: 5px;
+            }
+
+            .resetSearchBtn {
+                align-self: center;
+            }
+
+            .resetSearchBtn:hover {
+                transform: scale(1.1);
+                transition: all 0.5s;
+            }
+
+            .svg-icon {
+                width: 2em;
+                height: 2em;
+            }
+
+            .svg-icon path,
+            .svg-icon polygon,
+            .svg-icon rect {
+                fill: #4691f6;
+            }
+
+            .svg-icon circle {
+                stroke: #4691f6;
+                stroke-width: 1;
+            }
+
             /* The switch - the box around the slider */
             .switch {
                 position: relative;
@@ -433,6 +497,14 @@
                 /* text-decoration: none; */
                 /* font-weight: 600;*/
             }
+
+            .FavoritesContent {
+                min-height: 6vh;
+                display: flex;
+                flex-wrap: wrap;
+                top: 17px;
+                left: 0;
+            }
         </style>
     </head>
 
@@ -458,7 +530,26 @@
         <div id="progressbar">
             <div class="progress-label">Loading...</div>
         </div>
-        <input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
+        <div style="display: flex;">
+            <input class="FeatureSearch" type="text" placeholder="Feature search" size="40">
+            <select class="TeamsSearch"></select>
+            <div class="resetSearchBtn"><svg class="svg-icon current" data-name="trash" width="30px" height="30px"
+                    viewBox="0 0 30 30">
+                    <path fill="none" d="M10.83,12.498H9.162v10.009h1.668V12.498z M20.839,12.498h-1.668v10.009h1.668V12.498z M27.512,4.99h-8.341
+                V2.488c0-0.461-0.374-0.834-0.834-0.834h-6.673c-0.461,0-0.834,0.373-0.834,0.834V4.99H2.488c-0.461,0-0.834,0.373-0.834,0.834
+                c0,0.461,0.373,0.834,0.834,0.834h1.668v20.019c0,0.921,0.747,1.668,1.668,1.668h18.351c0.921,0,1.668-0.747,1.668-1.668V6.659
+                h1.668c0.461,0,0.834-0.373,0.834-0.834C28.346,5.363,27.973,4.99,27.512,4.99z M12.498,3.322h5.004V4.99h-5.004V3.322z
+                 M24.176,25.844c0,0.461-0.374,0.834-0.834,0.834H6.659c-0.461,0-0.834-0.373-0.834-0.834V6.659h18.351V25.844z M15.834,10.829
+                h-1.668v11.678h1.668V10.829z"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="FavoritesBlock">
+            <div class="FavoritesHeaderLabel">
+                <div class="FavoritesHeaderLabelText">Favorites</div>
+            </div>
+            <ul class="FavoritesContent connectedSortable "></ul>
+        </div>
         <div class="content">
             <div id="FadeBlock" class="fade">
                 <div class="lds-spinner">
@@ -483,8 +574,8 @@
             <div class="generalLoading">
                 generalLoading
             </div>
-            <div class="generalViewBlock">
-            </div>
+            <ul class="generalViewBlock connectedSortable ">
+            </ul>
         </div>
         <table id="roadmap-features-table" ; width="100%">
         </table>
@@ -509,6 +600,14 @@
                 console.log('loaded resources playgilePlugin and init v1');
 
                 const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
+
+                if (!localStorage.pluginFavorites) { localStorage.pluginFavorites = '[]' }
+                var FAVORITES = JSON.parse(localStorage.pluginFavorites)
+
+                if (!localStorage.searchData) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
+                if (!JSON.parse(localStorage.searchData).teamName) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
+
+                const SEARCH_DATA = JSON.parse(localStorage.searchData);
 
                 const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
 
@@ -538,14 +637,19 @@
 
                 const progressLabel = $(".progress-label");
 
-                const $featureSearch = $(".FeatureSearch").on('input', featureSearchOnChange)
+                const $featureSearch = $(".FeatureSearch").val(SEARCH_DATA.featureSearch).on('input', (e) => { featureSearchOnChange(e.currentTarget.value) })
+
+                const $teamsSearch = $(".TeamsSearch").on('input', (e) => { teamsSearchOnChange(e.currentTarget.value) })
+
+                const $resetSearchBtn = $('.resetSearchBtn').click(resetSearch);
 
                 const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString()
 
                 const STORE = {
                     featureArray: [],
                     viewChildren: [],
-                    $currentBlockInLoading: null
+                    $currentBlockInLoading: null,
+                    teams: {}
                 };
                 console.log('STORE');
                 console.log(STORE)
@@ -578,7 +682,7 @@
                     let loadingValue = 100 / STORE.featureArray.length;
                     if (STORE.featureArray.length != STORE.viewChildren.length) {
                         let featureId = encodeURIComponent(STORE.featureArray[STORE.viewChildren.length].featureKey);
-                        let $panelBlock = $('<div>')
+                        let $panelBlock = $('<li>')
                         $generalViewBlock.append($panelBlock)
                         STORE.$currentBlockInLoading = $panelBlock;
                         STORE.viewChildren.push($panelBlock);
@@ -589,15 +693,43 @@
                                 $panelBlock.hide()
                             } else {
                                 $panelBlock.empty();
-                                $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
+                                $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
                                 $panelBlock.click(() => { drawDeteilsView(data) })
+                                if (FAVORITES.includes(data.key)) { $panelBlock.detach().appendTo('.FavoritesContent') }
                                 console.log(data)
+                                STORE.teams[data.teamName] = true
+                                $(function () {
+                                    $(".generalViewBlock, .FavoritesContent").sortable({
+                                        connectWith: ".connectedSortable"
+                                    }).disableSelection();
+                                    $('.FavoritesContent').sortable({
+                                        deactivate: function (event, ui) {
+                                            var _$array = $('.FavoritesContent').children().map(function () { return $(this).children().data('featureKey') });
+                                            var _array = Array.from(_$array);
+                                            FAVORITES = _array
+                                            localStorage.pluginFavorites = JSON.stringify(_array)
+                                        }
+                                    })
+                                });
+
+                                updateTeamsSearch()
+
+                                genericSortFeature()
                             }
 
                         })
                     }
 
 
+                }
+                function updateTeamsSearch() {
+                    var _currentVal = SEARCH_DATA.teamName
+                    $teamsSearch.empty()
+                    $teamsSearch.append($('<option>').text(''))
+                    for (const key in STORE.teams) {
+                        $teamsSearch.append($('<option>').text(key))
+                    }
+                    $teamsSearch.val(_currentVal)
                 }
 
                 function globalLoadingON() {
@@ -740,12 +872,38 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         });
                     });
                 }
-                function featureSearchOnChange(e) {
-                    var searchValue = e.currentTarget.value.toUpperCase()
+                function resetSearch() {
+                    localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' });
+                    $teamsSearch.val('')
+                    $featureSearch.val('')
+                    genericSortFeature()
+                }
+                function featureSearchOnChange(value) {
+                    var searchData = JSON.parse(localStorage.searchData)
+                    searchData.featureSearch = value;
+                    localStorage.searchData = JSON.stringify(searchData)
+
+                    genericSortFeature()
+                }
+                function teamsSearchOnChange(value) {
+                    var searchData = JSON.parse(localStorage.searchData)
+                    searchData.teamName = value;
+                    localStorage.searchData = JSON.stringify(searchData)
+
+                    genericSortFeature()
+                }
+                function genericSortFeature() {
+                    var searchData = JSON.parse(localStorage.searchData);
+                    var featureNameSearch = searchData.featureSearch.toUpperCase();
+                    var teamNameSearch = searchData.teamName
                     STORE.viewChildren.forEach((elem) => {
                         if (elem.find('h2')[0]) {
+                            let result1 = false;
+                            let result2 = false;
                             var text = elem.find('h2')[0].innerText;
-                            !searchValue.length || text.toUpperCase().indexOf(searchValue) >= 0 ? elem.show() : elem.hide()
+                            if (!featureNameSearch.length || text.toUpperCase().indexOf(featureNameSearch) >= 0) { result1 = true };
+                            if (!teamNameSearch.length || elem.children().data().teamName.toUpperCase().indexOf(teamNameSearch) >= 0) { result2 = true };
+                            result1 && result2 ? elem.show() : elem.hide()
                         }
                     })
                 }
@@ -817,16 +975,16 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                             let ideal = null;
                             if (Number.isFinite(line.idealEstimations)) {
                                 ideal = Math.round(parseFloat(line.idealEstimations));
-                                if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
+                                /* if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
                                     ideal = null;
-                                }
+                                } */
                             }
                             let predicted = null;
                             if (Number.isFinite(line.predictedEstimations)) {
                                 predicted = Math.round(parseFloat(line.predictedEstimations))
-                                if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
+                                /* if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
                                     predicted = null;
-                                }
+                                } */
                             }
                             let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
                             let _annotationTarget = date.toLocaleDateString() == targetDate.toLocaleDateString() ? 'Target date' : null;
@@ -836,12 +994,12 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         let lastDate = new Date(LINES[LINES.length - 1].date);
                         let targetDate = new Date(featureData.targetDate);
                         if (lastDate < targetDate) {
-                            data.addRow([targetDate, null, 'Target date', null, null]);
+                            data.addRow([targetDate, null, 'Target date', 0, 0]);
                         }
 
                         var options = {
                             title: 'Project Monitor\n' +
-                                'Predicted completion is ' + new Date(featureData.targetDate).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ' SP',
+                                'Predicted completion is ' + new Date(featureData.predictedProjectEnd).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ' SP',
                             lineWidth: 3,
                             series: {
                                 0: { lineDashStyle: [0, 0] },
@@ -1141,7 +1299,8 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         let $panelBlock = STORE.viewChildren[panelIndex];
                         $panelBlock.empty();
                         $panelBlock.hide();
-                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key }));
+                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
+                        $panelBlock.off('click')
                         $panelBlock.click(() => { drawDeteilsView(data) })
                         $panelBlock.show()
                     })
