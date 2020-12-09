@@ -22,7 +22,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     Project currentProject;
     ProjectMonitoringMisc projectMonitoringMisc;
     ManageActiveObjects mao;
-    int numberOfOpenIssues;
+    private int numberOfOpenIssues;
     int numberOfTotalNotCompletedIssues;
 
 
@@ -353,40 +353,43 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     FeatureScore getQualityScore()
     {
         FeatureScore result = new FeatureScore();
-        /*
-        	1 Red, 2 - Yellow, 3 - Green
 
-        //delay
-        if (Expected end date <= Planned end date) DelayScore = 3;
+        double lowDelayPercentage = 5.0;
+        double mediumDelayPercentage = 15.0;
+
+        int targetMinusToday = DateTimeUtils.Days(targetDate, DateTimeUtils.getCurrentDate());
+        int predictedMinusTarget = DateTimeUtils.Days(projectProgressResult.predictedProjectEnd, targetDate);
+
+        if (targetMinusToday <= 0 && predictedMinusTarget > 0)
+        {
+            result.delayScore = 1;
+            result.delayScoreComment = "Already behind target date";
+        }
         else
         {
-           DelayScore = ((Expected date - Planned date) / Plannedlength)
-           ---- up to 5%  green (3),  5-15% - yellow (2), > 15% - red (1)
+            if (predictedMinusTarget <= 0 && targetMinusToday > 0)
+            {
+                result.delayScore = 3;
+                result.delayScoreComment = "According to schedule";
+            }
+            else if (predictedMinusTarget <= 0 && targetMinusToday <= 0) {
+                result.delayScore = 3;
+                result.delayScoreComment = "Seems like the feature is ready";
+            } else {
+                double delay = projectMonitoringMisc.roundToDecimalNumbers(((double) predictedMinusTarget / (double) targetMinusToday) * 100.0, 1);
+                if (delay > 0 && delay <= lowDelayPercentage) {
+                    result.delayScore = 3;
+                    result.delayScoreComment = "Small delay of " + delay + "%";
+                } else if (delay > lowDelayPercentage && delay < mediumDelayPercentage) {
+                    result.delayScore = 2;
+                    result.delayScoreComment = "Worrisome delay " + delay + "%, within " + mediumDelayPercentage + "%";
+                } else {
+                    result.delayScore = 1;
+                    result.delayScoreComment = "Critical delay " + delay + "%, more than " + mediumDelayPercentage + "%";
+                }
+            }
         }
-        */
-        double lowDelayPercentage = 0.05;
-        double mediumDelayPercentage = 0.15;
 
-        int differenceInDays = DateTimeUtils.AbsDays(projectProgressResult.predictedProjectEnd, targetDate);
-        double delay = (double)differenceInDays / (double) DateTimeUtils.AbsDays(targetDate, startDateRoadmapFeature);
-        delay = projectMonitoringMisc.roundToDecimalNumbers(delay, 1);
-        if (delay <= 0)
-        {
-            result.delayScore = 3;
-            result.delayScoreComment = "No delay is expected";
-        }
-        else if (delay > 0 && delay <= lowDelayPercentage) {
-            result.delayScore = 3;
-            result.delayScoreComment = "Small delay of " + delay * 100.0 + "%";
-        }
-        else if (delay > lowDelayPercentage && delay < mediumDelayPercentage) {
-            result.delayScore = 2;
-            result.delayScoreComment = "Worrisome delay " + delay * 100.0 + "%, within " + mediumDelayPercentage * 100.0 + "%";
-        }
-        else {
-            result.delayScore = 1;
-            result.delayScoreComment = "Critical delay " + delay * 100.0 + "%, more than " + mediumDelayPercentage * 100.0 + "%";
-        }
         /*
         //estimation ration
         EstimationScore = (number of normal (>0 <13 SP) not closed stories) / (Total number of not closed stories)

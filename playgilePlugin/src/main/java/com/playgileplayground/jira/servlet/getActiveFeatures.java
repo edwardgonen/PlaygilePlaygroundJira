@@ -1,32 +1,28 @@
-/**
- * Created by Ext_EdG on 11/12/2020.
- */
 package com.playgileplayground.jira.servlet;
 
     import com.atlassian.activeobjects.external.ActiveObjects;
-    import com.atlassian.activeobjects.tx.Transactional;
-    import com.atlassian.jira.bc.issue.search.SearchService;
-    import com.atlassian.jira.component.ComponentAccessor;
-    import com.atlassian.jira.issue.Issue;
-    import com.atlassian.jira.project.Project;
-    import com.atlassian.jira.project.ProjectManager;
-    import com.atlassian.jira.security.JiraAuthenticationContext;
-    import com.atlassian.jira.user.ApplicationUser;
-    import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-    import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-    import com.atlassian.templaterenderer.TemplateRenderer;
-    import com.playgileplayground.jira.api.ProjectMonitor;
-    import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
-    import com.playgileplayground.jira.impl.StatusText;
-    import com.playgileplayground.jira.jiraissues.JiraInterface;
-    import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.atlassian.activeobjects.tx.Transactional;
+import com.atlassian.jira.bc.issue.search.SearchService;
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.ProjectManager;
+import com.atlassian.jira.security.JiraAuthenticationContext;
+import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.templaterenderer.TemplateRenderer;
+import com.playgileplayground.jira.api.ProjectMonitor;
+import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.StatusText;
+import com.playgileplayground.jira.jiraissues.JiraInterface;
 
-    import javax.servlet.ServletException;
-    import javax.servlet.http.HttpServlet;
-    import javax.servlet.http.HttpServletRequest;
-    import javax.servlet.http.HttpServletResponse;
-    import java.io.IOException;
-    import java.util.*;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 
 @Scanned
 public class getActiveFeatures extends HttpServlet {
@@ -121,7 +117,6 @@ public class getActiveFeatures extends HttpServlet {
         {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
-            return;
         }
 
     }

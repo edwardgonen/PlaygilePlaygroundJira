@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-/**
- * Created by Ext_EdG on 7/9/2020.
- */
 public class ProgressData {
 
     private ArrayList<DateAndValues> _progressData = new ArrayList<>();
@@ -16,13 +13,11 @@ public class ProgressData {
     }
 
     public ArrayList<Double> GetEstimationValuesList() {
-        ArrayList<Double> result = _progressData.stream().map(dataPair -> dataPair.Estimation).collect(Collectors.toCollection(ArrayList::new));
-        return result;
+        return _progressData.stream().map(dataPair -> dataPair.Estimation).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public ArrayList<Date> GetEstimationDatesList() {
-        ArrayList<Date> result = _progressData.stream().map(dataPair -> dataPair.Date).collect(Collectors.toCollection(ArrayList::new));
-        return result;
+        return _progressData.stream().map(dataPair -> dataPair.Date).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public DateAndValues GetElementAtIndex(int index) {
@@ -40,8 +35,6 @@ public class ProgressData {
     }
 
     public void SetData(ArrayList<DateAndValues> progressData) {
-        for (DateAndValues dataPair : progressData) {
-            this._progressData.add(dataPair);
-        }
+        this._progressData.addAll(progressData.stream().collect(Collectors.toList()));
     }
 }
