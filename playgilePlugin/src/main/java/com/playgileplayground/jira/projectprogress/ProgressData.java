@@ -35,6 +35,9 @@ public class ProgressData {
     public void AddDataPair(DateAndValues dataPair) {
         _progressData.add(dataPair);
     }
+    public void AddDataPair(int index, DateAndValues dataPair) {
+        _progressData.add(index, dataPair);
+    }
 
     public void SetData(ArrayList<DateAndValues> progressData) {
         for (DateAndValues dataPair : progressData) {
