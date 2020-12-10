@@ -15,12 +15,14 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
-import com.playgileplayground.jira.impl.*;
+import com.playgileplayground.jira.impl.FeatureScore;
+import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
+import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
-import com.playgileplayground.jira.projectprogress.ProgressData;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
 import javax.servlet.ServletException;
@@ -96,7 +98,7 @@ public class getAnalyzedFeature extends HttpServlet {
                 return;
             }
 
-            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface, applicationUser, currentProject, mao);
+            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface);
             //Issue selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, roadmapFeatureName);
 
             Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), roadmapFeatureName);
@@ -206,56 +208,10 @@ class GetAnalyzedFeatureResponse
 
         progressDataSets = getEstimationsSet(roadmapFeatureAnalysis.projectProgressResult);
 
-        //for the right presentation of target line on chart in Web I need to add targetDate entry in the progress data set
-        //progressDataSets = insertTargetDateInSet(progressDataSets, targetDate);
-
         velocityDataSets = getRealInterpolatedVelocities(roadmapFeatureAnalysis.artificialTimeWindowsForVelocityCalculation,
             roadmapFeatureAnalysis.interpolatedVelocityPoints);
 
         issueCountsDataSets = getHistoricalIssuesCounts(roadmapFeatureAnalysis.historicalDateAndValues);
-    }
-
-    ArrayList<ProgressDataSet> insertTargetDateInSet(ArrayList<ProgressDataSet> progressDataSets, Date targetDate)
-    {
-        //is target date within our set?
-        Date lastElementDate = progressDataSets.get(progressDataSets.size() - 1).date;
-        if (DateTimeUtils.Days(lastElementDate, targetDate) >= 0) //within
-        {
-            int index = 0;
-            for (ProgressDataSet pdsItem : progressDataSets)
-            {
-                //difference between element and target
-                int difference = DateTimeUtils.Days(targetDate, pdsItem.date);
-                if (difference == 0) //we have this element
-                {
-                    break; //nothing to do
-                }
-                else
-                {
-                    if (difference < 0) //this element is beyond target date so we need to insert before it - i.e. at index
-                    {
-                        ProgressDataSet pds = new ProgressDataSet();
-                        pds.date = targetDate;
-                        //just duplicate the values
-                        pds.predictedEstimations = pdsItem.predictedEstimations;
-                        pds.idealEstimations = pdsItem.idealEstimations;
-                        progressDataSets.add(index, pds);
-                        break;
-                    }
-                }
-                index++;
-            }
-        }
-        else //add to the end
-        {
-            ProgressDataSet pds = new ProgressDataSet();
-            pds.date = targetDate;
-            pds.predictedEstimations = 0;
-            pds.idealEstimations = 0;
-            progressDataSets.add(pds);
-        }
-
-        return progressDataSets;
     }
     ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult)
     {
@@ -295,61 +251,6 @@ class GetAnalyzedFeatureResponse
             icds.openIssues = dateAndValues.OpenIssues;
             icds.totalIssues = dateAndValues.TotalIssues;
             result.add(icds);
-        }
-        return result;
-    }
-    ArrayList<ProgressDataSet> getEstimationsSetOld(ProjectProgressResult projectProgressResult)
-    {
-        ArrayList<ProgressDataSet> result = new ArrayList<>();
-        ProgressData longestList;
-        ProgressData shortestList;
-        boolean predictedIsLongest;
-        if (projectProgressResult.progressData.Length() >= projectProgressResult.idealData.Length()) {
-            longestList = projectProgressResult.progressData;
-            shortestList = projectProgressResult.idealData;
-            predictedIsLongest = true;
-        }
-        else
-        {
-            longestList = projectProgressResult.idealData;
-            shortestList = projectProgressResult.progressData;
-            predictedIsLongest = false;
-        }
-        DateAndValues tmpPredictedDataPair, tmpIdealDataPair;
-        for (int i = 0; i < longestList.Length(); i++)
-        {
-            if (predictedIsLongest) {
-                tmpPredictedDataPair = longestList.GetElementAtIndex(i);
-                tmpIdealDataPair = shortestList.GetElementAtIndex(i);
-            }
-            else
-            {
-                tmpPredictedDataPair = shortestList.GetElementAtIndex(i);
-                tmpIdealDataPair = longestList.GetElementAtIndex(i);
-            }
-            ProgressDataSet pds = new ProgressDataSet();
-            if (i >= shortestList.Length()) //no more elements in shortest
-            {
-
-                if (predictedIsLongest) {
-                    pds.date = tmpPredictedDataPair.Date;
-                    pds.idealEstimations = 0;
-                    pds.predictedEstimations = tmpPredictedDataPair.Estimation;
-                }
-                else
-                {
-                    pds.date = tmpIdealDataPair.Date;
-                    pds.idealEstimations = tmpIdealDataPair.Estimation;
-                    pds.predictedEstimations = 0;
-                }
-            }
-            else //both records available
-            {
-                pds.date = tmpPredictedDataPair.Date;
-                pds.idealEstimations = tmpIdealDataPair.Estimation;
-                pds.predictedEstimations = tmpPredictedDataPair.Estimation;
-            }
-            result.add(pds);
         }
         return result;
     }

@@ -1,23 +1,11 @@
 package com.playgileplayground.jira.impl;
 
-import java.awt.*;
 import java.util.*;
 
-/**
- * Created by Ext_EdG on 8/8/2020.
- */
 public class RoadmapFeatureDescriptor implements Comparator<RoadmapFeatureDescriptor>, Comparable<RoadmapFeatureDescriptor>{
     public String Name;
-    public double TeamVelocity;
-    public double ProjectVelocity;
-    public Date StartDate;
-    public double SprintLength;
-    public AnalyzedStories EstimatedStories;
-    public Date IdealEndOfProjet;
-    public Date PredictedEndOfProjet;
     public Date BusinessApprovalDate;
     public String Key;
-    public Color ProgressDataColor;
     public ArrayList<ProjectPreparationIssue> PreparationIssues;
 
     public RoadmapFeatureDescriptor() {

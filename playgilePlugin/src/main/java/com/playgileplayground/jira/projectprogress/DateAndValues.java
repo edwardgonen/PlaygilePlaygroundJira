@@ -1,12 +1,8 @@
 package com.playgileplayground.jira.projectprogress;
 
-
 import java.util.Comparator;
 import java.util.Date;
 
-/**
- * Created by Ext_EdG on 7/9/2020.
- */
 public class DateAndValues implements Comparator<DateAndValues>, Comparable<DateAndValues>{
     public Date Date;
     public double Estimation;

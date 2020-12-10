@@ -4,24 +4,19 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
-import com.atlassian.jira.project.Project;
-import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileIssue;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
-import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
+import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * Created by Ext_EdG on 7/16/2020.
- */
+
 public class ProjectMonitoringMisc {
 
     String TASK = "Task";
@@ -29,21 +24,35 @@ public class ProjectMonitoringMisc {
     String BUG = "Bug";
 
     private JiraInterface jiraInterface;
-    private ApplicationUser applicationUser;
-    private Project currentProject;
-    private ManageActiveObjects mao;
-    public ProjectMonitoringMisc(JiraInterface jiraInterface, ApplicationUser applicationUser, Project currentProject, ManageActiveObjects mao)
+
+    public ProjectMonitoringMisc(JiraInterface jiraInterface)
     {
         this.jiraInterface = jiraInterface;
-        this.currentProject = currentProject;
-        this.applicationUser = applicationUser;
-        this.mao = mao;
     }
+
+    public static String convertColorToHexadeimal(Color color)
+    {
+        String hex = Integer.toHexString(color.getRGB() & 0xffffff);
+        if(hex.length() < 6)
+        {
+            if(hex.length()==5)
+                hex = "0" + hex;
+            if(hex.length()==4)
+                hex = "00" + hex;
+            if(hex.length()==3)
+                hex = "000" + hex;
+        }
+        hex = "#" + hex;
+        return hex;
+    }
+
     public void addIssueSprintsToList(Issue issue, ArrayList<PlaygileSprint> playgileSprints)
     {
         //get all sprints
         Collection<PlaygileSprint> sprintsForIssue = jiraInterface.getAllSprintsForIssue(issue);
-        if (sprintsForIssue != null && sprintsForIssue.size() > 0) {
+        if (sprintsForIssue == null || sprintsForIssue.size() <= 0) {
+            StatusText.getInstance().add(false, "No sprints for " + issue.getId());
+        } else {
             //StatusText.getInstance().add(false, "Sprints for " + issue.getId() + " " + sprintsForIssue.size());
             for (PlaygileSprint playgileSprint : sprintsForIssue)
             {
@@ -81,10 +90,6 @@ public class ProjectMonitoringMisc {
                 }
             }
         }
-        else
-        {
-            //StatusText.getInstance().add(false, "No sprints for " + issue.getId());
-        }
     }
 
 
@@ -108,10 +113,7 @@ public class ProjectMonitoringMisc {
         LinearRegression lr = new LinearRegression();
         lr.getRegressionSlopeAndIntercept(x, y);
         double slope = lr.slope; double intercept = lr.intercept;
-        for (PlaygileSprint realSprint : allRealSprints)
-        {
-            result.add(DateTimeUtils.AbsDays(realSprint.getEndDate(), startDate) * slope + intercept);
-        }
+        result.addAll(allRealSprints.stream().map(realSprint -> DateTimeUtils.AbsDays(realSprint.getEndDate(), startDate) * slope + intercept).collect(Collectors.toList()));
 
         return result;
     }
@@ -182,39 +184,17 @@ public class ProjectMonitoringMisc {
     public boolean isIssueOneOfOurs(Issue issue)
     {
         IssueType issueType = issue.getIssueType();
-        return (
-            issueType.getName().equals(STORY) ||
-            //issueType.getName().equals(BUG) || //don't count bugs in the issues
-            issueType.getName().equals(TASK));
-    }
-
-    public boolean isIssueBug(Issue issue)
-    {
-        IssueType issueType = issue.getIssueType();
-        return issueType.getName().equals(BUG);
-    }
-    public double adjustStoryPointsIfNotEstimated(double storyPointValue, boolean isIssueBug, double defaultNotEstimatedIssueValue)
-    {
-        //Julia asked for not estimated bug to be 13
-        double result = storyPointValue;
-        if (storyPointValue <= 0)
-        {
-            if (defaultNotEstimatedIssueValue <= 0) {
-                if (isIssueBug) result = ProjectMonitor.MAX_BUG_ESTIMATION; //for not estimated
-                else result = ProjectMonitor.MAX_STORY_ESTIMATION; //for not estimated
-            }
-            else {
-                result = defaultNotEstimatedIssueValue;
-            }
-        }
-        return result;
+        return (issueType != null &&
+            (issueType.getName().equals(STORY) ||
+                //issueType.getName().equals(BUG) || //don't count bugs in the issues
+                issueType.getName().equals(TASK)));
     }
 
     public boolean isIssueCompleted(Issue issue)
     {
         Status issueStatus = issue.getStatus();
         StatusCategory statusCategory = issueStatus.getStatusCategory();
-        return (statusCategory.getKey() == StatusCategory.COMPLETE);
+        return (Objects.equals(statusCategory.getKey(), StatusCategory.COMPLETE));
     }
     public boolean isIssueOpen(Issue issue)
     {

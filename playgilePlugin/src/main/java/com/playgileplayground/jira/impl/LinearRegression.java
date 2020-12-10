@@ -1,8 +1,5 @@
 package com.playgileplayground.jira.impl;
 
-/**
- * Created by Ext_EdG on 7/31/2020.
- */
 public class LinearRegression {
     public double slope;
     public double intercept;

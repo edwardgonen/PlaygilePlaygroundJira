@@ -1,8 +1,5 @@
 package com.playgileplayground.jira.impl;
 
-/**
- * Created by Ext_EdG on 11/20/2020.
- */
 public class StatusText {
 
     private static final StatusText instance = new StatusText();
@@ -16,7 +13,7 @@ public class StatusText {
     }
     public void add(boolean mustPrint, String logEntry)
     {
-        if (mustPrint) statusText.append(logEntry + "<br>");
+        if (mustPrint) statusText.append(logEntry).append("<br>");
     }
     public void reset()
     {

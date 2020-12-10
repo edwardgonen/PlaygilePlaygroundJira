@@ -1,7 +1,5 @@
 package com.playgileplayground.jira.impl;
 
-import com.playgileplayground.jira.projectprogress.ProjectProgress;
-
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -143,8 +141,8 @@ public class ProjectPreparationPresentation {
 
                 result.append(rfd.Name + " " + rfd.Key + BR777 +
                     DateTimeUtils.ConvertDateToOurFormat(rfd.BusinessApprovalDate) + BR777 +
-                                ProjectProgress.convertColorToHexadeimal(featureBackgroundColor) + BR777 +
-                                ProjectProgress.convertColorToHexadeimal(featureForegroundColor)
+                                ProjectMonitoringMisc.convertColorToHexadeimal(featureBackgroundColor) + BR777 +
+                                ProjectMonitoringMisc.convertColorToHexadeimal(featureForegroundColor)
 
                 );
                 result.append(BR5);

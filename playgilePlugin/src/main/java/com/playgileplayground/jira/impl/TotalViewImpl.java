@@ -1,10 +1,5 @@
-
-/**
- * Created by Ext_EdG on 11/22/2020.
- */
 package com.playgileplayground.jira.impl;
 
-import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.properties.APKeys;
@@ -18,8 +13,6 @@ import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.web.ContextProvider;
-import com.playgileplayground.jira.jiraissues.JiraInterface;
-import com.playgileplayground.jira.persistence.ManageActiveObjects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +24,6 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
     @ComponentImport
-    private final ActiveObjects ao;
-    @ComponentImport
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
@@ -40,10 +31,8 @@ public class TotalViewImpl implements com.playgileplayground.jira.api.TotalView,
 
     public TotalViewImpl(UserProjectHistoryManager userProjectHistoryManager,
                          ProjectManager projectManager,
-                         ActiveObjects ao,
                          SearchService searchService) {
         this.userProjectHistoryManager = userProjectHistoryManager;
-        this.ao = ao;
         this.projectManager = projectManager;
         this.searchService = searchService;
     }

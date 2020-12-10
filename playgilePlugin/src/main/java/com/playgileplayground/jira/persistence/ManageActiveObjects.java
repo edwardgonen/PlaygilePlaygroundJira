@@ -6,7 +6,6 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.playgileplayground.jira.impl.DateTimeUtils;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import org.apache.commons.lang.time.DateUtils;
@@ -15,11 +14,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 
-/**
- * Created by Ext_EdG on 7/2/2020.
- */
 @Scanned
 @Named
 public final class ManageActiveObjects{
@@ -248,23 +246,6 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult SetProjectInitialEstimation(ManageActiveObjectsEntityKey key, Date startDate, double initialEstimation)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        PrjStatEntity prjStatEntity = GetProjectEntity(key);
-        if(prjStatEntity != null) {
-            prjStatEntity.setProjectStartDate(startDate);
-            prjStatEntity.setInitialEstimation(initialEstimation);
-            prjStatEntity.save();
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
-        }
-        return result;
-    }
-    @Transactional
     public ManageActiveObjectsResult SetTeamVelocity(ManageActiveObjectsEntityKey key, double teamVelocity)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -311,8 +292,7 @@ public final class ManageActiveObjects{
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if(prjStatEntity != null) {
             //read the existing data
-            ArrayList<DateAndValues> remainingEstimations = GetHistoricalDateAndValuesList(prjStatEntity);
-            result.Result = remainingEstimations;
+            result.Result = GetHistoricalDateAndValuesList(prjStatEntity);
             result.Message = "List returned";
         }
         else
@@ -343,7 +323,6 @@ public final class ManageActiveObjects{
                     tmpDateAndValues.TotalIssues = dateAndValues.TotalIssues;
                     tmpDateAndValues.OpenIssues = dateAndValues.OpenIssues;
                     SaveDateAndValuesList(existingData, prjStatEntity);
-                    prjStatEntity.save();
                     result.Message = "Data updated";
                     return result;
                 }
@@ -368,7 +347,7 @@ public final class ManageActiveObjects{
 
     private PrjStatEntity FindEntityByKey(ManageActiveObjectsEntityKey key, PrjStatEntity[] projectStatusEntities)
     {
-        //TODO make it strict search once old records are removed from all our Jira servers
+        /* TODO make it strict search once old records are removed from all our Jira servers */
         PrjStatEntity result = null;
         for (PrjStatEntity entity : projectStatusEntities)
         {
@@ -409,7 +388,7 @@ public final class ManageActiveObjects{
                 StatusText.getInstance().add(true, "Failed to deserialize DateAndValues");
             }
         }
-        else { //old format
+        else { //old format TODO delete after few months
             //parse it
             String[] entries = allEstimationsListAsString.split(LINE_SEPARATOR);
             if (entries.length > 0) {
@@ -446,11 +425,10 @@ public final class ManageActiveObjects{
     @Transactional
     private PrjStatEntity GetProjectEntity(ManageActiveObjectsEntityKey key)
     {
-        PrjStatEntity result = null;
         PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
 
         if (projectStatusEntities.length <= 0) {
-            return result;
+            return null;
         }
         return FindEntityByKey(key, projectStatusEntities);
     }
@@ -520,23 +498,6 @@ public final class ManageActiveObjects{
         return result;
     }
     @Transactional
-    public ManageActiveObjectsResult GetUserLastLocations(String userId)
-    {
-        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
-        UserEntity userEntity = GetUserEntity(userId);
-        if(userEntity != null) {
-            UserLastLocations usl = new UserLastLocations(userEntity.getLastProjectId(),userEntity.getLastRoadmapFeature());
-            result.Result = usl;
-            result.Message = "Found";
-        }
-        else
-        {
-            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
-            result.Message = "User not found " + userId;
-        }
-        return result;
-    }
-    @Transactional
     public ManageActiveObjectsResult SetUserLastLocations(String userId, UserLastLocations usl)
     {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
@@ -589,10 +550,9 @@ public final class ManageActiveObjects{
     @Transactional
     private UserEntity GetUserEntity(String userId)
     {
-        UserEntity result = null;
         UserEntity[] userEntities = ao.find(UserEntity.class);
         if (userEntities.length <= 0) {
-            return result;
+            return null;
         }
         return FindUserEntityById(userId, userEntities);
     }
