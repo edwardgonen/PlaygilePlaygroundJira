@@ -6,9 +6,6 @@ import com.playgileplayground.jira.impl.StatusText;
 
 import java.util.Date;
 
-/**
- * Created by Ext_EdG on 11/19/2020.
- */
 //The purpose of this class is purely performance. Instead of doing every time a request to Jira I do that once at beginning and cache
 public class PlaygileIssue {
 
@@ -19,6 +16,7 @@ public class PlaygileIssue {
     /////// publics
     public String issueKey;
     public String issueSummary;
+    public String issueStatus;
     public boolean bIssueCompleted;
     public boolean bOurIssueType;
     public boolean bIssueOpen;
@@ -41,6 +39,7 @@ public class PlaygileIssue {
         try {
             issueKey = jiraIssue.getKey();
             issueSummary = jiraIssue.getSummary();
+            issueStatus = projectMonitoringMisc.getIssueStatus(jiraIssue);
             bIssueCompleted = projectMonitoringMisc.isIssueCompleted(jiraIssue);
             bOurIssueType = projectMonitoringMisc.isIssueOneOfOurs(jiraIssue);
             bIssueOpen = projectMonitoringMisc.isIssueOpen(jiraIssue);
@@ -52,7 +51,7 @@ public class PlaygileIssue {
         }
         catch (Exception e)
         {
-            StatusText.getInstance().add(true, "Error instantiating issue " + issueKey + " " + issueSummary + " Exception " + e);
+            StatusText.getInstance().add(true, "Error instantiating issue " + issueKey + " " + issueSummary + " Exception " + projectMonitoringMisc.getExceptionTrace(e));
         }
 
         return result;
