@@ -198,8 +198,17 @@ public class ProjectMonitoringMisc {
     }
     public boolean isIssueOpen(Issue issue)
     {
-        return (issue.getStatus().getName().equalsIgnoreCase("open"));
+        return (getIssueStatus(issue).equalsIgnoreCase("open"));
     }
+    public boolean isIssueReadyForEstimation(Issue issue)
+    {
+        return (getIssueStatus(issue).equalsIgnoreCase("READY FOR ESTIMATION"));
+    }
+    public boolean isIssueReadyForDevelopment(Issue issue)
+    {
+        return (getIssueStatus(issue).equalsIgnoreCase("READY FOR DEV"));
+    }
+    public String getIssueStatus(Issue issue) {return issue.getStatus().getName();}
 
     public static String getExceptionTrace(Exception e)
     {

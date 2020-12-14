@@ -8,6 +8,8 @@ public class DateAndValues implements Comparator<DateAndValues>, Comparable<Date
     public double Estimation;
     public int TotalIssues;
     public int OpenIssues;
+    public int ReadyForEstimationIssues;
+    public int ReadyForDevelopmentIssues;
 
     //default constructor for deserialization purposes
     public DateAndValues() {}
