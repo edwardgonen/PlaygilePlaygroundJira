@@ -149,6 +149,8 @@ class IssueCountsDataSet
     public Date date;
     public int openIssues;
     public int totalIssues;
+    public int readyForDevelopmentIssues;
+    public int readyForEstimationIssues;
 }
 class VelocitiesDataSet
 {
@@ -249,6 +251,8 @@ class GetAnalyzedFeatureResponse
             IssueCountsDataSet icds = new IssueCountsDataSet();
             icds.date = dateAndValues.Date;
             icds.openIssues = dateAndValues.OpenIssues;
+            icds.readyForDevelopmentIssues = dateAndValues.ReadyForDevelopmentIssues;
+            icds.readyForEstimationIssues = dateAndValues.ReadyForEstimationIssues;
             icds.totalIssues = dateAndValues.TotalIssues;
             result.add(icds);
         }

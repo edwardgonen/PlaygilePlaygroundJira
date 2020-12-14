@@ -322,6 +322,8 @@ public final class ManageActiveObjects{
                     tmpDateAndValues.Estimation = dateAndValues.Estimation;
                     tmpDateAndValues.TotalIssues = dateAndValues.TotalIssues;
                     tmpDateAndValues.OpenIssues = dateAndValues.OpenIssues;
+                    tmpDateAndValues.ReadyForEstimationIssues = dateAndValues.ReadyForEstimationIssues;
+                    tmpDateAndValues.ReadyForDevelopmentIssues = dateAndValues.ReadyForDevelopmentIssues;
                     SaveDateAndValuesList(existingData, prjStatEntity);
                     result.Message = "Data updated";
                     return result;
@@ -332,6 +334,8 @@ public final class ManageActiveObjects{
             lastDateAndValues.Estimation = dateAndValues.Estimation;
             lastDateAndValues.TotalIssues = dateAndValues.TotalIssues;
             lastDateAndValues.OpenIssues = dateAndValues.OpenIssues;
+            lastDateAndValues.ReadyForEstimationIssues = dateAndValues.ReadyForEstimationIssues;
+            lastDateAndValues.ReadyForDevelopmentIssues = dateAndValues.ReadyForDevelopmentIssues;
             existingData.add(lastDateAndValues);
             SaveDateAndValuesList(existingData, prjStatEntity);
             result.Message = "Data added";

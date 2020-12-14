@@ -23,6 +23,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     ProjectMonitoringMisc projectMonitoringMisc;
     ManageActiveObjects mao;
     private int numberOfOpenIssues;
+    private int numberOfReadyForDevelopmentIssues;
+    private int numberOfReadyForEstimationIssues;
     int numberOfTotalNotCompletedIssues;
 
 
@@ -134,6 +136,14 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                         numberOfOpenIssues++;
                         StatusText.getInstance().add(true, "Issue counted as open " + playgileIssue.issueKey + " " + playgileIssue.issueSummary + ". Open issues count is " + numberOfOpenIssues);
                     }
+                    if (playgileIssue.bIssueReadyForDevelopment) {
+                        numberOfReadyForDevelopmentIssues++;
+                        StatusText.getInstance().add(true, "Issue counted as ready for development " + playgileIssue.issueKey + " " + playgileIssue.issueSummary + ". Ready for development issues count is " + numberOfReadyForDevelopmentIssues);
+                    }
+                    if (playgileIssue.bIssueReadyForEstimation) {
+                        numberOfReadyForEstimationIssues++;
+                        StatusText.getInstance().add(true, "Issue counted as ready for estimation " + playgileIssue.issueKey + " " + playgileIssue.issueSummary + ". Ready for estimation issues count is " + numberOfReadyForEstimationIssues);
+                    }
                 }
             }
             //now we have everything in the cache - list of instantiated issues
@@ -180,6 +190,8 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             dateAndValues.Estimation = remainingTotalEstimations;
             dateAndValues.TotalIssues = numberOfTotalNotCompletedIssues;
             dateAndValues.OpenIssues = numberOfOpenIssues;
+            dateAndValues.ReadyForDevelopmentIssues = numberOfReadyForDevelopmentIssues;
+            dateAndValues.ReadyForEstimationIssues = numberOfReadyForEstimationIssues;
             mao.AddLatestHistoricalRecord(new ManageActiveObjectsEntityKey(projectKey, featureSummary), dateAndValues);
 
 

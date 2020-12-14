@@ -20,6 +20,8 @@ public class PlaygileIssue {
     public boolean bIssueCompleted;
     public boolean bOurIssueType;
     public boolean bIssueOpen;
+    public boolean bIssueReadyForEstimation;
+    public boolean bIssueReadyForDevelopment;
     public Issue jiraIssue;
     public double storyPoints;
     public Date resolutionDate;
@@ -45,6 +47,8 @@ public class PlaygileIssue {
             bIssueOpen = projectMonitoringMisc.isIssueOpen(jiraIssue);
             storyPoints = jiraInterface.getStoryPointsForIssue(jiraIssue);
             bIssueCompleted = projectMonitoringMisc.isIssueCompleted(jiraIssue);
+            bIssueReadyForDevelopment= projectMonitoringMisc.isIssueReadyForDevelopment(jiraIssue);
+            bIssueReadyForEstimation = projectMonitoringMisc.isIssueReadyForEstimation(jiraIssue);
             resolutionDate = jiraIssue.getResolutionDate();
             this.defaultNotEstimatedIssueValue = defaultNotEstimatedIssueValue;
             result = true;
