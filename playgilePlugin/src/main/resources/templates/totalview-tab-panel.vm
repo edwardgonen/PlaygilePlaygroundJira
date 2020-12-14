@@ -1060,7 +1060,6 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                             svg.appendChild(createLine(xLoc, chartArea.top, chartArea.height, 'red', 4)); // axis line 
                         }
                         function createLine(x1, y1, z, color, w) {
-                            console.log([arguments])
                             var line = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                             line.setAttribute('x', x1);
                             line.setAttribute('y', y1);
@@ -1090,8 +1089,29 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                             width: '100%',
                             height: '100%'
                         };
-                        var chartIssueDistribution = new google.visualization.PieChart($piechart[0]);
-                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                        var chartIssueDistributionPie = new google.visualization.PieChart($piechart[0]);
+                        google.visualization.events.addListener(chartIssueDistributionPie, 'select', () => {
+                            var selectedItem = chartIssueDistributionPie.getSelection()[0];
+                            if (selectedItem) {
+                                let storyPointsCondition = (() => {
+                                    switch (selectedItem.row) {
+                                        case 0:
+                                            return `and "Story Points" is empty or "Story Points" = 0`
+                                        case 1:
+                                            return `and "Story Points" > 0 and "Story Points" < 13`
+                                        case 2:
+                                            return `and "Story Points" = 13`
+                                        case 3:
+                                            return `and "Story Points" > 13`
+                                        default:
+                                            return ``
+                                            break;
+                                    }
+                                })()
+                                window.open(`${BASE_URL}/issues/?jql=issueFunction in issuesInEpics("issueFunction in linkedIssuesOf(\\"issuekey = ${featureData.key}\\",\\"Is Parent task of:\\")") and issuetype in (Story, Task) and statusCategory != Done ${storyPointsCondition}`)
+                            }
+                        });
+                        chartIssueDistributionPie.draw(dataIssueDistribution, optionsIssueDistribution);
                         ///////////velocity_chart///////
                         var dataVelocity = new google.visualization.DataTable();
                         dataVelocity.addColumn('date', 'Date');
