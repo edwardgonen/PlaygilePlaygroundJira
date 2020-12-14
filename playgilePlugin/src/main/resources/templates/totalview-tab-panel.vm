@@ -1097,11 +1097,11 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                                     switch (selectedItem.row) {
                                         case 0:
                                             return `and "Story Points" is empty or "Story Points" = 0`
-                                        case 1:
+                                        case 3:
                                             return `and "Story Points" > 0 and "Story Points" < 13`
                                         case 2:
                                             return `and "Story Points" = 13`
-                                        case 3:
+                                        case 1:
                                             return `and "Story Points" > 13`
                                         default:
                                             return ``
