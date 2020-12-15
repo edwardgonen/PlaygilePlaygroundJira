@@ -918,6 +918,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                     var featureNameSearch = searchData.featureSearch.toUpperCase();
                     var teamNameSearch = searchData.teamName.toUpperCase();
                     STORE.viewChildren.forEach((elem) => {
+                        if (elem.parent().hasClass('FavoritesContent')) { return };
                         if (elem.find('h2')[0]) {
                             let result1 = false;
                             let result2 = false;
@@ -945,7 +946,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         let html = `<h1 class=QualityscoreHeader${featureData.qualityScore.totalScore} style="color:white;">
                         <a style="color: white;" href="${BASE_URL}/browse/${featureData.key}" target="_blank">${featureData.summary} by ${featureData.teamName} team</a>
                         </h1>
-                    <div>Click anywhere to close</div>
+                    <div>Click outside the panel to close</div>
                     <div style="width:90%; height:40vh; display: inline-flex;">   
                         <div id="curve_chart" style="width:33%; height:100%; padding:5px"></div>
                         <div id="velocity_chart" style="width:33%; height:100%;  padding:5px"></div>
@@ -1018,7 +1019,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
 
                         var options = {
                             title: 'Project Monitor\n' +
-                                'Predicted completion is ' + new Date(featureData.predictedProjectEnd).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ' SP',
+                                'ETA is ' + new Date(featureData.predictedProjectEnd).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ', Target ' + new Date(featureData.targetDate).toLocaleDateString(),
                             lineWidth: 3,
                             series: {
                                 0: { lineDashStyle: [0, 0] },
@@ -1096,7 +1097,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                                 let storyPointsCondition = (() => {
                                     switch (selectedItem.row) {
                                         case 0:
-                                            return `and "Story Points" is empty or "Story Points" = 0`
+                                            return `and ("Story Points" is empty or "Story Points" = 0)`
                                         case 3:
                                             return `and "Story Points" > 0 and "Story Points" < 13`
                                         case 2:
@@ -1151,19 +1152,24 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         //////////////////open_total_chart/////////////////////////
                         var dataOpenTotalChart = new google.visualization.DataTable();
                         dataOpenTotalChart.addColumn('date', 'Date');
-                        dataOpenTotalChart.addColumn('number', 'Open issues');
-                        dataOpenTotalChart.addColumn('number', 'Total issues');
+                        dataOpenTotalChart.addColumn('number', 'Open');
+                        dataOpenTotalChart.addColumn('number', 'Total');
+                        dataOpenTotalChart.addColumn('number', 'RFD');
+                        dataOpenTotalChart.addColumn('number', 'RFE');
                         featureData.issueCountsDataSets.forEach((line) => {
                             let date = new Date(line.date);
                             let openIssues = line.openIssues;
                             let totalIssues = line.totalIssues;
-                            dataOpenTotalChart.addRow([date, openIssues, totalIssues]);
+                            let readyForDevelopmentIssues = line.readyForDevelopmentIssues;
+                            let readyForEstimationIssues = line.readyForEstimationIssues;
+                            dataOpenTotalChart.addRow([date, openIssues, totalIssues, readyForDevelopmentIssues, readyForEstimationIssues]);
                         })
                         let optionsOpenTotal = {
-                            title: 'Open/Total issues',
+                            title: 'Issues Distribution',
                             lineWidth: 3,
                             width: '100%',
-                            height: '100%'
+                            height: '100%',
+                            legend: { position: 'bottom' },
                         }
                         var chartOpenTotal = new google.visualization.AreaChart($open_total_chart[0]);
                         chartOpenTotal.draw(dataOpenTotalChart, optionsOpenTotal);
@@ -1204,15 +1210,15 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
 
                         $('.gaugeDescr0').html(`
                             <h2 class=QualityscoreText${delay}>Delay</h2>
-                            <p>${qualityScore.delayScoreComment}</p>
+                            <p style="font-size: 1.8vh;">${qualityScore.delayScoreComment}</p>
                         `)
                         $('.gaugeDescr1').html(`
                             <h2 class=QualityscoreText${estimation}>Estimations</h2>
-                            <p>${qualityScore.estimationScoreComment}</p>
+                            <p style="font-size: 1.8vh;">${qualityScore.estimationScoreComment}</p>
                         `)
                         $('.gaugeDescr2').html(`
                             <h2 class=QualityscoreText${readiness}>BL Readiness</h2>
-                            <p>${qualityScore.readinessScoreComment}</p>
+                            <p style="font-size: 1.8vh;">${qualityScore.readinessScoreComment}</p>
                         `)
                         /////////////////issue_distribution///////////////
                         var distributionResult = featureData.overallIssuesDistributionInSprint;
@@ -1247,7 +1253,12 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
                         /////////////
 
-                        $detailsView.click(() => { $detailsView.hide() })
+                        $detailsView.click((e) => {
+                            if (e.target.className == "detailsView") {
+                                $detailsView.off()
+                                $detailsView.hide()
+                            }
+                        })
                     } catch (error) {
                         $detailsView.hide()
                         console.log(error)

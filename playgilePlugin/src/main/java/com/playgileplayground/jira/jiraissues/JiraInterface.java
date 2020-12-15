@@ -212,6 +212,7 @@ public class JiraInterface {
         Query query;
 
         String searchString;
+        //TODO when BK fixes query, remove second condition ("BKM")
         if (!jiraVersion.startsWith("7.") && !currentProject.getKey().contains("BKM")) //higher than 7
             searchString = "issueFunction in linkedIssuesOf(\"issueKey=" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
         else searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";

@@ -452,7 +452,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         }
         else {
             result.readinessScore = 1;
-            result.readinessScoreComment = "Backlog is not ready at all - Open issues (" + readinessRatio * 100.0 + "%) are above " + mediumAmountOfOpenIssues * 100.0 + "%";
+            result.readinessScoreComment = "Backlog is not ready at all - Open issues (" + readinessRatio + "%) are above " + mediumAmountOfOpenIssues + "%";
         }
         /*
         Here we have 3 scores each can be 1, 2 or 3. The minimum between them will be the final color
