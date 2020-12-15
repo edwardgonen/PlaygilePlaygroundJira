@@ -365,6 +365,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     FeatureScore getQualityScore()
     {
         FeatureScore result = new FeatureScore();
+        boolean bFeatureIsReady = false;
 
         double lowDelayPercentage = 5.0;
         double mediumDelayPercentage = 15.0;
@@ -387,6 +388,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             else if (predictedMinusTarget <= 0 && targetMinusToday <= 0) {
                 result.delayScore = 3;
                 result.delayScoreComment = "Seems like the feature is ready";
+                bFeatureIsReady = true;
             } else {
                 double delay = projectMonitoringMisc.roundToDecimalNumbers(((double) predictedMinusTarget / (double) targetMinusToday) * 100.0, 1);
                 if (delay > 0 && delay <= lowDelayPercentage) {
@@ -409,23 +411,27 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         */
         double goodEstimationRatio = 90.0;
         double mediocreEstimationRation = 60.0;
-        double estimationRatio = (analyzedStories.EstimatedStoriesNumber / (double)numberOfTotalNotCompletedIssues) * 100.0;
-        estimationRatio = projectMonitoringMisc.roundToDecimalNumbers(estimationRatio, 1);
-        if (estimationRatio >= 100.0) {
+        if (bFeatureIsReady)
+        {
             result.estimationScore = 3;
-            result.estimationScoreComment = "All issues are well-estimated";
-        }
-        else if (estimationRatio >= goodEstimationRatio) {
-            result.estimationScore = 3;
-            result.estimationScoreComment = "Most (" + estimationRatio + "%) of the issues are estimated below 13.0 - above " + goodEstimationRatio + "%";
-        }
-        else if (estimationRatio >= mediocreEstimationRation && estimationRatio < goodEstimationRatio) {
-            result.estimationScore = 2;
-            result.estimationScoreComment = "Not much (" + estimationRatio + "%) of the issues are well estimated - less than " + goodEstimationRatio + "%";
+            result.estimationScoreComment = "Seems like the feature is ready";
         }
         else {
-            result.estimationScore = 1;
-            result.estimationScoreComment = "Most (" + (100.0 - estimationRatio) + "%) of the issues are either too large or not estimated";
+            double estimationRatio = (analyzedStories.EstimatedStoriesNumber / (double) numberOfTotalNotCompletedIssues) * 100.0;
+            estimationRatio = projectMonitoringMisc.roundToDecimalNumbers(estimationRatio, 1);
+            if (estimationRatio >= 100.0) {
+                result.estimationScore = 3;
+                result.estimationScoreComment = "All issues are well-estimated";
+            } else if (estimationRatio >= goodEstimationRatio) {
+                result.estimationScore = 3;
+                result.estimationScoreComment = "Most (" + estimationRatio + "%) of the issues are estimated below 13.0 - above " + goodEstimationRatio + "%";
+            } else if (estimationRatio >= mediocreEstimationRation && estimationRatio < goodEstimationRatio) {
+                result.estimationScore = 2;
+                result.estimationScoreComment = "Not much (" + estimationRatio + "%) of the issues are well estimated - less than " + goodEstimationRatio + "%";
+            } else {
+                result.estimationScore = 1;
+                result.estimationScoreComment = "Most (" + (100.0 - estimationRatio) + "%) of the issues are either too large or not estimated";
+            }
         }
         /*
 
@@ -435,24 +441,28 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         */
         double smallAmountOfOpenIssues = 10.0;
         double mediumAmountOfOpenIssues = 30.0;
-        result.readinessScore = 3;
-        double readinessRatio = ((double)numberOfOpenIssues / (double) numberOfTotalNotCompletedIssues) * 100.0;
-        readinessRatio = projectMonitoringMisc.roundToDecimalNumbers(readinessRatio, 1);
-        if (readinessRatio <= 0.0) {
+        if (bFeatureIsReady)
+        {
             result.readinessScore = 3;
-            result.readinessScoreComment = "No open issues";
-        }
-        else if (readinessRatio > 0.0 && readinessRatio < smallAmountOfOpenIssues) {
-            result.readinessScore = 3;
-            result.readinessScoreComment = "Backlog is in a good shape - Open issues (" + readinessRatio + "%) are below " + smallAmountOfOpenIssues + "%";
-        }
-        else if (readinessRatio >= smallAmountOfOpenIssues && readinessRatio < mediumAmountOfOpenIssues) {
-            result.readinessScore = 2;
-            result.readinessScoreComment = "Backlog is not quite ready - Open issues (" + readinessRatio + "%) are above " + smallAmountOfOpenIssues + "%";
+            result.readinessScoreComment = "Seems like the feature is ready";
         }
         else {
-            result.readinessScore = 1;
-            result.readinessScoreComment = "Backlog is not ready at all - Open issues (" + readinessRatio + "%) are above " + mediumAmountOfOpenIssues + "%";
+            result.readinessScore = 3;
+            double readinessRatio = ((double) numberOfOpenIssues / (double) numberOfTotalNotCompletedIssues) * 100.0;
+            readinessRatio = projectMonitoringMisc.roundToDecimalNumbers(readinessRatio, 1);
+            if (readinessRatio <= 0.0) {
+                result.readinessScore = 3;
+                result.readinessScoreComment = "No open issues";
+            } else if (readinessRatio > 0.0 && readinessRatio < smallAmountOfOpenIssues) {
+                result.readinessScore = 3;
+                result.readinessScoreComment = "Backlog is in a good shape - Open issues (" + readinessRatio + "%) are below " + smallAmountOfOpenIssues + "%";
+            } else if (readinessRatio >= smallAmountOfOpenIssues && readinessRatio < mediumAmountOfOpenIssues) {
+                result.readinessScore = 2;
+                result.readinessScoreComment = "Backlog is not quite ready - Open issues (" + readinessRatio + "%) are above " + smallAmountOfOpenIssues + "%";
+            } else {
+                result.readinessScore = 1;
+                result.readinessScoreComment = "Backlog is not ready at all - Open issues (" + readinessRatio + "%) are above " + mediumAmountOfOpenIssues + "%";
+            }
         }
         /*
         Here we have 3 scores each can be 1, 2 or 3. The minimum between them will be the final color
