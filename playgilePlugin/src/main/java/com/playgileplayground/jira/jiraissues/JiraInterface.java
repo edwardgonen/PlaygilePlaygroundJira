@@ -232,15 +232,18 @@ public class JiraInterface {
         try {
             searchResults = searchService.search(applicationUser, query, pagerFilter);
         } catch (SearchException e) {
+            StatusText.getInstance().add(true, "Exception getting search on feature " + roadmapFeature.getKey());
             //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
         List<Issue> issues = new ArrayList<>();
         List<Issue> issueLinks;
         if (searchResults != null)
         {
+            StatusText.getInstance().add(true, "Accessing list of issues for " + roadmapFeature.getKey());
             issueLinks = this.AccessVersionIndependentListOfIssues(searchResults);
             if (issueLinks != null && issueLinks.size() > 0)
             {
+                StatusText.getInstance().add(true, "Found " + issueLinks.size() + " issue links for feature " + roadmapFeature.getKey());
                 for (Issue issueLink : issueLinks) {
 
                     //TEST
@@ -260,11 +263,13 @@ public class JiraInterface {
             }
             else
             {
+                StatusText.getInstance().add(true, "Returned no issue links for " + roadmapFeature.getKey());
                 issues = null;
             }
         }
         else
         {
+            StatusText.getInstance().add(true, "Search result is null for " + roadmapFeature.getKey());
             issues = null;
         }
 
@@ -519,6 +524,10 @@ public class JiraInterface {
     private List<Issue> AccessVersionIndependentListOfIssues(SearchResults searchResults)
     {
         //ugly situation - jira replaced API from getIssues to getResult :(
+        if (searchResults == null)
+        {
+            StatusText.getInstance().add(true, "In AccessVersionIndependentListOfIssues - Search results is null");
+        }
         Method newGetMethod = null;
         List<Issue> result;
         try {
@@ -530,16 +539,20 @@ public class JiraInterface {
             }
         }
         if (newGetMethod != null) {
+            StatusText.getInstance().add(true, "In AccessVersionIndependentListOfIssues - Before calling get results on search results");
             try {
                 result = (List<Issue>)newGetMethod.invoke(searchResults);
             } catch (IllegalAccessException e) {
+                StatusText.getInstance().add(true, "In AccessVersionIndependentListOfIssues - Access exception");
                 result = null;
             } catch (InvocationTargetException e) {
+                StatusText.getInstance().add(true, "In AccessVersionIndependentListOfIssues - Invocation exception");
                 result = null;
             }
         }
         else
         {
+            StatusText.getInstance().add(true, "Cannot call get results on search results");
             result = null;
         }
         return result;

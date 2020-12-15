@@ -101,9 +101,15 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         //get team name.
         teamName = jiraInterface.getTeamNameForIssue(roadmapFeature);
 
+        //let's create a key in Active objects if it does not exist yet
+        ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureSummary)); //will not create if exists
+        if (maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS && maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+            StatusText.getInstance().add(true, "Failed to create AO entry for " + featureKey + " - " + featureSummary);
+            return false;
+        }
+
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
-
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);
 
