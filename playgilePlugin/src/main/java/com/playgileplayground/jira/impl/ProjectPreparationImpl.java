@@ -103,7 +103,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                     roadmapFeatureDescriptor.Name = roadmapFeature.getSummary();
                     roadmapFeatureDescriptor.Key = roadmapFeature.getKey();
 
-                    jqr = jiraInterface.getBusinessApprovalDateForIssue(roadmapFeature, dateTimeFormatter.formatter());
+                    jqr = jiraInterface.getBusinessApprovalDateForIssue(roadmapFeature);
                     if (jqr.Code == JiraQueryResult.STATUS_CODE_SUCCESS)
                     {
                         roadmapFeatureDescriptor.BusinessApprovalDate = (Date)jqr.Result;
