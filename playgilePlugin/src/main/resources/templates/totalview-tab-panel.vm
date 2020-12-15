@@ -1096,7 +1096,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                                 let storyPointsCondition = (() => {
                                     switch (selectedItem.row) {
                                         case 0:
-                                            return `and "Story Points" is empty or "Story Points" = 0`
+                                            return `and ("Story Points" is empty or "Story Points" = 0)`
                                         case 3:
                                             return `and "Story Points" > 0 and "Story Points" < 13`
                                         case 2:
