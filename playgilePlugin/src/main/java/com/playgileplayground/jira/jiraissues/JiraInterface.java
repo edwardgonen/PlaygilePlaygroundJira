@@ -38,17 +38,9 @@ import java.util.List;
  * Created by Ext_EdG on 7/6/2020.
  */
 public class JiraInterface {
-    ProjectMonitorImpl mainClass;
     ApplicationUser applicationUser;
     SearchService searchService;
     String jiraVersion;
-    public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
-    {
-        this.mainClass = mainClass;
-        this.applicationUser = applicationUser;
-        this.searchService = searchService;
-        this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
-    }
 
     public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
     {
@@ -94,20 +86,6 @@ public class JiraInterface {
         }
 
         return result;
-    }
-
-    public List<Issue> getAllIssues(Project currentProject) {
-        //mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
-        IssueManager issueManager = ComponentAccessor.getIssueManager();
-        Collection<Long> allIssueIds = null;
-        try {
-            allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
-        } catch (GenericEntityException e) {
-            //mainClass.WriteToStatus(false, "Failed to get all issues " + e.toString());
-            //System.out.println("Failed to get issue ids " + e.toString());
-        }
-        List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
-        return allIssues;
     }
     public List<Issue> getAllProductRelatedIssues(RoadmapFeatureDescriptor roadmapFeature)
     {
@@ -155,55 +133,7 @@ public class JiraInterface {
 
         return issues;
     }
-
-    public List<Issue> getAllRoadmapFeatures(ApplicationUser applicationUser, Project currentProject, String featureKey)
-    {
-        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
-        Query query = jqlClauseBuilder.project(currentProject.getKey()).and().issueType(featureKey).buildQuery();
-        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
-        SearchResults searchResults = null;
-        try {
-            searchResults = searchService.search(applicationUser, query, pagerFilter);
-        } catch (SearchException e) {
-            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
-        }
-        if (searchResults == null)
-        {
-            return null;
-        }
-        else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
-        }
-    }
-    public List<Issue> getIssuesByFixVersion(ApplicationUser applicationUser, Project currentProject, String fixVersion) {
-        //if the version is not defined return null. no query
-        if (fixVersion == null) return null;
-
-        Query query;
-        String searchString = "project = \"" + currentProject.getKey() + "\" AND fixVersion = " + fixVersion;
-        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
-        try {
-            query = jqlQueryParser.parseQuery(searchString);
-        } catch (JqlParseException e) {
-            return null;
-        }
-
-        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
-        SearchResults searchResults = null;
-        try {
-            searchResults = searchService.search(applicationUser, query, pagerFilter);
-        } catch (SearchException e) {
-            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
-        }
-        if (searchResults == null)
-        {
-            return null;
-        }
-        else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
-        }
-    }
-
+    
     public List<Issue> getIssuesForRoadmapFeature( ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
     {
         //get all linked epics for Feature
