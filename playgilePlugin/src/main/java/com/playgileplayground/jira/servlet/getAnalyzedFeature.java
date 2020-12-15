@@ -101,6 +101,7 @@ public class getAnalyzedFeature extends HttpServlet {
             ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface);
             //Issue selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, roadmapFeatureName);
 
+            StatusText.getInstance().add(true, "Getting roadmap feature issues for " + roadmapFeatureName);
             Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), roadmapFeatureName);
             if (selectedRoadmapFeatureIssue == null) //not found
             {
@@ -128,6 +129,10 @@ public class getAnalyzedFeature extends HttpServlet {
             } else //failed to analyze feature
             {
                 ourResponse.statusMessage = "Failed to analyze feature " + roadmapFeatureName;
+                if (bSendLog)
+                {
+                    ourResponse.logInfo = StatusText.getInstance().toString();
+                }
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
             }
         }
