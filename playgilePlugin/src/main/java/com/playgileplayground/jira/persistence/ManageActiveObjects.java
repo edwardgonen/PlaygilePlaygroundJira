@@ -411,18 +411,6 @@ public final class ManageActiveObjects{
                 }
             }
         }
-        //TODO - remove the following loop after a while.
-        ///////////////////////////// start of code to delete ///////////////////////////////
-        // before returning the list set values of totat and open to 0 if it is before Dec, 8th, 2020
-        for (DateAndValues tmpDatesAndValue : list)
-        {
-            if (DateTimeUtils.Days(new Date("Dec 7 2020"), tmpDatesAndValue.Date) >= 0)
-            {
-                tmpDatesAndValue.OpenIssues = 0;
-                tmpDatesAndValue.TotalIssues = 0;
-            }
-        }
-        /////////////////// end of code to delete ///////////////////////
         return list;
     }
     @Transactional
