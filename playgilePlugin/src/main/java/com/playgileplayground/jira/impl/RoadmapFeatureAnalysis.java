@@ -10,6 +10,7 @@ import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
+import com.playgileplayground.jira.persistence.PrjStatEntity;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
@@ -102,11 +103,38 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         teamName = jiraInterface.getTeamNameForIssue(roadmapFeature);
 
         //let's create a key in Active objects if it does not exist yet
-        ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureSummary)); //will not create if exists
+        //TODO logic for replacing RF name part by issueKey, instead of issueSummary
+        ////////////////////////// delete this fragment till next comment /////////////////////
+        //1. check if we have entry with issueKey
+        PrjStatEntity tmpEntity = mao.GetProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureKey));
+        if (tmpEntity == null) //not found
+        {
+            StatusText.getInstance().add(true, "Not found feature (by key) " + featureKey + " - " + featureSummary);
+            //find by summary and update it
+            ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureSummary)); //will not create if exists
+            if (maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS && maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
+                StatusText.getInstance().add(true, "Failed to create AO entry for " + featureKey + " - " + featureSummary);
+                return false;
+            }
+            //now update with featureKey
+            tmpEntity = mao.GetProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+            tmpEntity.setRoadmapFeature(featureKey);
+            tmpEntity.save();
+        }
+        else //found - everything is ok
+        {
+            //do nothing
+            StatusText.getInstance().add(true, "Feature has correct key " + featureKey + " - " + featureSummary);
+        }
+        //////////////////////////////////// end of section to delete /////////////////////////
+
+        /* uncomment only this part
+        ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureKey)); //will not create if exists
         if (maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS && maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
             StatusText.getInstance().add(true, "Failed to create AO entry for " + featureKey + " - " + featureSummary);
             return false;
         }
+        */
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
@@ -198,7 +226,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             dateAndValues.OpenIssues = numberOfOpenIssues;
             dateAndValues.ReadyForDevelopmentIssues = numberOfReadyForDevelopmentIssues;
             dateAndValues.ReadyForEstimationIssues = numberOfReadyForEstimationIssues;
-            mao.AddLatestHistoricalRecord(new ManageActiveObjectsEntityKey(projectKey, featureSummary), dateAndValues);
+            mao.AddLatestHistoricalRecord(new ManageActiveObjectsEntityKey(projectKey, featureKey), dateAndValues);
 
 
             //get real velocities
@@ -262,7 +290,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     private ArrayList<DateAndValues> getHistoricalEstimations()
     {
         ArrayList<DateAndValues> result = null;
-        ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             result = (ArrayList<DateAndValues>)maor.Result;
         }
@@ -272,7 +300,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     private Date getTargetDate()
     {
         targetDate = null;
-        ManageActiveObjectsResult maor = mao.GetTargetDate(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        ManageActiveObjectsResult maor = mao.GetTargetDate(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             targetDate = (Date)maor.Result;
             StatusText.getInstance().add(true, "Target date from DB is " + targetDate);
@@ -292,7 +320,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     private double getDefaultValueForNonEstimatedIssue()
     {
         defaultNotEstimatedIssueValue = 0;
-        ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             defaultNotEstimatedIssueValue = (double)maor.Result;
         }
@@ -303,7 +331,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     {
         //we read them from DB (Active objects) and provide fallback if not found
         plannedRoadmapFeatureVelocity = 0;
-        ManageActiveObjectsResult maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        ManageActiveObjectsResult maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             plannedRoadmapFeatureVelocity = (double)maor.Result;
         }
@@ -312,7 +340,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         getDefaultValueForNonEstimatedIssue();
 
         startDateRoadmapFeature = null;
-        maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             startDateRoadmapFeature = (Date)maor.Result;
             StatusText.getInstance().add(true, "Start feature date from DB is " + startDateRoadmapFeature);
@@ -339,7 +367,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         }
         //sprint length
         sprintLengthRoadmapFeature = 0;
-        maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
+        maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
             sprintLengthRoadmapFeature = (double)maor.Result;
             StatusText.getInstance().add(true, "Detected sprint length from DB is " + sprintLengthRoadmapFeature);
