@@ -100,12 +100,20 @@
    <description key="plugin-configuration.description">Playgile Configuration</description>
    <url-pattern>/pluginConfiguration</url-pattern>
  </servlet>
-    <servlet name="Playgile get active features" i18n-name-key="get-active-features.name" key="get-active-features" class="com.playgileplayground.jira.servlet.getActiveFeatures">
-        <description key="get-active-features.description">Playgile Get Active Features</description>
-        <url-pattern>/getActiveFeatures</url-pattern>
-    </servlet>
-    <servlet name="Playgile get analyzed feature" i18n-name-key="get-analyzed-feature.name" key="get-analyzed-feature" class="com.playgileplayground.jira.servlet.getAnalyzedFeature">
-        <description key="get-analyzed-feature.description">Playgile Get Analyzed Feature</description>
-        <url-pattern>/getAnalyzedFeature</url-pattern>
-    </servlet>
+ <servlet name="Playgile get active features" i18n-name-key="get-active-features.name" key="get-active-features" class="com.playgileplayground.jira.servlet.getActiveFeatures">
+    <description key="get-active-features.description">Playgile Get Active Features</description>
+    <url-pattern>/getActiveFeatures</url-pattern>
+ </servlet>
+ <servlet name="Playgile get analyzed feature" i18n-name-key="get-analyzed-feature.name" key="get-analyzed-feature" class="com.playgileplayground.jira.servlet.getAnalyzedFeature">
+    <description key="get-analyzed-feature.description">Playgile Get Analyzed Feature</description>
+    <url-pattern>/getAnalyzedFeature</url-pattern>
+ </servlet>
+ <servlet name="Playgile get preparation features" i18n-name-key="get-preparation-features.name" key="get-preparation-features" class="com.playgileplayground.jira.servlet.getPreparationFeatures">
+    <description key="get-preparation-features.description">Playgile Get Preparation Features</description>
+    <url-pattern>/getPreparationFeatures</url-pattern>
+ </servlet>
+ <servlet name="Playgile get analyzed preparation feature" i18n-name-key="get-analyzed-preparation-feature.name" key="get-analyzed-preparation-feature" class="com.playgileplayground.jira.servlet.getAnalyzedPreparationFeature">
+    <description key="get-analyzed-preparation-feature.description">Playgile Get Analyzed Preparation Feature</description>
+    <url-pattern>/getAnalyzedPreparationFeature</url-pattern>
+ </servlet>
 </atlassian-plugin>

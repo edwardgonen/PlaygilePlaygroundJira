@@ -233,4 +233,10 @@ public class ProjectMonitoringMisc {
         long tmp = Math.round(value);
         return (double) tmp / factor;
     }
+    public static <T> T as(Class<T> clazz, Object o){
+        if(clazz.isInstance(o)){
+            return clazz.cast(o);
+        }
+        return null;
+    }
 }

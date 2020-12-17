@@ -6,7 +6,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 
 /**
- * Created by Ext_EdG on 8/8/2020.
+ * Created by on 8/8/2020.
  */
 public class ProjectPreparationMisc {
     private JiraInterface jiraInterface;
