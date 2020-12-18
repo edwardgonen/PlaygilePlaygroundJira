@@ -103,38 +103,12 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         teamName = jiraInterface.getTeamNameForIssue(roadmapFeature);
 
         //let's create a key in Active objects if it does not exist yet
-        //TODO logic for replacing RF name part by issueKey, instead of issueSummary
-        ////////////////////////// delete this fragment till next comment /////////////////////
-        //1. check if we have entry with issueKey
-        PrjStatEntity tmpEntity = mao.GetProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureKey));
-        if (tmpEntity == null) //not found
-        {
-            StatusText.getInstance().add(true, "Not found feature (by key) " + featureKey + " - " + featureSummary);
-            //find by summary and update it
-            ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureSummary)); //will not create if exists
-            if (maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS && maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
-                StatusText.getInstance().add(true, "Failed to create AO entry for " + featureKey + " - " + featureSummary);
-                return false;
-            }
-            //now update with featureKey
-            tmpEntity = mao.GetProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureSummary));
-            tmpEntity.setRoadmapFeature(featureKey);
-            tmpEntity.save();
-        }
-        else //found - everything is ok
-        {
-            //do nothing
-            StatusText.getInstance().add(true, "Feature has correct key " + featureKey + " - " + featureSummary);
-        }
-        //////////////////////////////////// end of section to delete /////////////////////////
 
-        /* uncomment only this part
         ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureKey)); //will not create if exists
         if (maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS && maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
             StatusText.getInstance().add(true, "Failed to create AO entry for " + featureKey + " - " + featureSummary);
             return false;
         }
-        */
 
         List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(applicationUser, currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {

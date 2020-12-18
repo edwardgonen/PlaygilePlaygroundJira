@@ -342,22 +342,12 @@ public final class ManageActiveObjects{
 
     private PrjStatEntity FindEntityByKey(ManageActiveObjectsEntityKey key, PrjStatEntity[] projectStatusEntities)
     {
-        /* TODO make it strict search once old records are removed from all our Jira servers */
         PrjStatEntity result = null;
         for (PrjStatEntity entity : projectStatusEntities)
         {
-            if (!key.roadmapFeature.isEmpty()) {
-                if (key.projectKey.equals(entity.getProjectKey()) && key.roadmapFeature.equals(entity.getRoadmapFeature())) {
-                    result = entity;
-                    break;
-                }
-            }
-            else //this else is to be deleted after all old records removed
-            {
-                if (key.projectKey.equals(entity.getProjectKey())) {
-                    result = entity;
-                    break;
-                }
+            if (key.projectKey.equals(entity.getProjectKey()) && key.roadmapFeature.equals(entity.getRoadmapFeature())) {
+                result = entity;
+                break;
             }
         }
         return result;
@@ -369,37 +359,13 @@ public final class ManageActiveObjects{
         String allEstimationsListAsString = entity.getRemainingStoriesEstimations();
 
         if (allEstimationsListAsString == null) return list; //first time, so the list does not exists
-
-        //for backward compatibility check if the string starts with number - i.e. it is old format, otherwise - JSON
-        if (!Character.isDigit(allEstimationsListAsString.charAt(0)))
-        {
-            //json
-            ObjectMapper jsonMapper = new ObjectMapper();
-            try {
-                list = jsonMapper.readValue(allEstimationsListAsString, new TypeReference<ArrayList<DateAndValues>>(){});
-            }
-            catch (Exception e)
-            {
-                StatusText.getInstance().add(true, "Failed to deserialize DateAndValues");
-            }
+        ObjectMapper jsonMapper = new ObjectMapper();
+        try {
+            list = jsonMapper.readValue(allEstimationsListAsString, new TypeReference<ArrayList<DateAndValues>>(){});
         }
-        else { //old format TODO delete after few months
-            //parse it
-            String[] entries = allEstimationsListAsString.split(LINE_SEPARATOR);
-            if (entries.length > 0) {
-                for (String entry : entries) {
-                    String[] pairParts = entry.split(PAIR_SEPARATOR);
-                    if (pairParts.length > 0) {
-                        try {
-                            Date tmpDate = new SimpleDateFormat(DATE_FORMAT).parse(pairParts[0]);
-                            Double tmpRemainingEstimation = Double.parseDouble(pairParts[1]);
-                            list.add(new DateAndValues(tmpDate, tmpRemainingEstimation));
-                        } catch (ParseException e) {
-                            //ignore
-                        }
-                    }
-                }
-            }
+        catch (Exception e)
+        {
+            StatusText.getInstance().add(true, "Failed to deserialize DateAndValues");
         }
         return list;
     }
