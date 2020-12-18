@@ -6,7 +6,6 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.playgileplayground.jira.impl.DateTimeUtils;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import org.apache.commons.lang.time.DateUtils;
@@ -60,28 +59,19 @@ public final class ManageActiveObjects{
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         //see if it already there
         try {
-            PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
-            if (projectStatusEntities.length > 0) {
 
-                PrjStatEntity prjStatEntity = FindEntityByKey(key, projectStatusEntities);
-                if(prjStatEntity != null) {//Check whether optional has element you are looking for
-                    prjStatEntity.setProjectKey(key.projectKey);
-                    prjStatEntity.setRoadmapFeature(key.roadmapFeature);
-                    prjStatEntity.save();
-                    result.Code = ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS;
-                    result.Message = "Entry already exists -- " + key.projectKey + " " + key.roadmapFeature + " " + projectStatusEntities.length;
-                    return result;
-                }
-                else //not found - create it
-                {
-                    prjStatEntity = ao.create(PrjStatEntity.class);
-                    prjStatEntity.setProjectKey(key.projectKey);
-                    prjStatEntity.setRoadmapFeature(key.roadmapFeature);
-                    prjStatEntity.save();
-                    result.Message = "Added";
-                }
+            PrjStatEntity prjStatEntity = GetProjectEntity(key);
+            if (prjStatEntity != null) //found
+            {
+                //update
+                prjStatEntity.setProjectKey(key.projectKey);
+                prjStatEntity.setRoadmapFeature(key.roadmapFeature);
+                prjStatEntity.save();
+                result.Code = ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS;
+                result.Message = "Entry already exists -- " + key.projectKey + " " + key.roadmapFeature;
+                return result;
             }
-            else //no entity at all
+            else
             {
                 //create
                 PrjStatEntity prjCreatedStatEntity = ao.create(PrjStatEntity.class);
@@ -362,7 +352,7 @@ public final class ManageActiveObjects{
                     break;
                 }
             }
-            else
+            else //this else is to be deleted after all old records removed
             {
                 if (key.projectKey.equals(entity.getProjectKey())) {
                     result = entity;
@@ -428,7 +418,7 @@ public final class ManageActiveObjects{
         }
     }
     @Transactional
-    private PrjStatEntity GetProjectEntity(ManageActiveObjectsEntityKey key)
+    public PrjStatEntity GetProjectEntity(ManageActiveObjectsEntityKey key)
     {
         PrjStatEntity[] projectStatusEntities = ao.find(PrjStatEntity.class);
 

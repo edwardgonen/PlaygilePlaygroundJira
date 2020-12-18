@@ -226,9 +226,8 @@ public class JiraInterface {
         //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
 
         String searchString;
-        if (!jiraVersion.startsWith("7.")) //higher than 7
-            searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and issueLinkType=\"Is Parent task of:\" AND Status!=Done AND Status!=Resolved AND Status!=Closed";
-        else searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and Status!=Done AND Status!=Resolved AND Status!=Closed";
+
+        searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" AND Status=\"PREP FOR INTEGRATION\"";
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
