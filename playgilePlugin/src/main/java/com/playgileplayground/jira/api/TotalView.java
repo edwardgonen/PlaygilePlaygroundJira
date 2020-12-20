@@ -8,15 +8,9 @@ import java.util.Map;
 
 public interface TotalView {
     String PROJECT = "project";
-    String STATUSTEXT = "statustext";
-    String MAINJAVACLASS = "mainjavaclass";
-    String ALLISOK = "allisok";
-    String MESSAGETODISPLAY = "messagetodisplay";
     String BASEURL = "baseurl";
     String CURRENTUSER = "currentuser";
-    String FEATURESROWS = "featuresrows";
 
-    double DEFAULT_TEAM_VELOCITY = 50.0;
 
 
 

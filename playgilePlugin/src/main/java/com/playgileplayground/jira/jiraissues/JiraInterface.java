@@ -3,28 +3,20 @@ package com.playgileplayground.jira.jiraissues;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.datetime.DateTimeFormatter;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
-import com.atlassian.jira.jql.builder.JqlClauseBuilder;
-import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.jql.parser.JqlParseException;
 import com.atlassian.jira.jql.parser.JqlQueryParser;
 import com.atlassian.jira.project.Project;
-import com.atlassian.jira.project.version.Version;
-import com.atlassian.jira.project.version.VersionManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.BuildUtilsInfo;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
-import com.playgileplayground.jira.impl.ProjectMonitorImpl;
 import com.playgileplayground.jira.impl.RoadmapFeatureDescriptor;
 import com.playgileplayground.jira.impl.StatusText;
-import org.ofbiz.core.entity.GenericEntityException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,21 +26,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created by Ext_EdG on 7/6/2020.
- */
 public class JiraInterface {
-    ProjectMonitorImpl mainClass;
     ApplicationUser applicationUser;
     SearchService searchService;
     String jiraVersion;
-    public JiraInterface(ProjectMonitorImpl mainClass, ApplicationUser applicationUser, SearchService searchService)
-    {
-        this.mainClass = mainClass;
-        this.applicationUser = applicationUser;
-        this.searchService = searchService;
-        this.jiraVersion = ComponentAccessor.getComponent(BuildUtilsInfo.class).getVersion();
-    }
 
     public JiraInterface(ApplicationUser applicationUser, SearchService searchService)
     {
@@ -95,20 +76,6 @@ public class JiraInterface {
 
         return result;
     }
-
-    public List<Issue> getAllIssues(Project currentProject) {
-        //mainClass.WriteToStatus(false, "In JiraInterface Getting all issues");
-        IssueManager issueManager = ComponentAccessor.getIssueManager();
-        Collection<Long> allIssueIds = null;
-        try {
-            allIssueIds = issueManager.getIssueIdsForProject(currentProject.getId());
-        } catch (GenericEntityException e) {
-            //mainClass.WriteToStatus(false, "Failed to get all issues " + e.toString());
-            //System.out.println("Failed to get issue ids " + e.toString());
-        }
-        List<Issue>	allIssues = issueManager.getIssueObjects(allIssueIds);
-        return allIssues;
-    }
     public List<Issue> getAllProductRelatedIssues(RoadmapFeatureDescriptor roadmapFeature)
     {
         //get all our issues for Feature
@@ -134,17 +101,12 @@ public class JiraInterface {
         } catch (SearchException e) {
             //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
-        List<Issue> issues = new ArrayList<>();
+        List<Issue> issues;
 
         if (searchResults != null)
         {
             issues = this.AccessVersionIndependentListOfIssues(searchResults);
-            if (issues != null && issues.size() > 0)
-            {
-
-            }
-            else
-            {
+            if (issues == null || issues.size() <= 0) {
                 issues = null;
             }
         }
@@ -154,54 +116,6 @@ public class JiraInterface {
         }
 
         return issues;
-    }
-
-    public List<Issue> getAllRoadmapFeatures(ApplicationUser applicationUser, Project currentProject, String featureKey)
-    {
-        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
-        Query query = jqlClauseBuilder.project(currentProject.getKey()).and().issueType(featureKey).buildQuery();
-        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
-        SearchResults searchResults = null;
-        try {
-            searchResults = searchService.search(applicationUser, query, pagerFilter);
-        } catch (SearchException e) {
-            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
-        }
-        if (searchResults == null)
-        {
-            return null;
-        }
-        else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
-        }
-    }
-    public List<Issue> getIssuesByFixVersion(ApplicationUser applicationUser, Project currentProject, String fixVersion) {
-        //if the version is not defined return null. no query
-        if (fixVersion == null) return null;
-
-        Query query;
-        String searchString = "project = \"" + currentProject.getKey() + "\" AND fixVersion = " + fixVersion;
-        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
-        try {
-            query = jqlQueryParser.parseQuery(searchString);
-        } catch (JqlParseException e) {
-            return null;
-        }
-
-        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
-        SearchResults searchResults = null;
-        try {
-            searchResults = searchService.search(applicationUser, query, pagerFilter);
-        } catch (SearchException e) {
-            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
-        }
-        if (searchResults == null)
-        {
-            return null;
-        }
-        else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
-        }
     }
 
     public List<Issue> getIssuesForRoadmapFeature( ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
@@ -250,7 +164,7 @@ public class JiraInterface {
                     StatusText.getInstance().add(true, "Issue link id " + issueLink.getKey());
 
                     //get all issues with epics from all issueLinks
-                    List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, currentProject, issueLink);
+                    List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, issueLink);
                     if (nextEpicIssues != null && nextEpicIssues.size() > 0)
                     {
                         //TEST
@@ -312,9 +226,8 @@ public class JiraInterface {
         //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
 
         String searchString;
-        if (!jiraVersion.startsWith("7.")) //higher than 7
-            searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and issueLinkType=\"Is Parent task of:\" AND Status!=Done AND Status!=Resolved AND Status!=Closed";
-        else searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and Status!=Done AND Status!=Resolved AND Status!=Closed";
+
+        searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" AND Status=\"PREP FOR INTEGRATION\"";
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
@@ -331,15 +244,13 @@ public class JiraInterface {
             //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
         }
         if (searchResults == null)
-        {
             return null;
-        }
         else {
             return this.AccessVersionIndependentListOfIssues(searchResults);
         }
     }
 
-    public List<Issue> getIssuesByEpic(ApplicationUser applicationUser, Project currentProject, Issue epic) {
+    public List<Issue> getIssuesByEpic(ApplicationUser applicationUser, Issue epic) {
         //if the version is not defined return null. no query
         if (epic == null) return null;
 
@@ -371,24 +282,7 @@ public class JiraInterface {
             return this.AccessVersionIndependentListOfIssues(searchResults);
         }
     }
-    public List<Issue> getEpics(ApplicationUser applicationUser, Project currentProject) {
-        JqlClauseBuilder jqlClauseBuilder = JqlQueryBuilder.newClauseBuilder();
-        Query query = jqlClauseBuilder.project(currentProject.getKey()).and().issueType("Epic").buildQuery();
-        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
-        SearchResults searchResults = null;
-        try {
-            searchResults = searchService.search(applicationUser, query, pagerFilter);
-        } catch (SearchException e) {
-            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
-        }
-        if (searchResults == null)
-        {
-            return null;
-        }
-        else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
-        }
-    }
+
 
     public Collection<PlaygileSprint> getAllSprintsForIssue(Issue issue)
     {
@@ -405,7 +299,7 @@ public class JiraInterface {
 
         return result;
     }
-    public JiraQueryResult getBusinessApprovalDateForIssue(Issue issue, DateTimeFormatter formatter)
+    public JiraQueryResult getBusinessApprovalDateForIssue(Issue issue)
     {
         JiraQueryResult result = new JiraQueryResult();
         String[] values = getSpecificCustomFields(issue, "Business Approval");
@@ -441,7 +335,7 @@ public class JiraInterface {
     }
     public double getStoryPointsForIssue(Issue issue)
     {
-        double result = -1;
+        double result;
         String[] values = getSpecificCustomFields(issue, "Story Points");
         if (values != null && values.length > 0)
         {
@@ -461,20 +355,6 @@ public class JiraInterface {
         return result;
     }
 
-
-    public ArrayList<String> getAllVersionsForProject(Project currentProject)
-    {
-        ArrayList<String> result = new ArrayList<>();
-        VersionManager vm = ComponentAccessor.getVersionManager();
-        Collection<Project> projects = new ArrayList<>();
-        projects.add(currentProject);
-        Collection<Version> versions = vm.getAllVersionsForProjects(projects, false);
-        for (Version version : versions)
-        {
-            result.add(version.getName());
-        }
-        return result;
-    }
 
     private String[] getSpecificCustomFields(Issue issue, String key)
     {
@@ -507,19 +387,6 @@ public class JiraInterface {
         }
         return result;
     }
-    public String getAllCustomFieldsForIssue(Issue issue)
-    {
-        StringBuilder result = new StringBuilder("Custom objects: ");
-        CustomFieldManager customFieldManager = ComponentAccessor.getCustomFieldManager();
-        List<CustomField> customFields = customFieldManager.getCustomFieldObjects(issue);
-        for (CustomField tmpField : customFields)
-        {
-            result.append("\n");
-            result.append(tmpField.getFieldName() + "=");
-            result.append(tmpField.getValue(issue));
-        }
-        return result.toString();
-    }
 
     private List<Issue> AccessVersionIndependentListOfIssues(SearchResults searchResults)
     {
@@ -535,7 +402,7 @@ public class JiraInterface {
         } catch (NoSuchMethodException e) {
             try {
                 newGetMethod = SearchResults.class.getMethod("getResults");
-            } catch (NoSuchMethodException e1) {
+            } catch (NoSuchMethodException ignored) {
             }
         }
         if (newGetMethod != null) {
