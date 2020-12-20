@@ -664,7 +664,7 @@
             */
             function init() {
                 /**
-                * Conver DomElements to jQueryElements
+                * Convert DomElements to jQueryElements
                 */
                 const $generalViewBlock = $('.generalViewBlock');
                 const $generalViewTable = $('.generalViewTable');
@@ -766,7 +766,7 @@
                 }
                 /**
                 * Build totalView block
-                * return HMLT element
+                * return HTML element
                 */
                 function getTotalViewBlock(featureData) {
 
