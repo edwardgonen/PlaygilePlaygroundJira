@@ -331,8 +331,9 @@
             }
 
             .detailsView {
+                display: none;
                 position: fixed;
-                z-index: 2;
+                z-index: 99;
                 background: #8080807a;
                 top: 0;
                 left: 0;
@@ -351,6 +352,7 @@
             }
 
             .editViewWrapper {
+                display: none;
                 position: fixed;
                 z-index: 2;
                 background: #8080807a;
@@ -520,6 +522,14 @@
                 top: 17px;
                 left: 0;
             }
+
+            .progressbarMain {
+                display: none;
+            }
+
+            .generalLoading {
+                display: none;
+            }
         </style>
     </head>
 
@@ -542,7 +552,7 @@
         #end
 
         #if ($allisok)
-        <div id="progressbar">
+        <div id="progressbar" class="progressbarMain">
             <div class="progress-label">Loading...</div>
         </div>
         <div style="display: flex;">
@@ -611,120 +621,137 @@
 
         #end
         <script>
+            /**
+            * Initializing google charts
+            */
             window.onload = function () {
                 google.charts.load('current', { 'packages': ['corechart'] });
                 google.charts.load('current', { 'packages': ['gauge'] });
                 google.charts.load('current', { 'packages': ['timeline'] });
                 google.charts.setOnLoadCallback(init);
             };
+            /**
+            * Logic for debug mode
+            */
+            const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
+            /**
+            * First initializing favorites save logic
+            */
+            if (!localStorage.pluginFavorites) { localStorage.pluginFavorites = '[]' };
+            var FAVORITES = JSON.parse(localStorage.pluginFavorites);
+            /**
+            * First initializing search save logic
+            */
+            if (!localStorage.searchData) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) };
+            if (!JSON.parse(localStorage.searchData).teamName) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) };
+            const SEARCH_DATA = JSON.parse(localStorage.searchData);
+
+            const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
+            const BASE_URL = '$baseurl';
+            const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
+            const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&roadmapFeature=';
+            const GET_URL = location.origin + location.pathname + '?projectKey=' + PROJECT_NAME;
+            const POST_UTL = location.origin + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME;
+            /**
+            * Min and max SP for input fields on configuration page
+            */
+            const MIN_INPUT_SP = 0;
+            const MAX_INPUT_SP = 200;
+
+            const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString();
+            /**
+            * Point of entry
+            */
             function init() {
-                console.log('loaded resources playgilePlugin and init v1');
-
-                const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
-
-                if (!localStorage.pluginFavorites) { localStorage.pluginFavorites = '[]' }
-                var FAVORITES = JSON.parse(localStorage.pluginFavorites)
-
-                if (!localStorage.searchData) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
-                if (!JSON.parse(localStorage.searchData).teamName) { localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' }) }
-
-                const SEARCH_DATA = JSON.parse(localStorage.searchData);
-
-                const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
-
-                const BASE_URL = '$baseurl';
-
-                const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
-
-                const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&roadmapFeature=';
-
-                const GET_URL = location.origin + location.pathname + '?projectKey=' + PROJECT_NAME
-                const POST_UTL = location.origin + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME
-                const PROJECT = PROJECT_NAME
-
-                const $generalLoading = $('.generalLoading');
-
+                /**
+                * Conver DomElements to jQueryElements
+                */
                 const $generalViewBlock = $('.generalViewBlock');
-
                 const $generalViewTable = $('.generalViewTable');
-
                 const progressbar = $("#progressbar");
-
                 const progressLabel = $(".progress-label");
-
-                const $featureSearch = $(".FeatureSearch").val(SEARCH_DATA.featureSearch).on('input', (e) => { featureSearchOnChange(e.currentTarget.value) })
-
-                const $teamsSearch = $(".TeamsSearch").on('input', (e) => { teamsSearchOnChange(e.currentTarget.value) })
-
-                const $resetSearchBtn = $('.resetSearchBtn').click(resetSearch);
-
-                const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString()
-
-                $('.editViewWrapper').hide()
-
-                globalLoadingOFF()
-
+                const $featureSearch = $(".FeatureSearch")
+                    /** Adding default value of search input field from saved value */
+                    .val(SEARCH_DATA.featureSearch)
+                    /** Handler of search input filed*/
+                    .on('input', (e) => { featureSearchOnChange(e.currentTarget.value) })
+                const $teamsSearch = $(".TeamsSearch")
+                    /** Handler of teams search input filed*/
+                    .on('input', (e) => { teamsSearchOnChange(e.currentTarget.value) })
+                const $resetSearchBtn = $('.resetSearchBtn')
+                    /** Click handler of reset buttom*/
+                    .click(resetSearch);
+                /** Initializing progress bar*/
                 buildProgressBar()
-
+                /** Fade turned off, because user already can use plugin */
                 Fade.off()
-
-                $('.detailsView').hide()
-
-                let $debugSwitch = $('.debugSwitch');
-                $debugSwitch[0].checked = !!eval(localStorage.pluginDebugMode)
-                $('.switch').click(() => {
-                    localStorage.pluginDebugMode = $debugSwitch[0].checked
-                    location.reload()
-                })
-
+                /**
+                * Initializing debug switcher
+                */
+                $('.debugSwitch')[0].checked = !!eval(localStorage.pluginDebugMode)
+                $('.switch')
+                    .click(() => {
+                        /** Save new debug value and reload page after click */
+                        localStorage.pluginDebugMode = $('.debugSwitch')[0].checked
+                        location.reload()
+                    })
+                /**
+                * Request project features from servlet
+                */
                 doPost(FEATURES_URL, {}, function (data) {
                     STORE.features = data.featuresList
                     console.log(data)
+                    /** Start build total view blocks */
                     initBuildPanels()
                 })
 
-
+                /**
+                * Recursively creating totalview blocks
+                */
                 function initBuildPanels() {
+                    /** If the number of features and the total view blocks are the same, stop the recursion */
+                    if (STORE.features.length == STORE.viewChildren.length) { return }
+
                     let loadingValue = 100 / STORE.features.length;
-                    if (STORE.features.length != STORE.viewChildren.length) {
-                        let featureId = encodeURIComponent(STORE.features[STORE.viewChildren.length].featureKey);
-                        let $panelBlock = $('<li>')
-                        $generalViewBlock.append($panelBlock)
-                        STORE.currentBlock = $panelBlock;
-                        STORE.addViewChildren($panelBlock);
-                        initBuildPanels()
-                        doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
-                            progressbar.progressbar("value", progressbar.progressbar("value") < 90 ? progressbar.progressbar("value") + loadingValue : 100);
-                            if (!!data.statusMessage) {
-                                $panelBlock.hide()
-                            } else {
-                                $panelBlock.empty();
-                                $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
-                                $panelBlock.click(() => { drawDeteilsView(data) })
-                                if (FAVORITES.includes(data.key)) { $panelBlock.detach().appendTo('.FavoritesContent') }
-                                console.log(data)
-                                STORE.addTeam(data.teamName)
-                                $(function () {
-                                    $(".generalViewBlock, .FavoritesContent").sortable({
-                                        connectWith: ".connectedSortable"
-                                    }).disableSelection();
-                                    $('.FavoritesContent').sortable({
-                                        deactivate: function (event, ui) {
-                                            var _$array = $('.FavoritesContent').children().map(function () { return $(this).children().data('featureKey') });
-                                            var _array = Array.from(_$array);
-                                            FAVORITES = _array
-                                            localStorage.pluginFavorites = JSON.stringify(_array)
-                                        }
-                                    })
-                                });
+                    let featureId = encodeURIComponent(STORE.features[STORE.viewChildren.length].featureKey);
+                    let $panelBlock = $('<li>')
+                    $generalViewBlock.append($panelBlock)
+                    STORE.addViewChildren($panelBlock);
 
-                                updateTeamsSearch()
+                    doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
+                        progressbar.progressbar("value", progressbar.progressbar("value") < 90 ? progressbar.progressbar("value") + loadingValue : 100);
+                        if (!!data.statusMessage) {
+                            $panelBlock.hide()
+                        } else {
+                            $panelBlock.empty();
+                            $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
+                            $panelBlock.click(() => { drawDeteilsView(data) })
+                            if (FAVORITES.includes(data.key)) { $panelBlock.detach().appendTo('.FavoritesContent') }
+                            console.log(data)
+                            STORE.addTeam(data.teamName)
+                            /** Drag and Drop logic */
+                            $(function () {
+                                $(".generalViewBlock, .FavoritesContent").sortable({
+                                    connectWith: ".connectedSortable"
+                                }).disableSelection();
+                                $('.FavoritesContent').sortable({
+                                    deactivate: function (event, ui) {
+                                        var _$array = $('.FavoritesContent').children().map(function () { return $(this).children().data('featureKey') });
+                                        var _array = Array.from(_$array);
+                                        FAVORITES = _array
+                                        localStorage.pluginFavorites = JSON.stringify(_array)
+                                    }
+                                })
+                            });
 
-                                genericSortFeature()
-                            }
+                            updateTeamsSearch()
 
-                        })
-                    }
+                            genericSortFeature()
+                        }
+
+                    })
+                    /** Continuing recursion */
+                    initBuildPanels()
 
 
                 }
@@ -737,44 +764,10 @@
                     }
                     $teamsSearch.val(_currentVal)
                 }
-
-                function globalLoadingON() {
-                    $generalLoading.show()
-                }
-
-                function globalLoadingOFF() {
-                    $generalLoading.hide()
-                }
-
-                function doPost(url, postData, callback) {
-                    globalLoadingON()
-                    jQuery.post(url, postData)
-                        .done(function (textData) {
-                            var jsonData = JSON.parse(textData)
-                            if (!!jsonData.logInfo) {
-                                console.warn(
-                                    `
-url: ${url}
-body: ${jsonData}
-statusMessage: ${jsonData.statusMessage}
-logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
-`)
-                            }
-                            if (!!jsonData.statusMessage) { traceDataMessageError(jsonData) }
-                            callback(jsonData)
-                            globalLoadingOFF()
-                        })
-                        .fail(function (err) {
-                            alert("POST error")
-                            globalLoadingOFF()
-                        })
-                }
-                function traceDataMessageError(data) {
-                    console.log('----------------data.statusMessage----ERROR---------------')
-                    console.log(data.statusMessage)
-                    console.log(data)
-                }
-
+                /**
+                * Build totalView block
+                * return HMLT element
+                */
                 function getTotalViewBlock(featureData) {
 
                     const SUMMARY = featureData.summary;//[0]
@@ -924,6 +917,9 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                 function normolizedDate(date) {
                     return (new Date(date))
                 }
+                /**
+                * Build deteiled view block
+                */
                 function drawDeteilsView(featureData) {
                     let $detailsView = $('.detailsView');
                     $detailsView.show()
@@ -1251,12 +1247,6 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                     }
 
                 }
-
-
-
-
-
-
                 function rebuildPanelBlock(featureKey) {
                     let encodedFeatureKey = encodeURIComponent(featureKey);
                     doPost(GET_FEATURE_DATA_URL + encodedFeatureKey, {}, function (data) {
@@ -1266,166 +1256,211 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                         $panelBlock.empty();
                         $panelBlock.hide();
                         $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
-                        $panelBlock.off('click')
-                        $panelBlock.click(() => { drawDeteilsView(data) })
-                        $panelBlock.show()
+                        $panelBlock.off('click');
+                        $panelBlock.click(() => { drawDeteilsView(data) });
+                        $panelBlock.show();
                     })
                 }
-
-                class STORE {
-                    static #featureArray = []
-                    static #viewChildren = []
-                    static #$currentBlockInLoading = null
-                    static #teams = {}
-                    static set features(array) {
-                        this.#featureArray = array;
-                    }
-                    static get features() {
-                        return this.#featureArray
-                    }
-                    static addViewChildren(elem) {
-                        STORE.#viewChildren.push(elem)
-                    }
-                    static get viewChildren() {
-                        return this.#viewChildren
-                    }
-                    static set currentBlock(elem) {
-                        this.#$currentBlockInLoading = elem;
-                    }
-                    static get currentBlock() {
-                        return this.#$currentBlockInLoading;
-                    }
-                    static addTeam(teamName) {
-                        STORE.#teams[teamName] = true;
-                    }
-                    static get teams() {
-                        return this.#teams
-                    }
-                }
-
-                const LABEL_1_TEXT = 'Default value for not estimated issues'
-                const LABEL_2_TEXT = 'Originally planned velocity'
-                const LABEL_3_TEXT = 'Sprint length in days'
-                const LABEL_4_TEXT = 'Roadmap Feature start date'
-                const MIN_INPUT_SP = 0;
-                const MAX_INPUT_SP = 200;
-
-                class EditView {
-                    formArea
-                    wrapperSelector
-                    constructor(data, wrapperSelector) {
-                        console.log('start: render edit view')
-                        this.wrapperSelector = wrapperSelector;
-                        this.formArea = $('<div>').addClass('editView').click((e) => { e.stopPropagation() })
-                        $(this.wrapperSelector).click(this.close())
-                        this.formArea.empty()
-                        $(this.wrapperSelector).show()
-
-                        var header = $('<h2>').text(data.summary)
-                        var _input0 = Create.inputText({ text: LABEL_1_TEXT, value: data.defaultNotEstimatedIssueValue })
-                        var _input1 = Create.inputText({ text: LABEL_2_TEXT, value: data.plannedRoadmapFeatureVelocity })
-                        var _input2 = Create.inputText({ text: LABEL_3_TEXT, value: data.sprintLengthRoadmapFeature })
-                        var _input3 = Create.inputDate({ text: LABEL_4_TEXT, value: data.startDateRoadmapFeature })
-                        var _input4 = Create.inputDate({ text: 'Target date', value: data.targetDate })
-
-                        var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click((e) => {
-                            e.stopPropagation()
-                            var result = {};
-                            var check = 0
-                            if (Check.inputStoryPoints(_input0.find('input').val())) {
-                                check++;
-                                result.defaultNotEstimatedIssueValue = _input0.find('input').val()
-                            }
-                            if (Check.inputStoryPoints(_input1.find('input').val())) {
-                                check++;
-                                result.plannedRoadmapFeatureVelocity = _input1.find('input').val()
-                            }
-                            if (Check.inputStoryPoints(_input2.find('input').val())) {
-                                check++;
-                                result.sprintLengthRoadmapFeature = _input2.find('input').val()
-                            }
-
-                            var userDate = +new Date(_input3.find('input').val())
-                            var isTimeHaveDiff = new Date(userDate).toDateString() != new Date(+data.startDateRoadmapFeature).toDateString()
-                            if (isTimeHaveDiff) {
-                                check++;
-                                result.startDateRoadmapFeature = userDate
-                            }
-                            var userDate4 = +new Date(_input4.find('input').val())
-                            var isTimeHaveDiff4 = new Date(userDate4).toDateString() != new Date(+data.targetDate).toDateString()
-                            if (isTimeHaveDiff4) {
-                                check++;
-                                result.targetDate = userDate4
-                            }
-
-                            if (!check) { return }
-                            result.roadmapFeature = data.key
-                            getFeaturesDateAndBuild(result, this.close)
-                        })
-
-                        this.formArea.append(header, _input0, _input1, _input2, _input3, _input4, _saveButton)
-                        $(this.wrapperSelector).append(this.formArea)
-
-                        console.log('end: render edit view')
-                    }
-                    close = () => {
-                        $(this.wrapperSelector).empty();
-                        $(this.wrapperSelector).hide()
-                    }
-                }
-                class Create {
-                    static inputText(props) {
-                        var _label = $('<label>').text(props.text)
-                        var _input = $('<input>')
-                            .prop({
-                                placeholder: props.value,
-                                type: 'number'
-                            })
-                            .on('input', function () {
-                                let val = +$(this).val();
-                                Check.inputStoryPoints(val) ? $(this).removeClass('wrongIput') : $(this).addClass('wrongIput')
-                            })
-                        return $('<div>').append(_label, _input)
-                    }
-                    static inputDate(props) {
-                        var _label = $('<label>').text(props.text)
-                        var _input = $('<input>')
-                            .prop({
-                                type: 'date'
-                            })
-                        _input.prop({ valueAsNumber: +props.value })
-                        return $('<div>').append(_label, _input)
-                    }
-                }
-                class Check {
-                    static inputStoryPoints(value) {
-                        return !!(+value && MIN_INPUT_SP <= value && value <= MAX_INPUT_SP)
-                    }
-                }
-                function getFeaturesDateAndBuild(obj, callback) {
-                    Fade.on()
-                    jQuery.post(POST_UTL, obj)
-                        .done(function (data) {
-                            var jsonData = JSON.parse(data)
-                            callback()
-                            rebuildPanelBlock(obj.roadmapFeature)
-                            Fade.off()
-                        })
-                        .fail(function () {
-                            Fade.off()
-                            alert("POST error")
-                        })
-                }
-
             }
+
+            const LABEL_1_TEXT = 'Default value for not estimated issues';
+            const LABEL_2_TEXT = 'Originally planned velocity';
+            const LABEL_3_TEXT = 'Sprint length in days';
+            const LABEL_4_TEXT = 'Roadmap Feature start date';
+            /**
+            * Builder view for configuration page
+            */
+            class EditView {
+                formArea
+                wrapperSelector
+                constructor(data, wrapperSelector) {
+                    console.log('start: render edit view');
+                    this.wrapperSelector = wrapperSelector;
+                    this.formArea = $('<div>').addClass('editView').click((e) => { e.stopPropagation() });
+                    $(this.wrapperSelector).click(this.close);
+                    this.formArea.empty();
+                    $(this.wrapperSelector).show();
+
+                    var header = $('<h2>').text(data.summary);
+                    var _input0 = Create.inputText({ text: LABEL_1_TEXT, value: data.defaultNotEstimatedIssueValue });
+                    var _input1 = Create.inputText({ text: LABEL_2_TEXT, value: data.plannedRoadmapFeatureVelocity });
+                    var _input2 = Create.inputText({ text: LABEL_3_TEXT, value: data.sprintLengthRoadmapFeature });
+                    var _input3 = Create.inputDate({ text: LABEL_4_TEXT, value: data.startDateRoadmapFeature });
+                    var _input4 = Create.inputDate({ text: 'Target date', value: data.targetDate });
+
+                    var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click((e) => {
+                        e.stopPropagation();
+                        var result = {};
+                        var check = 0;
+                        if (Check.inputStoryPoints(_input0.find('input').val())) {
+                            check++;
+                            result.defaultNotEstimatedIssueValue = _input0.find('input').val();
+                        };
+                        if (Check.inputStoryPoints(_input1.find('input').val())) {
+                            check++;
+                            result.plannedRoadmapFeatureVelocity = _input1.find('input').val();
+                        };
+                        if (Check.inputStoryPoints(_input2.find('input').val())) {
+                            check++;
+                            result.sprintLengthRoadmapFeature = _input2.find('input').val();
+                        };
+
+                        var userDate = +new Date(_input3.find('input').val());
+                        var isTimeHaveDiff = new Date(userDate).toDateString() != new Date(+data.startDateRoadmapFeature).toDateString();
+                        if (isTimeHaveDiff) {
+                            check++;
+                            result.startDateRoadmapFeature = userDate;
+                        };
+                        var userDate4 = +new Date(_input4.find('input').val());
+                        var isTimeHaveDiff4 = new Date(userDate4).toDateString() != new Date(+data.targetDate).toDateString();
+                        if (isTimeHaveDiff4) {
+                            check++;
+                            result.targetDate = userDate4;
+                        };
+
+                        if (!check) { return };
+                        result.roadmapFeature = data.key;
+                        getFeaturesDateAndBuild(result, this.close);
+                    })
+
+                    this.formArea.append(header, _input0, _input1, _input2, _input3, _input4, _saveButton);
+                    $(this.wrapperSelector).append(this.formArea);
+
+                    console.log('end: render edit view');
+                }
+                /**
+                * Close configuration page
+                */
+                close = () => {
+                    $(this.wrapperSelector).empty();
+                    $(this.wrapperSelector).hide();
+                }
+            }
+            function getFeaturesDateAndBuild(obj, callback) {
+                Fade.on();
+                jQuery.post(POST_UTL, obj)
+                    .done(function (data) {
+                        var jsonData = JSON.parse(data);
+                        callback();
+                        rebuildPanelBlock(obj.roadmapFeature);
+                        Fade.off();
+                    })
+                    .fail(function () {
+                        Fade.off();
+                        alert("POST error");
+                    })
+            }
+            /**
+            * Builder for input fields
+            * metods return DOMElemnt with input field
+            */
+            class Create {
+                static inputText(props) {
+                    var _label = $('<label>').text(props.text);
+                    var _input = $('<input>')
+                        .prop({
+                            placeholder: props.value,
+                            type: 'number'
+                        })
+                        .on('input', function () {
+                            let val = +$(this).val();
+                            Check.inputStoryPoints(val) ? $(this).removeClass('wrongIput') : $(this).addClass('wrongIput');
+                        });
+                    return $('<div>').append(_label, _input);
+                }
+                static inputDate(props) {
+                    var _label = $('<label>').text(props.text);
+                    var _input = $('<input>')
+                        .prop({
+                            type: 'date'
+                        })
+                    _input.prop({ valueAsNumber: +props.value });
+                    return $('<div>').append(_label, _input)
+                }
+            }
+            /**
+            * Сhecking if a number is in the range
+            * return bool
+            */
+            class Check {
+                static inputStoryPoints(value) {
+                    return !!(+value && MIN_INPUT_SP <= value && value <= MAX_INPUT_SP)
+                }
+            }
+            /**
+            * Black shadow with spinner
+            */
             class Fade {
-                static #FadeBlock = FadeBlock
+                static #FadeBlock = FadeBlock;
                 static on() {
-                    Fade.#FadeBlock.style.display = 'block'
+                    Fade.#FadeBlock.style.display = 'block';
                 }
                 static off() {
-                    Fade.#FadeBlock.style.display = 'none'
+                    Fade.#FadeBlock.style.display = 'none';
                 }
+            }
+            /**
+            * Data model of application
+            * #featureArray - features array from server
+            * #viewChildren - links of total view block
+            */
+            class STORE {
+                static #featureArray = []
+                static #viewChildren = []
+                static #teams = {}
+                static set features(array) {
+                    this.#featureArray = array;
+                }
+                static get features() {
+                    return this.#featureArray
+                }
+                static addViewChildren(elem) {
+                    STORE.#viewChildren.push(elem)
+                }
+                static get viewChildren() {
+                    return this.#viewChildren
+                }
+                static addTeam(teamName) {
+                    STORE.#teams[teamName] = true;
+                }
+                static get teams() {
+                    return this.#teams
+                }
+            }
+            /**
+            * Post request with error handling
+            * @param {string} url
+            * @param {object} postData
+            * @param {function} callback
+            */
+            function doPost(url, postData, callback) {
+                jQuery.post(url, postData)
+                    .done(function (textData) {
+                        var jsonData = JSON.parse(textData)
+                        if (!!jsonData.logInfo) {
+                            console.warn(
+                                `
+url: ${url}
+body: ${jsonData}
+statusMessage: ${jsonData.statusMessage}
+logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
+`)
+                        }
+                        if (!!jsonData.statusMessage) { dataMessageError(jsonData) }
+                        callback(jsonData)
+                    })
+                    .fail(function (err) {
+                        alert("POST error")
+                    })
+            }
+            /**
+            * Logging error in console
+            * @param {object} data
+            */
+            function dataMessageError(data) {
+                console.log('----------------data.statusMessage----ERROR---------------')
+                console.log(data.statusMessage)
+                console.log(data)
             }
 
         </script>
