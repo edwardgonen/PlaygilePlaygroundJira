@@ -84,7 +84,7 @@ public class getActiveFeatures extends HttpServlet {
                 return;
             }
 
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
             if (roadmapFeatures == null) {
                 ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);

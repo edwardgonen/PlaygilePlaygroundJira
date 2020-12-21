@@ -1,5 +1,7 @@
 package com.playgileplayground.jira.impl;
 
+import com.playgileplayground.jira.jiraissues.ProjectPreparationIssue;
+
 import java.util.*;
 
 public class RoadmapFeatureDescriptor implements Comparator<RoadmapFeatureDescriptor>, Comparable<RoadmapFeatureDescriptor>{

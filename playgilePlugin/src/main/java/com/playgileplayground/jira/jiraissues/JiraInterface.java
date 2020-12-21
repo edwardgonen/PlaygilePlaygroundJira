@@ -118,7 +118,7 @@ public class JiraInterface {
         return issues;
     }
 
-    public List<Issue> getIssuesForRoadmapFeature( ApplicationUser applicationUser, Project currentProject, Issue roadmapFeature)
+    public List<Issue> getIssuesForRoadmapFeature(Project currentProject, Issue roadmapFeature)
     {
         //get all linked epics for Feature
         if (roadmapFeature == null) return null;
@@ -164,7 +164,7 @@ public class JiraInterface {
                     StatusText.getInstance().add(true, "Issue link id " + issueLink.getKey());
 
                     //get all issues with epics from all issueLinks
-                    List<Issue> nextEpicIssues = getIssuesByEpic(applicationUser, issueLink);
+                    List<Issue> nextEpicIssues = getIssuesByEpic(issueLink);
                     if (nextEpicIssues != null && nextEpicIssues.size() > 0)
                     {
                         //TEST
@@ -191,7 +191,7 @@ public class JiraInterface {
     }
 
 
-    public List<Issue> getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(ApplicationUser applicationUser, Project currentProject, String featureKey)
+    public List<Issue> getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(Project currentProject, String featureKey)
     {
         Query query;
         //query project = "Bingo Blitz 2.0" and issuetype = "Roadmap Feature" and (status !=  Cancelled or status != Go-Live)
@@ -220,7 +220,7 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getRoadmapFeaturesInPreparationPhase(ApplicationUser applicationUser, Project currentProject, String featureKey)
+    public List<Issue> getRoadmapFeaturesInPreparationPhase(Project currentProject, String featureKey)
     {
         Query query;
         //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
@@ -250,7 +250,7 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getIssuesByEpic(ApplicationUser applicationUser, Issue epic) {
+    public List<Issue> getIssuesByEpic(Issue epic) {
         //if the version is not defined return null. no query
         if (epic == null) return null;
 
@@ -386,6 +386,53 @@ public class JiraInterface {
             }
         }
         return result;
+    }
+
+    public List<Issue> getTasksForPreparationFeature(Issue roadmapFeature)
+    {
+        //get all linked epics for Feature
+        if (roadmapFeature == null) return null;
+
+        Query query;
+
+        String searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\") and issuetype=Task";
+
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
+
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            StatusText.getInstance().add(true, "Exception getting search on feature " + roadmapFeature.getKey());
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        List<Issue> tasks;
+        if (searchResults != null)
+        {
+            StatusText.getInstance().add(true, "Accessing list of tasks for " + roadmapFeature.getKey());
+            tasks = this.AccessVersionIndependentListOfIssues(searchResults);
+            if (tasks != null && tasks.size() > 0)
+            {
+            }
+            else
+            {
+                StatusText.getInstance().add(true, "Returned no tasks for " + roadmapFeature.getKey());
+                tasks = null;
+            }
+        }
+        else
+        {
+            StatusText.getInstance().add(true, "Search result is null for " + roadmapFeature.getKey());
+            tasks = null;
+        }
+
+        return tasks;
     }
 
     private List<Issue> AccessVersionIndependentListOfIssues(SearchResults searchResults)

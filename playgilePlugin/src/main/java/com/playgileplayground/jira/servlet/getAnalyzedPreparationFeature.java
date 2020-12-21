@@ -15,15 +15,9 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
-import com.playgileplayground.jira.impl.FeatureScore;
-import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
-import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
-import com.playgileplayground.jira.impl.StatusText;
+import com.playgileplayground.jira.impl.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
-import com.playgileplayground.jira.jiraissues.PlaygileSprint;
-import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.projectprogress.DateAndValues;
-import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
+import com.playgileplayground.jira.jiraissues.ProjectPreparationTask;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -31,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 
@@ -65,7 +58,7 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
-        GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
+        GetAnalyzedPreparationFeatureResponse ourResponse = new GetAnalyzedPreparationFeatureResponse();
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
@@ -87,19 +80,14 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
 
             boolean bSendLog = req.getParameter("sendLog") != null;
 
-            //prepare to walk through the features
-            ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
-
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
             if (currentProject == null) {
                 ourResponse.statusMessage = "Failed to find current project " + projectKey;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
-
-            ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface);
-
+            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+            ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
             StatusText.getInstance().add(true, "Getting roadmap feature issues for " + roadmapFeatureName);
             Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), roadmapFeatureName);
             if (selectedRoadmapFeatureIssue == null) //not found
@@ -109,7 +97,27 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
                 return;
             }
             resp.setContentType("text/html;charset=utf-8");
-
+            //get the feature, analyze it and convert it to our response
+            RoadmapFeaturePreparationAnalysis roadmapFeaturePreparationAnalysis = new RoadmapFeaturePreparationAnalysis(
+                selectedRoadmapFeatureIssue,
+                jiraInterface,
+                projectPreparationMisc);
+            if (roadmapFeaturePreparationAnalysis.analyzePreparationFeature()) { //we take all successfully analyzed features - started or non-started
+                ourResponse.fillTheFields(roadmapFeaturePreparationAnalysis);
+                if (bSendLog)
+                {
+                    ourResponse.logInfo = StatusText.getInstance().toString();
+                }
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+            } else //failed to analyze feature
+            {
+                ourResponse.statusMessage = "Failed to analyze feature " + roadmapFeatureName;
+                if (bSendLog)
+                {
+                    ourResponse.logInfo = StatusText.getInstance().toString();
+                }
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+            }
         }
         catch (Exception e)
         {
@@ -126,16 +134,18 @@ class GetAnalyzedPreparationFeatureResponse
     public String logInfo = "";
     public String summary;
     public String key;
-    public String teamName = "";
-    public Date startDateRoadmapFeature;
-    public Date targetDate;
+    public Date businessApprovalDate;
+    public ArrayList<ProjectPreparationTask> tasksList;
 
 
-    public FeatureScore qualityScore;
 
 
-    public void fillTheFields(RoadmapFeatureAnalysis roadmapFeatureAnalysis)
+    public void fillTheFields(RoadmapFeaturePreparationAnalysis roadmapFeatureAnalysis)
     {
-
+        summary = roadmapFeatureAnalysis.issueSummary;
+        key = roadmapFeatureAnalysis.issueKey;
+        businessApprovalDate = roadmapFeatureAnalysis.businessApprovalDate;
+        tasksList = roadmapFeatureAnalysis.tasksList;
+        //TODO add the whole feature status and for each task - status of tardiness
     }
 }
