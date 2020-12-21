@@ -19,6 +19,7 @@ import com.atlassian.plugin.web.ContextProvider;
 
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraQueryResult;
+import com.playgileplayground.jira.jiraissues.ProjectPreparationIssue;
 import com.playgileplayground.jira.persistence.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 
@@ -92,7 +93,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
             contextMap.put(PROJECT, currentProject);
             ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
             //get list of roadmap features
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
 
             if (roadmapFeatures != null && roadmapFeatures.size() > 0)
             {

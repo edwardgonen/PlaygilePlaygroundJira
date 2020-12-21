@@ -2,88 +2,58 @@ package com.playgileplayground.jira.impl;
 
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.status.Status;
+import com.atlassian.jira.issue.status.category.StatusCategory;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
+import com.playgileplayground.jira.jiraissues.JiraQueryResult;
+import com.playgileplayground.jira.jiraissues.ProjectPreparationIssue;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by on 8/8/2020.
  */
 public class ProjectPreparationMisc {
     private JiraInterface jiraInterface;
-
     public ProjectPreparationMisc(JiraInterface jiraInterface)
     {
         this.jiraInterface = jiraInterface;
     }
 
-
-    public ProjectPreparationIssue identifyProductPreparationIssue(Issue issue, RoadmapFeatureDescriptor roadmapFeatureDescriptor)
+    public Date getBusinessApprovalDate(Issue roadmapFeature)
     {
-        ProjectPreparationIssue result = new ProjectPreparationIssue();
+        Date result = null;
 
-        if (issue == null) return null; //wrong issue
-
-        //1. get issue key
-        String issueKey = issue.getKey();
-
-        //Monetization(PKM), BI(BIT), BA(PKBA), Economics (PKEC)
-
-        if (issueKey.contains("PKM")) {
-            result.issueTypeKey = "PKM";
-            result.issueTypeName = "Monetization";
-        } else
-        if (issueKey.contains("BIT")) {
-            result.issueTypeKey = "BIT";
-            result.issueTypeName = "Business Intelligence";
-        } else
-        if (issueKey.contains("PKBA")) {
-            result.issueTypeKey = "PKBA";
-            result.issueTypeName = "Business Analytics";
-        } else
-        if (issueKey.contains("PKEC")) {
-            result.issueTypeKey = "PKEC";
-            result.issueTypeName = "Economy";
-        }
-        else //unknown
+        JiraQueryResult jqr;
+        //get business approval date
+        jqr = jiraInterface.getBusinessApprovalDateForIssue(roadmapFeature);
+        if (jqr.Code == JiraQueryResult.STATUS_CODE_SUCCESS)
         {
-            return null;
+            result = (Date)jqr.Result;
         }
-
-        //get assignee
+        return result;
+    }
+    public boolean isIssueCompleted(Issue issue)
+    {
+        Status issueStatus = issue.getStatus();
+        StatusCategory statusCategory = issueStatus.getStatusCategory();
+        return (Objects.equals(statusCategory.getKey(), StatusCategory.COMPLETE));
+    }
+    public String getAssignee(Issue issue)
+    {
+        String result = "No assignee";
         ApplicationUser assignee = issue.getAssignee();
         if (assignee != null) {
-            result.assigneeName = issue.getAssignee().getName();
-        } else {
-            result.assigneeName = "Unassigned";
+            result = assignee.getDisplayName();
         }
-
-        //get start date
-        result.createdDate = issue.getCreated();
-        //get due date
-        result.dueDate = issue.getDueDate();
-        if (result.dueDate == null) //not defined so I use the business approval date as due date
-        {
-            result.dueDate = roadmapFeatureDescriptor.BusinessApprovalDate;
-        }
-        //get status
-        Status issueStatus = issue.getStatus();
-        if (issueStatus != null) {
-            String statusName = issueStatus.getName();
-            switch (statusName)
-            {
-                case "Resolved":
-                case "Closed":
-                case "Done":
-                    result.issueState = ProjectPreparationIssue.IssueState.CLOSED;
-                    break;
-                default: result.issueState = ProjectPreparationIssue.IssueState.ACTIVE;
-            }
-
-        }
-        else result.issueState = ProjectPreparationIssue.IssueState.UNDEFINED;
-
-        result.issueKey = issue.getKey();
-        result.issueName = issue.getSummary();
+        return result;
+    }
+    public ProjectPreparationIssue identifyProductPreparationIssue(Issue issue, RoadmapFeatureDescriptor roadmapFeatureDescriptor)
+    {
+        ProjectPreparationIssue result = null;
         return result;
     }
 }

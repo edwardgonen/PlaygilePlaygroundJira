@@ -17,6 +17,7 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
@@ -69,6 +70,7 @@ public class pluginConfiguration extends HttpServlet {
     }
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        StatusText.getInstance().reset();
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
             //first check user
@@ -93,6 +95,8 @@ public class pluginConfiguration extends HttpServlet {
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
             JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
 
+            boolean bSendLog = req.getParameter("sendLog") != null;
+
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
             if (currentProject == null) {
                 ourResponse.statusMessage = "Failed to find project " + projectKey;
@@ -112,8 +116,8 @@ public class pluginConfiguration extends HttpServlet {
             ao.executeInTransaction((TransactionCallback<Void>) () -> {
 
                 //if at least one our parameter is specified - save it
-
-                ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, selectedRoadmapFeatureIssue.getSummary());
+                StatusText.getInstance().add(true, "Setting configuration");
+                ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, selectedRoadmapFeatureIssue.getKey());
                 ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(key); //will not create if exists
                 if (maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS || maorLocal.Code == ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
                     //set team velocity if available
@@ -159,16 +163,28 @@ public class pluginConfiguration extends HttpServlet {
                                 {
                                     //exit with error
                                     ourResponse.statusMessage = collectedStatus.toString() + " " + "Failed to set parameter " + parameterName + " " + maorLocal.Message;
+                                    if (bSendLog)
+                                    {
+                                        ourResponse.logInfo = StatusText.getInstance().toString();
+                                    }
                                     servletMisc.serializeToJsonAndSend(ourResponse, resp);
                                     return null;
                                 }
                                 else
                                 {
+                                    if (bSendLog)
+                                    {
+                                        ourResponse.logInfo = StatusText.getInstance().toString();
+                                    }
                                     collectedStatus.append(" Set");
                                 }
                             } catch (Exception e) {
                                 //exit with error
                                 ourResponse.statusMessage = "Parsing exception " + ProjectMonitoringMisc.getExceptionTrace(e);
+                                if (bSendLog)
+                                {
+                                    ourResponse.logInfo = StatusText.getInstance().toString();
+                                }
                                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                                 return null;
                             }
@@ -176,12 +192,20 @@ public class pluginConfiguration extends HttpServlet {
                     }
                 } else {
                     ourResponse.statusMessage = "Failed to find project and feature " + projectKey + " " + roadmapFeatureKey;
+                    if (bSendLog)
+                    {
+                        ourResponse.logInfo = StatusText.getInstance().toString();
+                    }
                     servletMisc.serializeToJsonAndSend(ourResponse, resp);
                     return null;
                 }
 
                 //return answer to web
                 ourResponse.statusMessage = "";
+                if (bSendLog)
+                {
+                    ourResponse.logInfo = StatusText.getInstance().toString();
+                }
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return null;
             });
