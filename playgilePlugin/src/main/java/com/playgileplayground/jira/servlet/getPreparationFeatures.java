@@ -13,8 +13,7 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.playgileplayground.jira.api.ProjectMonitor;
-import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
-import com.playgileplayground.jira.impl.StatusText;
+import com.playgileplayground.jira.impl.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 
 import javax.servlet.ServletException;
@@ -54,7 +53,7 @@ public class getPreparationFeatures extends HttpServlet {
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
-        GetPreparationFeaturesResponse ourResponse = new GetPreparationFeaturesResponse();
+        PreparationFeaturesResponse ourResponse = new PreparationFeaturesResponse();
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
@@ -94,15 +93,17 @@ public class getPreparationFeatures extends HttpServlet {
             //prepare list of short feature descriptors
             if (roadmapFeatures.size() > 0)
             {
-                //convert to string list
-                for (Issue feature : roadmapFeatures)
-                {
-                    PreparationFeatureShortDescriptor afsd = new PreparationFeatureShortDescriptor();
-                    afsd.featureKey = feature.getKey();
-                    afsd.setFeatureSummary(feature.getSummary());
-                    ourResponse.featuresList.add(afsd);
+                //prepare the response with features sorted by month/year
+                //first - create our list of features
+                ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
+                ArrayList<PreparationFeatureShortDescriptor> preparationFeatureShortDescriptors = new ArrayList<>();
+                for (Issue feature : roadmapFeatures) {
+                    PreparationFeatureShortDescriptor preparationFeatureShortDescriptor = new PreparationFeatureShortDescriptor();
+                    preparationFeatureShortDescriptor.businessApprovalDate = projectPreparationMisc.getBusinessApprovalDate(feature);
+                    preparationFeatureShortDescriptor.featureKey = feature.getKey();
+                    preparationFeatureShortDescriptors.add(preparationFeatureShortDescriptor);
                 }
-                Collections.sort(ourResponse.featuresList);//sort by Date for better user experience
+                ourResponse.featuresListByMonthYear = createListOfFeaturesByMonthYear(preparationFeatureShortDescriptors);
             }
             else
             {
@@ -120,30 +121,56 @@ public class getPreparationFeatures extends HttpServlet {
         }
 
     }
+    private ArrayList<PreparationFeaturesListByMonth> createListOfFeaturesByMonthYear(ArrayList<PreparationFeatureShortDescriptor> preparationFeatureShortDescriptors)
+    {
+        ArrayList<PreparationFeaturesListByMonth> result = new ArrayList<>();
+        //1. Sort the input list by business approval date
+        Collections.sort(preparationFeatureShortDescriptors);
+        Date firstDate = preparationFeatureShortDescriptors.get(0).businessApprovalDate;
+        Date lastDate = preparationFeatureShortDescriptors.get(preparationFeatureShortDescriptors.size() - 1).businessApprovalDate;
+
+        //go through all months from first record to the last
+        for (Date date = firstDate; date.before(lastDate) || date.equals(lastDate); date = DateTimeUtils.AddMonths(date, 1)) {
+            PreparationFeaturesListByMonth preparationFeaturesListByMonth = new PreparationFeaturesListByMonth();
+            //go through the list and build our array and find year/month
+            for (PreparationFeatureShortDescriptor feature : preparationFeatureShortDescriptors)
+            {
+                if (DateTimeUtils.CompareDatesByMonthYear(feature.businessApprovalDate, date))
+                {
+                    preparationFeaturesListByMonth.monthYear = date;
+                    preparationFeaturesListByMonth.featuresList.add(feature);
+                }
+            }
+            if (preparationFeaturesListByMonth.featuresList.size() > 0) result.add(preparationFeaturesListByMonth);
+        }
+
+        return result;
+    }
+
 }
 
-class GetPreparationFeaturesResponse
+class PreparationFeaturesResponse
 {
     public String statusMessage = "";
+    public ArrayList<PreparationFeaturesListByMonth> featuresListByMonthYear = new ArrayList<>();
+}
+class PreparationFeaturesListByMonth
+{
+    public Date monthYear;
     public ArrayList<PreparationFeatureShortDescriptor> featuresList = new ArrayList<>();
 }
 class PreparationFeatureShortDescriptor implements Comparator<PreparationFeatureShortDescriptor>, Comparable<PreparationFeatureShortDescriptor>
 {
     public String featureKey;
     public Date businessApprovalDate;
-    private String featureSummary;
 
-    public void setFeatureSummary(String featureSummary)
-    {
-        this.featureSummary = featureSummary;
-    }
     @Override
     public int compareTo(PreparationFeatureShortDescriptor o) {
-        return featureSummary.compareTo(o.featureSummary);
+        return DateTimeUtils.Days(businessApprovalDate, o.businessApprovalDate);
     }
 
     @Override
     public int compare(PreparationFeatureShortDescriptor o1, PreparationFeatureShortDescriptor o2) {
-        return o1.featureSummary.compareTo(o2.featureSummary);
+        return DateTimeUtils.Days(o1.businessApprovalDate, o2.businessApprovalDate);
     }
 }
