@@ -130,7 +130,7 @@ public class ProjectPreparationPresentation {
 
                     issuesStrings.append(
                         preparationIssue.issueTypeName + BR777 +
-                            preparationIssue.issueName + " " + preparationIssue.issueKey + BR777 +
+                            preparationIssue.issueSummary + " " + preparationIssue.issueKey + BR777 +
                             DateTimeUtils.ConvertDateToOurFormat(preparationIssue.getStartDate()) + BR777 +
                             DateTimeUtils.ConvertDateToOurFormat(preparationIssue.getDueDate()) + BR777 +
                             completeness + BR777 + //percentage completed

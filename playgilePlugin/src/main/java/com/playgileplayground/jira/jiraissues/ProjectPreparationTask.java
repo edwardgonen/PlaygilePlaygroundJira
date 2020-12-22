@@ -1,5 +1,7 @@
 package com.playgileplayground.jira.jiraissues;
 
+import com.playgileplayground.jira.impl.ProjectPreparationMisc;
+
 import java.util.Date;
 
 /**
@@ -8,6 +10,8 @@ import java.util.Date;
 public class ProjectPreparationTask {
     public String issueKey;
     public String issueSummary;
+    public double tardiness;
+    public Date createDate;
     public Date dueDate;
     public String assignee;
     public ProjectPreparationIssue.IssueState state;

@@ -31,8 +31,6 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
     @ComponentImport
     private final UserProjectHistoryManager userProjectHistoryManager;
     @ComponentImport
-    private final ActiveObjects ao;
-    @ComponentImport
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
@@ -43,10 +41,9 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
 
     public ProjectPreparationImpl(UserProjectHistoryManager userProjectHistoryManager,
                               ProjectManager projectManager,
-                              ActiveObjects ao, DateTimeFormatterFactory dateTimeFormatter,
+                              DateTimeFormatterFactory dateTimeFormatter,
                               SearchService searchService){
         this.userProjectHistoryManager = userProjectHistoryManager;
-        this.ao = ao;
         this.projectManager = projectManager;
         this.searchService = searchService;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -83,8 +80,6 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
         contextMap.put(CURRENTUSER, applicationUser.getKey());
 
         JiraInterface jiraInterface = new JiraInterface(applicationUser,  searchService);
-
-        ManageActiveObjects mao = new ManageActiveObjects(this.ao);
 
         //get the current project
         Project currentProject = projectManager.getProjectByCurrentKey((String) map.get("projectKey"));
@@ -138,7 +133,7 @@ public class ProjectPreparationImpl implements com.playgileplayground.jira.api.P
                                 ourIssue.businessApprovalDate = roadmapFeatureDescriptor.BusinessApprovalDate;
                                 //add to RF
                                 roadmapFeatureDescriptor.PreparationIssues.add(ourIssue);
-                                StatusText.getInstance().add ( true, "Issue " + ourIssue.issueName + " " + ourIssue.issueKey + " added with type " + ourIssue.issueTypeName);
+                                StatusText.getInstance().add ( true, "Issue " + ourIssue.issueSummary + " " + ourIssue.issueKey + " added with type " + ourIssue.issueTypeName);
                             }
                             else //not our issue or something
                             {
