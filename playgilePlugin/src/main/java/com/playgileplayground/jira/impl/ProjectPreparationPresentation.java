@@ -1,5 +1,7 @@
 package com.playgileplayground.jira.impl;
 
+import com.playgileplayground.jira.jiraissues.ProjectPreparationIssue;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;

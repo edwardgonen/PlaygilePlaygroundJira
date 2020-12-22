@@ -9,7 +9,20 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <style>
-            .FavoritesContent:empty~.emptyFavoritesText {
+            @media (orientation: portrait) {
+                .mobileWidthCahrt {
+                    width: 100% !important;
+                    height: 40vh !important;
+                }
+            }
+
+            @media (orientation: landscape) {
+                .mobileHeightCahrt {
+                    height: 40vh;
+                }
+            }
+
+            .mobileHeightCahrt .FavoritesContent:empty~.emptyFavoritesText {
                 /* background: black; */
                 color: gainsboro;
                 position: relative;
@@ -331,6 +344,7 @@
             }
 
             .detailsView {
+                overflow: auto;
                 display: none;
                 position: fixed;
                 z-index: 99;
@@ -659,6 +673,7 @@
             const MAX_INPUT_SP = 200;
 
             const TODAY_LOCAL_FORMAT = new Date().toLocaleDateString();
+            let $generalViewBlock, $generalViewTable, progressbar, progressLabel, $featureSearch, $teamsSearch, $resetSearchBtn
             /**
             * Point of entry
             */
@@ -666,19 +681,19 @@
                 /**
                 * Convert DomElements to jQueryElements
                 */
-                const $generalViewBlock = $('.generalViewBlock');
-                const $generalViewTable = $('.generalViewTable');
-                const progressbar = $("#progressbar");
-                const progressLabel = $(".progress-label");
-                const $featureSearch = $(".FeatureSearch")
+                $generalViewBlock = $('.generalViewBlock');
+                $generalViewTable = $('.generalViewTable');
+                progressbar = $("#progressbar");
+                progressLabel = $(".progress-label");
+                $featureSearch = $(".FeatureSearch")
                     /** Adding default value of search input field from saved value */
                     .val(SEARCH_DATA.featureSearch)
                     /** Handler of search input filed*/
                     .on('input', (e) => { featureSearchOnChange(e.currentTarget.value) })
-                const $teamsSearch = $(".TeamsSearch")
+                $teamsSearch = $(".TeamsSearch")
                     /** Handler of teams search input filed*/
                     .on('input', (e) => { teamsSearchOnChange(e.currentTarget.value) })
-                const $resetSearchBtn = $('.resetSearchBtn')
+                $resetSearchBtn = $('.resetSearchBtn')
                     /** Click handler of reset buttom*/
                     .click(resetSearch);
                 /** Initializing progress bar*/
@@ -704,238 +719,239 @@
                     /** Start build total view blocks */
                     initBuildPanels()
                 })
+            }
 
-                /**
-                * Recursively creating totalview blocks
-                */
-                function initBuildPanels() {
-                    /** If the number of features and the total view blocks are the same, stop the recursion */
-                    if (STORE.features.length == STORE.viewChildren.length) { return }
+            /**
+            * Recursively creating totalview blocks
+            */
+            function initBuildPanels() {
+                /** If the number of features and the total view blocks are the same, stop the recursion */
+                if (STORE.features.length == STORE.viewChildren.length) { return }
 
-                    let loadingValue = 100 / STORE.features.length;
-                    let featureId = encodeURIComponent(STORE.features[STORE.viewChildren.length].featureKey);
-                    let $panelBlock = $('<li>')
-                    $generalViewBlock.append($panelBlock)
-                    STORE.addViewChildren($panelBlock);
+                let loadingValue = 100 / STORE.features.length;
+                let featureId = encodeURIComponent(STORE.features[STORE.viewChildren.length].featureKey);
+                let $panelBlock = $('<li>')
+                $generalViewBlock.append($panelBlock)
+                STORE.addViewChildren($panelBlock);
 
-                    doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
-                        progressbar.progressbar("value", progressbar.progressbar("value") < 90 ? progressbar.progressbar("value") + loadingValue : 100);
-                        if (!!data.statusMessage) {
-                            $panelBlock.hide()
-                        } else {
-                            $panelBlock.empty();
-                            $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
-                            $panelBlock.click(() => { drawDeteilsView(data) })
-                            if (FAVORITES.includes(data.key)) { $panelBlock.detach().appendTo('.FavoritesContent') }
-                            console.log(data)
-                            STORE.addTeam(data.teamName)
-                            /** Drag and Drop logic */
-                            $(function () {
-                                $(".generalViewBlock, .FavoritesContent").sortable({
-                                    connectWith: ".connectedSortable"
-                                }).disableSelection();
-                                $('.FavoritesContent').sortable({
-                                    deactivate: function (event, ui) {
-                                        var _$array = $('.FavoritesContent').children().map(function () { return $(this).children().data('featureKey') });
-                                        var _array = Array.from(_$array);
-                                        FAVORITES = _array
-                                        localStorage.pluginFavorites = JSON.stringify(_array)
-                                    }
-                                })
-                            });
-
-                            updateTeamsSearch()
-
-                            genericSortFeature()
-                        }
-
-                    })
-                    /** Continuing recursion */
-                    initBuildPanels()
-
-
-                }
-                function updateTeamsSearch() {
-                    var _currentVal = SEARCH_DATA.teamName
-                    $teamsSearch.empty()
-                    $teamsSearch.append($('<option>').text(''))
-                    for (const key in STORE.teams) {
-                        $teamsSearch.append($('<option>').text(key))
-                    }
-                    $teamsSearch.val(_currentVal)
-                }
-                /**
-                * Build totalView block
-                * return HTML element
-                */
-                function getTotalViewBlock(featureData) {
-
-                    const SUMMARY = featureData.summary;//[0]
-
-                    const QUALITY_SCORE = normolizedInt(featureData.qualityScore.totalScore);//[1]
-
-                    const START_DATE_ROADMAP_FEATURE = normolizedDate(featureData.startDateRoadmapFeature);//[2]
-
-                    const PLANNED_VELOCITY = normolizedInt(featureData.plannedRoadmapFeatureVelocity);//[3]
-
-                    //NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
-                    const PROJECT_VELOCITY = normolizedInt(13);//[4] I dont know how find it
-
-                    const IDEAL_PROJECT_END = normolizedDate(featureData.idealProjectEnd);//[5]
-
-                    const PREDICTED_PROJECT_END = normolizedDate(featureData.predictedProjectEnd);//[6]
-
-                    const NOT_ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.notEstimatedStoriesNumber);//[7]
-
-                    const LARGE_STORIES_NUMBER = normolizedInt(featureData.largeStoriesNumber);//[8]
-
-                    const VERY_LARGE_STORIES_NUMBER = normolizedInt(featureData.veryLargeStoriesNumber);//[9]
-
-                    const ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.estimatedStoriesNumber);//[10]
-
-                    const TARGET_DATE = normolizedDate(featureData.targetDate)
-
-                    const LINE_COLOR1 = '#4285f4'
-                    const LINE_COLOR2 = "#cccc00"//[11]
-
-
-                    const ROW_HEIGHT = 100;
-                    const ROW_WIDTH = 100;
-                    const LABEL = 'Label';
-                    const VALUE = 'Value';
-                    const RISK = 'Risk'
-
-                    var table = document.createElement('div');
-                    /////////////////////////////////////////////////////////////
-                    table.className = `StatusBlock`
-                    ///////////////////////////////////////////////////////////////
-                    var featureNameCell = document.createElement('h2');
-                    table.append(featureNameCell)
-                    featureNameCell.style.width = '100%';
-                    featureNameCell.innerText = SUMMARY;
-                    ////////////////////////////////////////////////////////////////////
-                    var startDateCell = document.createElement('div');
-                    table.append(startDateCell);
-                    startDateCell.className = `Qualityscore${QUALITY_SCORE}`
-                    startDateCell.style.margin = '23px'
-                    startDateCell.style.alignSelf = 'center'
-                    startDateCell.style.fontWeight = 'bold'
-                    startDateCell.style.width = "250px";
-                    startDateCell.style.background = 'transparent'
-                    let p1 = document.createElement('p');
-                    p1.innerText = 'Started on: ' + START_DATE_ROADMAP_FEATURE.toDateString().slice(4);
-                    let p2 = document.createElement('p');
-                    p2.innerText = 'Target date: ' + TARGET_DATE.toDateString().slice(4)
-                    let p3 = document.createElement('p');
-                    p3.innerText = 'Predicted end: ' + PREDICTED_PROJECT_END.toDateString().slice(4)
-                    startDateCell.append(p1, p2, p3)
-                    ///////////////////////////////////////
-                    let progressDiv = document.createElement('div');
-                    progressDiv.style.alignSelf = 'center';
-                    progressDiv.style.width = "200px";
-                    startDateCell.append(progressDiv)
-                    let $progressDiv = $(progressDiv);
-                    let TODAY = new Date()
-                    let progressValue = (TODAY - START_DATE_ROADMAP_FEATURE) / (PREDICTED_PROJECT_END - START_DATE_ROADMAP_FEATURE) * 100;
-                    let progressCreateFn = function (event, ui) { $(this).find('.ui-widget-header').addClass(`Qualityscore${QUALITY_SCORE}`) }
-                    $(function () {
-                        $progressDiv.progressbar({
-                            value: progressValue,
-                            create: progressCreateFn
-                        });
-                    });
-                    //(new Date() - START_DATE_ROADMAP_FEATURE)/(PREDICTED_PROJECT_END-START_DATE_ROADMAP_FEATURE)
-                    //(today date - start project) / (predicted end - start project)
-                    ///////////////////////////////////
-                    var configButtnsCell = document.createElement('div');
-                    configButtnsCell.className = 'ButtonPluginWrapper';
-                    table.append(configButtnsCell)
-                    var $configButtnsCell = $(configButtnsCell).addClass('StatusBlockDivBtn');
-                    var $buttonEdit = $('<div class="ButtonPlugin aui-icon aui-icon-small aui-iconfont-configure">')
-                        .click((e) => { e.stopPropagation(); new EditView(featureData, '.editViewWrapper') });
-                    $configButtnsCell.append($buttonEdit)
-
-                    return table
-                }
-                function buildProgressBar() {
-                    $(function () {
-                        progressbar.progressbar({
-                            value: 0,
-                            change: function () {
-                                progressLabel.text(parseInt(progressbar.progressbar("value")) + "%");
-                            },
-                            complete: function () {
-                                progressLabel.text("All data loaded!");
-                                setTimeout(() => { progressbar.hide() }, 3000)
-                            }
-                        });
-                    });
-                }
-                function resetSearch() {
-                    localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' });
-                    $teamsSearch.val('')
-                    $featureSearch.val('')
-                    genericSortFeature()
-                }
-                function featureSearchOnChange(value) {
-                    var searchData = JSON.parse(localStorage.searchData)
-                    searchData.featureSearch = value;
-                    localStorage.searchData = JSON.stringify(searchData)
-
-                    genericSortFeature()
-                }
-                function teamsSearchOnChange(value) {
-                    var searchData = JSON.parse(localStorage.searchData)
-                    searchData.teamName = value;
-                    localStorage.searchData = JSON.stringify(searchData)
-
-                    genericSortFeature()
-                }
-                function genericSortFeature() {
-                    var searchData = JSON.parse(localStorage.searchData);
-                    var featureNameSearch = searchData.featureSearch.toUpperCase();
-                    var teamNameSearch = searchData.teamName.toUpperCase();
-                    STORE.viewChildren.forEach((elem) => {
-                        if (elem.parent().hasClass('FavoritesContent')) { return };
-                        if (elem.find('h2')[0]) {
-                            let result1 = false;
-                            let result2 = false;
-                            var text = elem.find('h2')[0].innerText;
-                            if (!featureNameSearch.length || text.toUpperCase().indexOf(featureNameSearch) >= 0) { result1 = true };
-                            if (!teamNameSearch.length || elem.children().data().teamName.toUpperCase().indexOf(teamNameSearch) >= 0) { result2 = true };
-                            result1 && result2 ? elem.show() : elem.hide()
-                        }
-                    })
-                }
-                function normolizedInt(int) {
-                    if ((typeof int) == 'number') {
-                        return parseFloat(int)
+                doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
+                    progressbar.progressbar("value", progressbar.progressbar("value") < 90 ? progressbar.progressbar("value") + loadingValue : 100);
+                    if (!!data.statusMessage) {
+                        $panelBlock.hide()
                     } else {
-                        return null
+                        $panelBlock.empty();
+                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
+                        $panelBlock.click(() => { drawDeteilsView(data) })
+                        if (FAVORITES.includes(data.key)) { $panelBlock.detach().appendTo('.FavoritesContent') }
+                        console.log(data)
+                        STORE.addTeam(data.teamName)
+                        /** Drag and Drop logic */
+                        $(function () {
+                            $(".generalViewBlock, .FavoritesContent").sortable({
+                                connectWith: ".connectedSortable"
+                            }).disableSelection();
+                            $('.FavoritesContent').sortable({
+                                deactivate: function (event, ui) {
+                                    var _$array = $('.FavoritesContent').children().map(function () { return $(this).children().data('featureKey') });
+                                    var _array = Array.from(_$array);
+                                    FAVORITES = _array
+                                    localStorage.pluginFavorites = JSON.stringify(_array)
+                                }
+                            })
+                        });
+
+                        updateTeamsSearch()
+
+                        genericSortFeature()
                     }
+
+                })
+                /** Continuing recursion */
+                initBuildPanels()
+
+
+            }
+            function updateTeamsSearch() {
+                var _currentVal = SEARCH_DATA.teamName
+                $teamsSearch.empty()
+                $teamsSearch.append($('<option>').text(''))
+                for (const key in STORE.teams) {
+                    $teamsSearch.append($('<option>').text(key))
                 }
-                function normolizedDate(date) {
-                    return (new Date(date))
+                $teamsSearch.val(_currentVal)
+            }
+            /**
+            * Build totalView block
+            * return HTML element
+            */
+            function getTotalViewBlock(featureData) {
+
+                const SUMMARY = featureData.summary;//[0]
+
+                const QUALITY_SCORE = normolizedInt(featureData.qualityScore.totalScore);//[1]
+
+                const START_DATE_ROADMAP_FEATURE = normolizedDate(featureData.startDateRoadmapFeature);//[2]
+
+                const PLANNED_VELOCITY = normolizedInt(featureData.plannedRoadmapFeatureVelocity);//[3]
+
+                //NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
+                const PROJECT_VELOCITY = normolizedInt(13);//[4] I dont know how find it
+
+                const IDEAL_PROJECT_END = normolizedDate(featureData.idealProjectEnd);//[5]
+
+                const PREDICTED_PROJECT_END = normolizedDate(featureData.predictedProjectEnd);//[6]
+
+                const NOT_ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.notEstimatedStoriesNumber);//[7]
+
+                const LARGE_STORIES_NUMBER = normolizedInt(featureData.largeStoriesNumber);//[8]
+
+                const VERY_LARGE_STORIES_NUMBER = normolizedInt(featureData.veryLargeStoriesNumber);//[9]
+
+                const ESTIMATED_STORIES_NUMBER = normolizedInt(featureData.estimatedStoriesNumber);//[10]
+
+                const TARGET_DATE = normolizedDate(featureData.targetDate)
+
+                const LINE_COLOR1 = '#4285f4'
+                const LINE_COLOR2 = "#cccc00"//[11]
+
+
+                const ROW_HEIGHT = 100;
+                const ROW_WIDTH = 100;
+                const LABEL = 'Label';
+                const VALUE = 'Value';
+                const RISK = 'Risk'
+
+                var table = document.createElement('div');
+                /////////////////////////////////////////////////////////////
+                table.className = `StatusBlock`
+                ///////////////////////////////////////////////////////////////
+                var featureNameCell = document.createElement('h2');
+                table.append(featureNameCell)
+                featureNameCell.style.width = '100%';
+                featureNameCell.innerText = SUMMARY;
+                ////////////////////////////////////////////////////////////////////
+                var startDateCell = document.createElement('div');
+                table.append(startDateCell);
+                startDateCell.className = `Qualityscore${QUALITY_SCORE}`
+                startDateCell.style.margin = '23px'
+                startDateCell.style.alignSelf = 'center'
+                startDateCell.style.fontWeight = 'bold'
+                startDateCell.style.width = "250px";
+                startDateCell.style.background = 'transparent'
+                let p1 = document.createElement('p');
+                p1.innerText = 'Started on: ' + START_DATE_ROADMAP_FEATURE.toDateString().slice(4);
+                let p2 = document.createElement('p');
+                p2.innerText = 'Target date: ' + TARGET_DATE.toDateString().slice(4)
+                let p3 = document.createElement('p');
+                p3.innerText = 'Predicted end: ' + PREDICTED_PROJECT_END.toDateString().slice(4)
+                startDateCell.append(p1, p2, p3)
+                ///////////////////////////////////////
+                let progressDiv = document.createElement('div');
+                progressDiv.style.alignSelf = 'center';
+                progressDiv.style.width = "200px";
+                startDateCell.append(progressDiv)
+                let $progressDiv = $(progressDiv);
+                let TODAY = new Date()
+                let progressValue = (TODAY - START_DATE_ROADMAP_FEATURE) / (PREDICTED_PROJECT_END - START_DATE_ROADMAP_FEATURE) * 100;
+                let progressCreateFn = function (event, ui) { $(this).find('.ui-widget-header').addClass(`Qualityscore${QUALITY_SCORE}`) }
+                $(function () {
+                    $progressDiv.progressbar({
+                        value: progressValue,
+                        create: progressCreateFn
+                    });
+                });
+                //(new Date() - START_DATE_ROADMAP_FEATURE)/(PREDICTED_PROJECT_END-START_DATE_ROADMAP_FEATURE)
+                //(today date - start project) / (predicted end - start project)
+                ///////////////////////////////////
+                var configButtnsCell = document.createElement('div');
+                configButtnsCell.className = 'ButtonPluginWrapper';
+                table.append(configButtnsCell)
+                var $configButtnsCell = $(configButtnsCell).addClass('StatusBlockDivBtn');
+                var $buttonEdit = $('<div class="ButtonPlugin aui-icon aui-icon-small aui-iconfont-configure">')
+                    .click((e) => { e.stopPropagation(); new EditView(featureData, '.editViewWrapper') });
+                $configButtnsCell.append($buttonEdit)
+
+                return table
+            }
+            function buildProgressBar() {
+                $(function () {
+                    progressbar.progressbar({
+                        value: 0,
+                        change: function () {
+                            progressLabel.text(parseInt(progressbar.progressbar("value")) + "%");
+                        },
+                        complete: function () {
+                            progressLabel.text("All data loaded!");
+                            setTimeout(() => { progressbar.hide() }, 3000)
+                        }
+                    });
+                });
+            }
+            function resetSearch() {
+                localStorage.searchData = JSON.stringify({ featureSearch: '', teamName: '' });
+                $teamsSearch.val('')
+                $featureSearch.val('')
+                genericSortFeature()
+            }
+            function featureSearchOnChange(value) {
+                var searchData = JSON.parse(localStorage.searchData)
+                searchData.featureSearch = value;
+                localStorage.searchData = JSON.stringify(searchData)
+
+                genericSortFeature()
+            }
+            function teamsSearchOnChange(value) {
+                var searchData = JSON.parse(localStorage.searchData)
+                searchData.teamName = value;
+                localStorage.searchData = JSON.stringify(searchData)
+
+                genericSortFeature()
+            }
+            function genericSortFeature() {
+                var searchData = JSON.parse(localStorage.searchData);
+                var featureNameSearch = searchData.featureSearch.toUpperCase();
+                var teamNameSearch = searchData.teamName.toUpperCase();
+                STORE.viewChildren.forEach((elem) => {
+                    if (elem.parent().hasClass('FavoritesContent')) { return };
+                    if (elem.find('h2')[0]) {
+                        let result1 = false;
+                        let result2 = false;
+                        var text = elem.find('h2')[0].innerText;
+                        if (!featureNameSearch.length || text.toUpperCase().indexOf(featureNameSearch) >= 0) { result1 = true };
+                        if (!teamNameSearch.length || elem.children().data().teamName.toUpperCase().indexOf(teamNameSearch) >= 0) { result2 = true };
+                        result1 && result2 ? elem.show() : elem.hide()
+                    }
+                })
+            }
+            function normolizedInt(int) {
+                if ((typeof int) == 'number') {
+                    return parseFloat(int)
+                } else {
+                    return null
                 }
-                /**
-                * Build deteiled view block
-                */
-                function drawDeteilsView(featureData) {
-                    let $detailsView = $('.detailsView');
-                    $detailsView.show()
-                    try {
-                        let html = `<h1 class=QualityscoreHeader${featureData.qualityScore.totalScore} style="color:white;">
+            }
+            function normolizedDate(date) {
+                return (new Date(date))
+            }
+            /**
+            * Build deteiled view block
+            */
+            function drawDeteilsView(featureData) {
+                let $detailsView = $('.detailsView');
+                $detailsView.show()
+                try {
+                    let html = `<h1 class=QualityscoreHeader${featureData.qualityScore.totalScore} style="color:white;">
                         <a style="color: white;" href="${BASE_URL}/browse/${featureData.key}" target="_blank">${featureData.summary} by ${featureData.teamName} team</a>
                         </h1>
                     <div>Click outside the panel to close</div>
-                    <div style="width:90%; height:40vh; display: inline-flex;">   
-                        <div id="curve_chart" style="width:33%; height:100%; padding:5px"></div>
-                        <div id="velocity_chart" style="width:33%; height:100%;  padding:5px"></div>
-                        <div id="piechart" style="width:33%; height:100%;  padding:5px"></div>
+                    <div class="mobileHeightCahrt" style="width: 90%; display: flex; flex-wrap: wrap; margin: 5px;">   
+                        <div id="curve_chart" class="mobileWidthCahrt" style="width:32%; height:100%; padding:5px"></div>
+                        <div id="velocity_chart" class="mobileWidthCahrt" style="width:32%; height:100%;  padding:5px"></div>
+                        <div id="piechart" class="mobileWidthCahrt" style="width:32%; height:100%;  padding:5px"></div>
                     </div>
-                    <div style="width:90%; height:40vh; display: inline-flex;">
-                            <div id="open_total_chart" style="width:33%; height:100%;  padding:5px"></div>
-                            <div id="quality_score_chart" style="width:33%; height:100%;  margin:5px; background:#f4f5f7">
+                    <div class="mobileHeightCahrt" style="width: 90%; display: flex; flex-wrap: wrap; margin: 5px;">
+                            <div id="open_total_chart" class="mobileWidthCahrt" style="width:32%; height:100%;  padding:5px"></div>
+                            <div id="quality_score_chart" class="mobileWidthCahrt" style="width:32%; height:100%;  margin:5px; background:#f4f5f7">
                                 <div style="width:100%; height:33%; display: inline-flex;">
                                     <div id="gauge0" style="width:33%; height:90%;"></div>
                                     <div class="gaugeDescr0" style="width:77%; height:100%; text-align: left; margin: 5px;"></div>
@@ -949,318 +965,336 @@
                                     <div class="gaugeDescr2" style="width:77%; height:100%; text-align: left; margin: 5px;"></div>
                                 </div>
                             </div>
-                            <div id="issue_distribution" style="width:33%; height:100%;  padding:5px"></div>
+                            <div id="issue_distribution" class="mobileWidthCahrt" style="width:32%; height:100%;  padding:5px"></div>
                     </div>`
-                        $detailsView.html(html);
-                        let $curve_chart = $detailsView.find('#curve_chart');
-                        let $velocity_chart = $detailsView.find('#velocity_chart');
-                        let $piechart = $detailsView.find('#piechart');
-                        let $open_total_chart = $detailsView.find('#open_total_chart');
-                        let $qualityScoreChart = $detailsView.find('#quality_score_chart');
-                        let $gauge0 = $detailsView.find('#gauge0');
-                        let $gauge1 = $detailsView.find('#gauge1');
-                        let $gauge2 = $detailsView.find('#gauge2');
-                        let $issue_distribution = $detailsView.find('#issue_distribution');
+                    $detailsView.html(html);
+                    let $curve_chart = $detailsView.find('#curve_chart');
+                    let $velocity_chart = $detailsView.find('#velocity_chart');
+                    let $piechart = $detailsView.find('#piechart');
+                    let $open_total_chart = $detailsView.find('#open_total_chart');
+                    let $qualityScoreChart = $detailsView.find('#quality_score_chart');
+                    let $gauge0 = $detailsView.find('#gauge0');
+                    let $gauge1 = $detailsView.find('#gauge1');
+                    let $gauge2 = $detailsView.find('#gauge2');
+                    let $issue_distribution = $detailsView.find('#issue_distribution');
 
 
-                        //////////////////curve_chart///////////////////////
-                        var data = new google.visualization.DataTable();
-                        data.addColumn('date', 'Date');
-                        data.addColumn({ type: 'string', role: 'annotation' });
-                        data.addColumn('number', 'Initial Velocity');
-                        data.addColumn('number', 'Predicted Velocity');
+                    //////////////////curve_chart///////////////////////
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('date', 'Date');
+                    data.addColumn({ type: 'string', role: 'annotation' });
+                    data.addColumn('number', 'Initial Velocity');
+                    data.addColumn('number', 'Predicted Velocity');
 
-                        const LINES = featureData.progressDataSets
-                        LINES.forEach(function (line, index) {
-                            let date = new Date(line.date)
-                            let ideal = null;
-                            if (Number.isFinite(line.idealEstimations)) {
-                                ideal = Math.round(parseFloat(line.idealEstimations));
-                                /* if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
-                                    ideal = null;
-                                } */
+                    const LINES = featureData.progressDataSets
+                    LINES.forEach(function (line, index) {
+                        let date = new Date(line.date)
+                        let ideal = null;
+                        if (Number.isFinite(line.idealEstimations)) {
+                            ideal = Math.round(parseFloat(line.idealEstimations));
+                            /* if (line.idealEstimations == 0 && LINES[index - 1].idealEstimations == 0) {
+                                ideal = null;
+                            } */
+                        }
+                        let predicted = null;
+                        if (Number.isFinite(line.predictedEstimations)) {
+                            predicted = Math.round(parseFloat(line.predictedEstimations))
+                            /* if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
+                                predicted = null;
+                            } */
+                        }
+                        let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
+                        data.addRow([date, _annotationRemaing, ideal, predicted]);
+                    });
+
+                    let lastDate = new Date(LINES[LINES.length - 1].date);
+                    let targetDate = new Date(featureData.targetDate);
+                    if (lastDate < targetDate) {
+                        data.addRow([targetDate, null, 0, 0]);
+                    }
+
+
+                    var options = {
+                        title: 'Project Monitor\n' +
+                            'ETA is ' + new Date(featureData.predictedProjectEnd).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ', Target ' + new Date(featureData.targetDate).toLocaleDateString(),
+                        lineWidth: 3,
+                        series: {
+                            0: { lineDashStyle: [0, 0] },
+                            1: { lineDashStyle: [2, 2], color: '#009900' }
+                        },
+                        width: '100%',
+                        height: '100%',
+                        annotations: {
+                            style: 'line',
+                            textStyle: {
+                                fontName: 'sans-serif',
+                                fontSize: 12
                             }
-                            let predicted = null;
-                            if (Number.isFinite(line.predictedEstimations)) {
-                                predicted = Math.round(parseFloat(line.predictedEstimations))
-                                /* if (line.predictedEstimations == 0 && LINES[index - 1].predictedEstimations == 0) {
-                                    predicted = null;
-                                } */
+                        },
+                        vAxes: [
+                            {
+                                title: 'Story Points',
+                                viewWindow: {
+                                    min: 0
+                                }
                             }
-                            let _annotationRemaing = date.toLocaleDateString() == TODAY_LOCAL_FORMAT ? 'Remaining ' + ideal + ' SP ' : null;
-                            data.addRow([date, _annotationRemaing, ideal, predicted]);
-                        });
+                        ],
+                        curveType: 'function',
+                        legend: { position: 'bottom' },
+                        backgroundColor: '#f4f5f7'
+                    };
+                    var chart = new google.visualization.LineChart($curve_chart[0]);
+                    chart.draw(data, options);
+                    google.visualization.events.addListener(chart, 'ready', chartReadyHandler);
+                    function chartReadyHandler() {
+                        drawVAxisLine(chart, targetDate)
+                    }
+                    function drawVAxisLine(chart, value) {
+                        var layout = chart.getChartLayoutInterface();
+                        var chartArea = layout.getChartAreaBoundingBox();
 
-                        let lastDate = new Date(LINES[LINES.length - 1].date);
-                        let targetDate = new Date(featureData.targetDate);
-                        if (lastDate < targetDate) {
-                            data.addRow([targetDate, null, 0, 0]);
-                        }
+                        var svg = chart.getContainer().getElementsByTagName('svg')[0];
+                        var xLoc = layout.getXLocation(value)
+                        svg.appendChild(createLine(xLoc, chartArea.top, chartArea.height, 'red', 4)); // axis line 
+                    }
+                    function createLine(x1, y1, z, color, w) {
+                        var line = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        line.setAttribute('x', x1);
+                        line.setAttribute('y', y1);
+                        line.setAttribute('width', 2);
+                        line.setAttribute('height', z);
+                        line.setAttribute('fill', color);
+                        //line.setAttribute('stroke-width', w);
+                        return line;
+                    }
+                    ///////piechart///////////
+                    var dataIssueDistribution = new google.visualization.DataTable();
 
-
-                        var options = {
-                            title: 'Project Monitor\n' +
-                                'ETA is ' + new Date(featureData.predictedProjectEnd).toLocaleDateString() + ' based on velocity of ' + featureData.predictedVelocity + ', Target ' + new Date(featureData.targetDate).toLocaleDateString(),
-                            lineWidth: 3,
-                            series: {
-                                0: { lineDashStyle: [0, 0] },
-                                1: { lineDashStyle: [2, 2], color: '#009900' }
-                            },
-                            width: '100%',
-                            height: '100%',
-                            annotations: {
-                                style: 'line',
-                                textStyle: {
-                                    fontName: 'sans-serif',
-                                    fontSize: 12
+                    dataIssueDistribution.addColumn('string', 'Category');
+                    dataIssueDistribution.addColumn('number', 'Value');
+                    var notEstimatedNumber = featureData.notEstimatedStoriesNumber || 0;
+                    var largeStoriesNumber = featureData.largeStoriesNumber || 0;
+                    var veryLargeStoriesNumber = featureData.veryLargeStoriesNumber || 0;
+                    var estimatedStoriesNumber = featureData.estimatedStoriesNumber || 0;
+                    dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
+                    dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
+                    dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
+                    dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
+                    var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
+                    var optionsIssueDistribution = {
+                        title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
+                        backgroundColor: '#f4f5f7',
+                        width: '100%',
+                        height: '100%'
+                    };
+                    var chartIssueDistributionPie = new google.visualization.PieChart($piechart[0]);
+                    google.visualization.events.addListener(chartIssueDistributionPie, 'select', () => {
+                        var selectedItem = chartIssueDistributionPie.getSelection()[0];
+                        if (selectedItem) {
+                            let storyPointsCondition = (() => {
+                                switch (selectedItem.row) {
+                                    case 0:
+                                        return `and ("Story Points" is empty or "Story Points" = 0)`
+                                    case 3:
+                                        return `and "Story Points" > 0 and "Story Points" < 13`
+                                    case 2:
+                                        return `and "Story Points" = 13`
+                                    case 1:
+                                        return `and "Story Points" > 13`
+                                    default:
+                                        return ``
+                                        break;
                                 }
-                            },
-                            vAxes: [
-                                {
-                                    title: 'Story Points',
-                                    viewWindow: {
-                                        min: 0
-                                    }
+                            })()
+                            window.open(`${BASE_URL}/issues/?jql=issueFunction in issuesInEpics("issueFunction in linkedIssuesOf(\\"issuekey = ${featureData.key}\\",\\"Is Parent task of:\\")") and issuetype in (Story, Task) and statusCategory != Done ${storyPointsCondition}`)
+                        }
+                    });
+                    chartIssueDistributionPie.draw(dataIssueDistribution, optionsIssueDistribution);
+                    ///////////velocity_chart///////
+                    var dataVelocity = new google.visualization.DataTable();
+                    dataVelocity.addColumn('date', 'Date');
+                    dataVelocity.addColumn('number', 'Actual Velocity');
+                    dataVelocity.addColumn('number', 'Predicted Velocity');
+                    var velocityChartRows = featureData.velocityDataSets;
+                    velocityChartRows.forEach(function (line, index) {
+                        var date = new Date(line.date);
+                        var realVelocity = line.realVelocity || 0;
+                        var linearVelocity = line.interpolatedVelocity || 0;
+                        dataVelocity.addRow([date, realVelocity, linearVelocity]);
+
+                    });
+                    var optionsVelocityChart = {
+                        title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + featureData.predictedVelocity,
+                        lineWidth: 3,
+                        width: '100%',
+                        height: '100%',
+                        series: {
+                            0: { lineDashStyle: [0, 0] },
+                            1: { lineDashStyle: [10, 2], color: 'black' }
+                        },
+                        vAxes: {
+                            0: {
+                                title: 'Story Points per Sprint',
+                                viewWindow: {
+                                    min: 0
                                 }
-                            ],
-                            curveType: 'function',
-                            legend: { position: 'bottom' },
-                            backgroundColor: '#f4f5f7'
-                        };
-                        var chart = new google.visualization.LineChart($curve_chart[0]);
-                        chart.draw(data, options);
-                        google.visualization.events.addListener(chart, 'ready', chartReadyHandler);
-                        function chartReadyHandler() {
-                            drawVAxisLine(chart, targetDate)
-                        }
-                        function drawVAxisLine(chart, value) {
-                            var layout = chart.getChartLayoutInterface();
-                            var chartArea = layout.getChartAreaBoundingBox();
-
-                            var svg = chart.getContainer().getElementsByTagName('svg')[0];
-                            var xLoc = layout.getXLocation(value)
-                            svg.appendChild(createLine(xLoc, chartArea.top, chartArea.height, 'red', 4)); // axis line 
-                        }
-                        function createLine(x1, y1, z, color, w) {
-                            var line = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                            line.setAttribute('x', x1);
-                            line.setAttribute('y', y1);
-                            line.setAttribute('width', 2);
-                            line.setAttribute('height', z);
-                            line.setAttribute('fill', color);
-                            //line.setAttribute('stroke-width', w);
-                            return line;
-                        }
-                        ///////piechart///////////
-                        var dataIssueDistribution = new google.visualization.DataTable();
-
-                        dataIssueDistribution.addColumn('string', 'Category');
-                        dataIssueDistribution.addColumn('number', 'Value');
-                        var notEstimatedNumber = featureData.notEstimatedStoriesNumber || 0;
-                        var largeStoriesNumber = featureData.largeStoriesNumber || 0;
-                        var veryLargeStoriesNumber = featureData.veryLargeStoriesNumber || 0;
-                        var estimatedStoriesNumber = featureData.estimatedStoriesNumber || 0;
-                        dataIssueDistribution.addRow(['Not estimated', notEstimatedNumber]);
-                        dataIssueDistribution.addRow(['Very Large (21 points)', veryLargeStoriesNumber]);
-                        dataIssueDistribution.addRow(['Large (13 points)', largeStoriesNumber]);
-                        dataIssueDistribution.addRow(['Normal', estimatedStoriesNumber]);
-                        var totalStories = notEstimatedNumber + largeStoriesNumber + veryLargeStoriesNumber + estimatedStoriesNumber;
-                        var optionsIssueDistribution = {
-                            title: 'Project Issues Analysis. Total ' + totalStories + ' issues',
-                            backgroundColor: '#f4f5f7',
-                            width: '100%',
-                            height: '100%'
-                        };
-                        var chartIssueDistributionPie = new google.visualization.PieChart($piechart[0]);
-                        google.visualization.events.addListener(chartIssueDistributionPie, 'select', () => {
-                            var selectedItem = chartIssueDistributionPie.getSelection()[0];
-                            if (selectedItem) {
-                                let storyPointsCondition = (() => {
-                                    switch (selectedItem.row) {
-                                        case 0:
-                                            return `and ("Story Points" is empty or "Story Points" = 0)`
-                                        case 3:
-                                            return `and "Story Points" > 0 and "Story Points" < 13`
-                                        case 2:
-                                            return `and "Story Points" = 13`
-                                        case 1:
-                                            return `and "Story Points" > 13`
-                                        default:
-                                            return ``
-                                            break;
-                                    }
-                                })()
-                                window.open(`${BASE_URL}/issues/?jql=issueFunction in issuesInEpics("issueFunction in linkedIssuesOf(\\"issuekey = ${featureData.key}\\",\\"Is Parent task of:\\")") and issuetype in (Story, Task) and statusCategory != Done ${storyPointsCondition}`)
                             }
-                        });
-                        chartIssueDistributionPie.draw(dataIssueDistribution, optionsIssueDistribution);
-                        ///////////velocity_chart///////
-                        var dataVelocity = new google.visualization.DataTable();
-                        dataVelocity.addColumn('date', 'Date');
-                        dataVelocity.addColumn('number', 'Actual Velocity');
-                        dataVelocity.addColumn('number', 'Predicted Velocity');
-                        var velocityChartRows = featureData.velocityDataSets;
-                        velocityChartRows.forEach(function (line, index) {
-                            var date = new Date(line.date);
-                            var realVelocity = line.realVelocity || 0;
-                            var linearVelocity = line.interpolatedVelocity || 0;
-                            dataVelocity.addRow([date, realVelocity, linearVelocity]);
+                        },
+                        curveType: 'function',
+                        legend: { position: 'bottom' },
+                        backgroundColor: '#f4f5f7'
+                    };
+                    var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
+                    chartVelocity.draw(dataVelocity, optionsVelocityChart);
+                    //////////////////open_total_chart/////////////////////////
+                    var dataOpenTotalChart = new google.visualization.DataTable();
+                    dataOpenTotalChart.addColumn('date', 'Date');
+                    dataOpenTotalChart.addColumn('number', 'Open');
+                    dataOpenTotalChart.addColumn('number', 'Total');
+                    dataOpenTotalChart.addColumn('number', 'RFD');
+                    dataOpenTotalChart.addColumn('number', 'RFE');
+                    featureData.issueCountsDataSets.forEach((line) => {
+                        let date = new Date(line.date);
+                        let openIssues = line.openIssues;
+                        let totalIssues = line.totalIssues;
+                        let readyForDevelopmentIssues = line.readyForDevelopmentIssues;
+                        let readyForEstimationIssues = line.readyForEstimationIssues;
+                        dataOpenTotalChart.addRow([date, openIssues, totalIssues, readyForDevelopmentIssues, readyForEstimationIssues]);
+                    })
+                    let optionsOpenTotal = {
+                        title: 'Issues Distribution',
+                        lineWidth: 3,
+                        width: '100%',
+                        height: '100%',
+                        legend: { position: 'bottom' },
+                    }
+                    var chartOpenTotal = new google.visualization.AreaChart($open_total_chart[0]);
+                    chartOpenTotal.draw(dataOpenTotalChart, optionsOpenTotal);
+                    ///////////////////qualityScoreChart/////////////////////////////
+                    let qualityScore = featureData.qualityScore
+                    let delay = qualityScore.delayScore
+                    let estimation = qualityScore.estimationScore
+                    let readiness = qualityScore.readinessScore
+                    var dataGauge0 = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['', delay]
+                    ]);
+                    var dataGauge1 = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['', estimation]
+                    ]);
+                    var dataGauge2 = google.visualization.arrayToDataTable([
+                        ['Label', 'Value'],
+                        ['', readiness]
+                    ]);
 
-                        });
-                        var optionsVelocityChart = {
-                            title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + featureData.predictedVelocity,
-                            lineWidth: 3,
-                            width: '100%',
-                            height: '100%',
-                            series: {
-                                0: { lineDashStyle: [0, 0] },
-                                1: { lineDashStyle: [10, 2], color: 'black' }
-                            },
-                            vAxes: {
-                                0: {
-                                    title: 'Story Points per Sprint',
-                                    viewWindow: {
-                                        min: 0
-                                    }
-                                }
-                            },
-                            curveType: 'function',
-                            legend: { position: 'bottom' },
-                            backgroundColor: '#f4f5f7'
-                        };
-                        var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
-                        chartVelocity.draw(dataVelocity, optionsVelocityChart);
-                        //////////////////open_total_chart/////////////////////////
-                        var dataOpenTotalChart = new google.visualization.DataTable();
-                        dataOpenTotalChart.addColumn('date', 'Date');
-                        dataOpenTotalChart.addColumn('number', 'Open');
-                        dataOpenTotalChart.addColumn('number', 'Total');
-                        dataOpenTotalChart.addColumn('number', 'RFD');
-                        dataOpenTotalChart.addColumn('number', 'RFE');
-                        featureData.issueCountsDataSets.forEach((line) => {
-                            let date = new Date(line.date);
-                            let openIssues = line.openIssues;
-                            let totalIssues = line.totalIssues;
-                            let readyForDevelopmentIssues = line.readyForDevelopmentIssues;
-                            let readyForEstimationIssues = line.readyForEstimationIssues;
-                            dataOpenTotalChart.addRow([date, openIssues, totalIssues, readyForDevelopmentIssues, readyForEstimationIssues]);
-                        })
-                        let optionsOpenTotal = {
-                            title: 'Issues Distribution',
-                            lineWidth: 3,
-                            width: '100%',
-                            height: '100%',
-                            legend: { position: 'bottom' },
-                        }
-                        var chartOpenTotal = new google.visualization.AreaChart($open_total_chart[0]);
-                        chartOpenTotal.draw(dataOpenTotalChart, optionsOpenTotal);
-                        ///////////////////qualityScoreChart/////////////////////////////
-                        let qualityScore = featureData.qualityScore
-                        let delay = qualityScore.delayScore
-                        let estimation = qualityScore.estimationScore
-                        let readiness = qualityScore.readinessScore
-                        var dataGauge0 = google.visualization.arrayToDataTable([
-                            ['Label', 'Value'],
-                            ['', delay]
-                        ]);
-                        var dataGauge1 = google.visualization.arrayToDataTable([
-                            ['Label', 'Value'],
-                            ['', estimation]
-                        ]);
-                        var dataGauge2 = google.visualization.arrayToDataTable([
-                            ['Label', 'Value'],
-                            ['', readiness]
-                        ]);
+                    var optionsQualityScoreChart = {
+                        greenFrom: 2.4, greenTo: 3.2,
+                        yellowFrom: 1.6, yellowTo: 2.4,
+                        redFrom: 0.8, redTo: 1.6,
+                        minorTicks: 5,
+                        min: 0.8,
+                        max: 3.2
+                    };
 
-                        var optionsQualityScoreChart = {
-                            greenFrom: 2.4, greenTo: 3.2,
-                            yellowFrom: 1.6, yellowTo: 2.4,
-                            redFrom: 0.8, redTo: 1.6,
-                            minorTicks: 5,
-                            min: 0.8,
-                            max: 3.2
-                        };
+                    var chartGauge0 = new google.visualization.Gauge($gauge0[0]);
+                    var chartGauge1 = new google.visualization.Gauge($gauge1[0]);
+                    var chartGauge2 = new google.visualization.Gauge($gauge2[0]);
 
-                        var chartGauge0 = new google.visualization.Gauge($gauge0[0]);
-                        var chartGauge1 = new google.visualization.Gauge($gauge1[0]);
-                        var chartGauge2 = new google.visualization.Gauge($gauge2[0]);
+                    chartGauge0.draw(dataGauge0, optionsQualityScoreChart);
+                    chartGauge1.draw(dataGauge1, optionsQualityScoreChart);
+                    chartGauge2.draw(dataGauge2, optionsQualityScoreChart);
 
-                        chartGauge0.draw(dataGauge0, optionsQualityScoreChart);
-                        chartGauge1.draw(dataGauge1, optionsQualityScoreChart);
-                        chartGauge2.draw(dataGauge2, optionsQualityScoreChart);
-
-                        $('.gaugeDescr0').html(`
+                    $('.gaugeDescr0').html(`
                             <h2 class=QualityscoreText${delay}>Delay</h2>
                             <p style="font-size: 1.8vh;">${qualityScore.delayScoreComment}</p>
                         `)
-                        $('.gaugeDescr1').html(`
+                    $('.gaugeDescr1').html(`
                             <h2 class=QualityscoreText${estimation}>Estimations</h2>
                             <p style="font-size: 1.8vh;">${qualityScore.estimationScoreComment}</p>
                         `)
-                        $('.gaugeDescr2').html(`
+                    $('.gaugeDescr2').html(`
                             <h2 class=QualityscoreText${readiness}>BL Readiness</h2>
                             <p style="font-size: 1.8vh;">${qualityScore.readinessScoreComment}</p>
                         `)
-                        /////////////////issue_distribution///////////////
-                        var distributionResult = featureData.overallIssuesDistributionInSprint;
-                        var firstQ = parseFloat(distributionResult[0]) || 0;
-                        var secondQ = parseFloat(distributionResult[1]) || 0;
-                        var thirdQ = parseFloat(distributionResult[2]) || 0;
-                        var fourthQ = parseFloat(distributionResult[3]) || 0;
-                        var dataIssueDistribution = google.visualization.arrayToDataTable([
-                            ["Segment", "Distribution", { role: "style" }],
-                            ["1/4 of sprint", firstQ * 100, "#3366CC"],
-                            ["2/4 of sprint", secondQ * 100, "#3366CC"],
-                            ["3/4 of sprint", thirdQ * 100, "#3366CC"],
-                            ["End of sprint", fourthQ * 100, "#3366CC"]
-                        ]);
-                        var optionsIssueDistribution = {
-                            width: '100%',
-                            height: '100%',
-                            title: "Average Issue Closure Distribution (%) in a typical sprint",
-                            bar: { groupWidth: "90%" },
-                            legend: { position: "bottom" },
-                            vAxes: {
-                                0: {
-                                    title: 'Percentage of closed issues',
-                                    viewWindow: {
-                                        min: 0
-                                    }
+                    /////////////////issue_distribution///////////////
+                    var distributionResult = featureData.overallIssuesDistributionInSprint;
+                    var firstQ = parseFloat(distributionResult[0]) || 0;
+                    var secondQ = parseFloat(distributionResult[1]) || 0;
+                    var thirdQ = parseFloat(distributionResult[2]) || 0;
+                    var fourthQ = parseFloat(distributionResult[3]) || 0;
+                    var dataIssueDistribution = google.visualization.arrayToDataTable([
+                        ["Segment", "Distribution", { role: "style" }],
+                        ["1/4 of sprint", firstQ * 100, "#3366CC"],
+                        ["2/4 of sprint", secondQ * 100, "#3366CC"],
+                        ["3/4 of sprint", thirdQ * 100, "#3366CC"],
+                        ["End of sprint", fourthQ * 100, "#3366CC"]
+                    ]);
+                    var optionsIssueDistribution = {
+                        width: '100%',
+                        height: '100%',
+                        title: "Average Issue Closure Distribution (%) in a typical sprint",
+                        bar: { groupWidth: "90%" },
+                        legend: { position: "bottom" },
+                        vAxes: {
+                            0: {
+                                title: 'Percentage of closed issues',
+                                viewWindow: {
+                                    min: 0
                                 }
-                            },
-                            backgroundColor: '#f4f5f7'
-                        };
-                        var chartIssueDistribution = new google.visualization.ColumnChart($issue_distribution[0]);
-                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
-                        /////////////
-
-                        $detailsView.click((e) => {
-                            if (e.target.className == "detailsView") {
-                                $detailsView.off()
-                                $detailsView.hide()
                             }
-                        })
-                    } catch (error) {
-                        $detailsView.hide()
-                        console.log(error)
-                        alert('No stories for this feature')
-                    }
+                        },
+                        backgroundColor: '#f4f5f7'
+                    };
+                    var chartIssueDistribution = new google.visualization.ColumnChart($issue_distribution[0]);
+                    chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                    /**
+                    * Resize handler 
+                    */
+                    $(window).resize(function () {
+                        //drawDeteilsView(featureData)
 
-                }
-                function rebuildPanelBlock(featureKey) {
-                    let encodedFeatureKey = encodeURIComponent(featureKey);
-                    doPost(GET_FEATURE_DATA_URL + encodedFeatureKey, {}, function (data) {
-                        let panelIndex = STORE.features.findIndex((elem) => elem.featureKey == data.key);
-                        if (panelIndex < 0) { return };
-                        let $panelBlock = STORE.viewChildren[panelIndex];
-                        $panelBlock.empty();
-                        $panelBlock.hide();
-                        $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
-                        $panelBlock.off('click');
-                        $panelBlock.click(() => { drawDeteilsView(data) });
-                        $panelBlock.show();
+                        chart.draw(data, options);
+                        chartIssueDistributionPie.draw(dataIssueDistribution, optionsIssueDistribution);
+                        chartVelocity.draw(dataVelocity, optionsVelocityChart);
+                        chartOpenTotal.draw(dataOpenTotalChart, optionsOpenTotal);
+                        chartGauge0.draw(dataGauge0, optionsQualityScoreChart);
+                        chartGauge1.draw(dataGauge1, optionsQualityScoreChart);
+                        chartGauge2.draw(dataGauge2, optionsQualityScoreChart);
+                        chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
+                    });
+                    /**
+                    * Close handler 
+                    */
+                    $detailsView.click((e) => {
+                        if (e.target.className == "detailsView") {
+                            $(window).off('resize')
+                            $detailsView.off()
+                            $detailsView.hide()
+                        }
                     })
+
+
+                } catch (error) {
+                    $detailsView.hide()
+                    console.log(error)
+                    alert('No stories for this feature')
                 }
+
+            }
+            function rebuildPanelBlock(featureKey) {
+                let encodedFeatureKey = encodeURIComponent(featureKey);
+                doPost(GET_FEATURE_DATA_URL + encodedFeatureKey, {}, function (data) {
+                    let panelIndex = STORE.features.findIndex((elem) => elem.featureKey == data.key);
+                    if (panelIndex < 0) { return };
+                    let $panelBlock = STORE.viewChildren[panelIndex];
+                    $panelBlock.empty();
+                    $panelBlock.hide();
+                    $panelBlock.append($(getTotalViewBlock(data)).data({ featureKey: data.key, teamName: data.teamName }));
+                    $panelBlock.off('click');
+                    $panelBlock.click(() => { drawDeteilsView(data) });
+                    $panelBlock.show();
+                })
             }
 
             const LABEL_1_TEXT = 'Default value for not estimated issues';

@@ -84,7 +84,7 @@ public class getPreparationFeatures extends HttpServlet {
                 return;
             }
 
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(applicationUser, currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
             if (roadmapFeatures == null) {
                 ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
@@ -102,7 +102,7 @@ public class getPreparationFeatures extends HttpServlet {
                     afsd.setFeatureSummary(feature.getSummary());
                     ourResponse.featuresList.add(afsd);
                 }
-                Collections.sort(ourResponse.featuresList);//sort alphabetically for better user experience
+                Collections.sort(ourResponse.featuresList);//sort by Date for better user experience
             }
             else
             {
@@ -130,6 +130,7 @@ class GetPreparationFeaturesResponse
 class PreparationFeatureShortDescriptor implements Comparator<PreparationFeatureShortDescriptor>, Comparable<PreparationFeatureShortDescriptor>
 {
     public String featureKey;
+    public Date businessApprovalDate;
     private String featureSummary;
 
     public void setFeatureSummary(String featureSummary)
