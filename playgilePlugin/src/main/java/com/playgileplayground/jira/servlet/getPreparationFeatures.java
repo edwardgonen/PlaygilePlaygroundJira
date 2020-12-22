@@ -31,11 +31,11 @@ public class getPreparationFeatures extends HttpServlet {
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
-    ActiveObjects ao;
 
-    public getPreparationFeatures(ActiveObjects ao,TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
+    public ApplicationUser applicationUser;
+
+    public getPreparationFeatures(TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
     {
-        this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
@@ -57,7 +57,7 @@ public class getPreparationFeatures extends HttpServlet {
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
-            ApplicationUser applicationUser = jac.getLoggedInUser();
+            applicationUser = jac.getLoggedInUser();
             if (applicationUser == null)
             {
                 ourResponse.statusMessage = "User authentication failure";
@@ -83,7 +83,7 @@ public class getPreparationFeatures extends HttpServlet {
                 return;
             }
 
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            ArrayList<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
             if (roadmapFeatures == null) {
                 ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
@@ -94,16 +94,7 @@ public class getPreparationFeatures extends HttpServlet {
             if (roadmapFeatures.size() > 0)
             {
                 //prepare the response with features sorted by month/year
-                //first - create our list of features
-                ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
-                ArrayList<PreparationFeatureShortDescriptor> preparationFeatureShortDescriptors = new ArrayList<>();
-                for (Issue feature : roadmapFeatures) {
-                    PreparationFeatureShortDescriptor preparationFeatureShortDescriptor = new PreparationFeatureShortDescriptor();
-                    preparationFeatureShortDescriptor.businessApprovalDate = projectPreparationMisc.getBusinessApprovalDate(feature);
-                    preparationFeatureShortDescriptor.featureKey = feature.getKey();
-                    preparationFeatureShortDescriptors.add(preparationFeatureShortDescriptor);
-                }
-                ourResponse.featuresListByMonthYear = createListOfFeaturesByMonthYear(preparationFeatureShortDescriptors);
+                ourResponse.featuresListByMonthYear = createListOfFeaturesByMonthYear(roadmapFeatures);
             }
             else
             {
@@ -121,6 +112,51 @@ public class getPreparationFeatures extends HttpServlet {
         }
 
     }
+    private ArrayList<PreparationFeaturesListByMonth> createListOfFeaturesByMonthYear(ArrayList<Issue> preparationFeatures)
+    {
+        ArrayList<PreparationFeaturesListByMonth> result = new ArrayList<>();
+        JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+        ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
+        //build a list of analysis
+        ArrayList<RoadmapFeaturePreparationAnalysis> analyzedPreparationFeatures = new ArrayList<>();
+        for (Issue preparationFeature : preparationFeatures)
+        {
+            //get the feature, analyze it and convert it to our response
+            RoadmapFeaturePreparationAnalysis roadmapFeaturePreparationAnalysis = new RoadmapFeaturePreparationAnalysis(
+                preparationFeature,
+                jiraInterface,
+                projectPreparationMisc);
+            if (roadmapFeaturePreparationAnalysis.analyzePreparationFeature()) { //we take all successfully analyzed features - started or non-started
+                analyzedPreparationFeatures.add(roadmapFeaturePreparationAnalysis);
+            } else //failed to analyze feature
+            {
+                StatusText.getInstance().add(true, "Failed to analyze preparation feature " + preparationFeature.getKey());
+            }
+        }
+
+        //Sort the input list by business approval date
+        Collections.sort(analyzedPreparationFeatures);
+        Date firstDate = analyzedPreparationFeatures.get(0).projectPreparationIssue.businessApprovalDate;
+        Date lastDate = analyzedPreparationFeatures.get(analyzedPreparationFeatures.size() - 1).projectPreparationIssue.businessApprovalDate;
+
+        //go through all months from first record to the last
+        for (Date date = firstDate; date.before(lastDate) || date.equals(lastDate); date = DateTimeUtils.AddMonths(date, 1)) {
+            PreparationFeaturesListByMonth preparationFeaturesListByMonth = new PreparationFeaturesListByMonth();
+            //go through the list and build our array and find year/month
+            for (RoadmapFeaturePreparationAnalysis analyzedFeature : analyzedPreparationFeatures)
+            {
+                if (DateTimeUtils.CompareDatesByMonthYear(analyzedFeature.projectPreparationIssue.businessApprovalDate, date))
+                {
+                    preparationFeaturesListByMonth.monthYear = date;
+                    preparationFeaturesListByMonth.featuresList.add(analyzedFeature);
+                }
+            }
+            if (preparationFeaturesListByMonth.featuresList.size() > 0) result.add(preparationFeaturesListByMonth);
+        }
+
+        return result;
+    }
+    /*
     private ArrayList<PreparationFeaturesListByMonth> createListOfFeaturesByMonthYear(ArrayList<PreparationFeatureShortDescriptor> preparationFeatureShortDescriptors)
     {
         ArrayList<PreparationFeaturesListByMonth> result = new ArrayList<>();
@@ -146,6 +182,7 @@ public class getPreparationFeatures extends HttpServlet {
 
         return result;
     }
+    */
 
 }
 
@@ -157,20 +194,5 @@ class PreparationFeaturesResponse
 class PreparationFeaturesListByMonth
 {
     public Date monthYear;
-    public ArrayList<PreparationFeatureShortDescriptor> featuresList = new ArrayList<>();
-}
-class PreparationFeatureShortDescriptor implements Comparator<PreparationFeatureShortDescriptor>, Comparable<PreparationFeatureShortDescriptor>
-{
-    public String featureKey;
-    public Date businessApprovalDate;
-
-    @Override
-    public int compareTo(PreparationFeatureShortDescriptor o) {
-        return DateTimeUtils.Days(businessApprovalDate, o.businessApprovalDate);
-    }
-
-    @Override
-    public int compare(PreparationFeatureShortDescriptor o1, PreparationFeatureShortDescriptor o2) {
-        return DateTimeUtils.Days(o1.businessApprovalDate, o2.businessApprovalDate);
-    }
+    public ArrayList<RoadmapFeaturePreparationAnalysis> featuresList = new ArrayList<>();
 }

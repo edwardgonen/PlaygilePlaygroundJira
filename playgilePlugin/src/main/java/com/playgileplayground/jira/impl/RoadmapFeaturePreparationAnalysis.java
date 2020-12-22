@@ -36,12 +36,12 @@ public class RoadmapFeaturePreparationAnalysis implements Comparator<RoadmapFeat
 
     @Override
     public int compareTo(RoadmapFeaturePreparationAnalysis o) {
-        return projectPreparationIssue.issueSummary.compareTo(o.projectPreparationIssue.issueSummary);
+        return DateTimeUtils.Days(projectPreparationIssue.businessApprovalDate, o.projectPreparationIssue.businessApprovalDate);
     }
 
     @Override
     public int compare(RoadmapFeaturePreparationAnalysis o1, RoadmapFeaturePreparationAnalysis o2) {
-        return o1.projectPreparationIssue.issueSummary.compareTo(o2.projectPreparationIssue.issueSummary);
+        return DateTimeUtils.Days(o1.projectPreparationIssue.businessApprovalDate, o2.projectPreparationIssue.businessApprovalDate);
     }
 
 

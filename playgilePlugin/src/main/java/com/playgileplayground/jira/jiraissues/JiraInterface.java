@@ -220,7 +220,7 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getRoadmapFeaturesInPreparationPhase(Project currentProject, String featureKey)
+    public ArrayList<Issue> getRoadmapFeaturesInPreparationPhase(Project currentProject, String featureKey)
     {
         Query query;
         //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
@@ -246,7 +246,7 @@ public class JiraInterface {
         if (searchResults == null)
             return null;
         else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
+            return new ArrayList<>(this.AccessVersionIndependentListOfIssues(searchResults));
         }
     }
 
