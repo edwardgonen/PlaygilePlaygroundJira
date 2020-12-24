@@ -18,11 +18,6 @@ import java.util.Objects;
  */
 public class ProjectPreparationMisc {
     private JiraInterface jiraInterface;
-    public enum IssueTardiness {
-        OK,
-        LATE,
-        TOO_LATE
-    }
     public ProjectPreparationMisc(JiraInterface jiraInterface)
     {
         this.jiraInterface = jiraInterface;

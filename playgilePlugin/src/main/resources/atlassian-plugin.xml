@@ -116,4 +116,8 @@
     <description key="get-analyzed-preparation-feature.description">Playgile Get Analyzed Preparation Feature</description>
     <url-pattern>/getAnalyzedPreparationFeature</url-pattern>
  </servlet>
+ <servlet name="Playgile get all stories for project" i18n-name-key="get-all-project-stories.name" key="get-all-project-stories" class="com.playgileplayground.jira.servlet.getAllStories">
+    <description key="get-all-project-stories.description">Playgile get all stories for project</description>
+    <url-pattern>/getAllStories</url-pattern>
+ </servlet>
 </atlassian-plugin>
