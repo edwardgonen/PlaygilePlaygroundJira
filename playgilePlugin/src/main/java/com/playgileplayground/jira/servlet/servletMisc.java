@@ -6,6 +6,7 @@ import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created on 7/16/2020.
@@ -63,6 +64,23 @@ public class servletMisc {
         else
         {
             answer = "Failure " + maor.Message;
+        }
+        simpleResponseToWeb(answer, resp);
+    }
+    static void responseSimpleListToWeb(ArrayList<String> list, HttpServletResponse resp)
+    {
+        String answer;
+        if (list != null && list.size() >0) {
+            StringBuilder output = new StringBuilder();
+            for (String entity : list)
+            {
+                output.append(entity).append("<br>");
+            }
+            answer = output.toString();
+        }
+        else
+        {
+            answer = "Failure";
         }
         simpleResponseToWeb(answer, resp);
     }
