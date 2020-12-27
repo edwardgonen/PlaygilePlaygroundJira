@@ -13,6 +13,11 @@
             integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
             crossorigin="anonymous"></script>
         <style>
+            .customMonth {
+                margin: 20px;
+                font-weight: bold;
+            }
+
             .componentHeader span {
                 margin-right: 20px;
             }
@@ -61,7 +66,7 @@
              * Url constants
              */
             const BASE_URL = '$baseurl';
-            const PROJECT_NAME = 'PKP'// /[^/]*$/.exec(location.pathname);
+            const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
             const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getPreparationFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
 
             window.onload = () => {
@@ -87,7 +92,7 @@
                     accordionItems.push(
                         componentHeader({
                             children: month + ' ' + year
-                        }),
+                        }).addClass('customMonth'),
                         componentItemsBody({
                             children: componentItem({ array: data.featuresList })
                         })
@@ -98,7 +103,7 @@
                  * Create accordion for data
                  */
                 $(document).ready(function () {
-                    $('.accordion').accordion({
+                    $('.accordion2').accordion({
                         collapsible: true,
                         active: 0,
                         heightStyle: "content"
@@ -118,7 +123,7 @@
                         })
                     )
                 })
-                return $('<div class="accordion">').append(itemsArray)
+                return $('<div class="accordion2">').append(itemsArray)
             }
             function componentFeatureHeader({ issueKey, issueSummary, businessApprovalDate }) {
                 var _bad = moment(businessApprovalDate).format('LL')
@@ -184,6 +189,9 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
             * @param {object} data
             */
             function dataMessageError(data) {
+                AJS.banner({
+                    body: data.statusMessage
+                });
                 console.log('----------------data.statusMessage----ERROR---------------')
                 console.log(data.statusMessage)
                 console.log(data)
