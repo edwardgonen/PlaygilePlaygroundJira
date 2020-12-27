@@ -648,7 +648,6 @@
                 * Initializing google charts
                 */
                 window.onload = function () {
-                    document.body.prepend('start initi asdasdsada dsad sa d sadsa dsa  dsa d  sa dsad')
                     google.charts.load('current', { 'packages': ['corechart'] });
                     google.charts.load('current', { 'packages': ['gauge'] });
                     google.charts.load('current', { 'packages': ['timeline'] });
