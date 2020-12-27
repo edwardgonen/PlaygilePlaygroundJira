@@ -9,14 +9,10 @@ import java.util.Map;
 public interface ProjectPreparation {
     String PROJECT = "project";
     String STATUSTEXT = "statustext";
-    String MAINJAVACLASS = "mainjavaclass";
     String ALLISOK = "allisok";
     String MESSAGETODISPLAY = "messagetodisplay";
     String BASEURL = "baseurl";
     String CURRENTUSER = "currentuser";
-    String MONTHSROWS = "monthsrows";
-
-
 
 
     Map getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper);

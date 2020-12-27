@@ -5,7 +5,6 @@ import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
-import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
 import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
 import javax.servlet.ServletException;
@@ -33,7 +32,7 @@ public class activeObjectsUserDelete extends HttpServlet{
             {
                 try {
                     resp.getWriter().write("No user key provided");
-                } catch (IOException e) {
+                } catch (IOException ignored) {
                 }
                 return null;
             }

@@ -16,7 +16,7 @@ public class JiraQueryResult {
 
     /////////// codes
     final static int STATUS_CODE_BASE = 0;
-    public static final int STATUS_CODE_SUCCESS = STATUS_CODE_BASE + 0;
+    public static final int STATUS_CODE_SUCCESS = STATUS_CODE_BASE;
     public static final int STATUS_CODE_DATE_PARSE_ERROR = STATUS_CODE_BASE + 1;
     public static final int STATUS_CODE_DATE_IS_EMPTY = STATUS_CODE_BASE + 2;
     public static final int STATUS_CODE_NO_SUCH_FIELD = STATUS_CODE_BASE + 3;

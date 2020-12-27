@@ -1,7 +1,5 @@
 package com.playgileplayground.jira.jiraissues;
 
-import com.playgileplayground.jira.impl.ProjectPreparationMisc;
-
 import java.util.Date;
 
 /**

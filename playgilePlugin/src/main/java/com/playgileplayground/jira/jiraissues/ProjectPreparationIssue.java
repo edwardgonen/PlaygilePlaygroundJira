@@ -61,7 +61,7 @@ public class ProjectPreparationIssue
         if (businessApprovalDate == null)
         {
             StatusText.getInstance().add(true, "No or invalid business approval date for " + issueSummary);
-            return result;
+            return false;
         }
 
         Date today = DateTimeUtils.getCurrentDate();
@@ -139,10 +139,10 @@ public class ProjectPreparationIssue
         else
         {
             StatusText.getInstance().add(true, "No preparation tasks found for " + issueSummary);
-            return result;
+            return false;
         }
 
-        return result;
+        return true;
     }
     public Date getStartDate()
     {

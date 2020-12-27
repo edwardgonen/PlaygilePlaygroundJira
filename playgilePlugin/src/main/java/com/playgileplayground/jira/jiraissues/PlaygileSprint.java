@@ -59,13 +59,13 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
                     {
                         //split it
                         String[] items = sprintInfo.split(",");
-                        if (items != null && items.length > 0)
+                        if (items.length > 0)
                         {
                             for (String item : items)
                             {
                                 //split
                                 String[] pair = item.split("=");
-                                if (pair != null && pair.length == 2)
+                                if (pair.length == 2)
                                 {
                                     ConvertToField(pair[0], pair[1]);
                                 }
@@ -265,9 +265,8 @@ public class PlaygileSprint implements Comparator<PlaygileSprint>, Comparable<Pl
         double[] result = new double[4];
         double sum = 0;
 
-        for (int i = 0; i < storiesTimeDistribution.length; i++)
-        {
-            sum += storiesTimeDistribution[i];
+        for (double aStoriesTimeDistribution : storiesTimeDistribution) {
+            sum += aStoriesTimeDistribution;
         }
 
         if (sum != 0) {

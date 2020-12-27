@@ -6,7 +6,6 @@ import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created on 7/16/2020.

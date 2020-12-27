@@ -3,14 +3,12 @@ package com.playgileplayground.jira.impl;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
-import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.JiraQueryResult;
 import com.playgileplayground.jira.jiraissues.ProjectPreparationIssue;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -49,11 +47,6 @@ public class ProjectPreparationMisc {
         if (assignee != null) {
             result = assignee.getDisplayName();
         }
-        return result;
-    }
-    public ProjectPreparationIssue identifyProductPreparationIssue(Issue issue, RoadmapFeatureDescriptor roadmapFeatureDescriptor)
-    {
-        ProjectPreparationIssue result = null;
         return result;
     }
 }
