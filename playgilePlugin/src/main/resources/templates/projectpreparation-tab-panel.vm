@@ -2,186 +2,49 @@
     <h3>Playgile Studio Project Preparation Status for $project.name ($project.getKey())</h3>
 
     <html>
+
     <head>
         $webResourceManager.requireResourcesForContext("playgileProjectPreparationPlugin")
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-        <script type="text/javascript">
-            google.charts.load('current', {'packages':['gantt']});
-            google.charts.setOnLoadCallback(drawChart);
-            function daysToMilliseconds(days) {
-                return days * 24 * 60 * 60 * 1000;
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous"></script>
+        <style>
+            .customMonth {
+                margin: 20px;
+                font-weight: bold;
             }
-            function drawChart() {
-                if (!$allisok) return; //no need to execute
 
-                const BR1 = "bobruisk1";
-                const BR2 = "bobruisk2";
-                const BR3 = "bobruisk3";
-                const BR4 = "bobruisk4";
-                const BR5 = "bobruisk5";
-                const BR777 = "bobruisk777";
-
-                //split by lines
-
-                var dataContainer = document.getElementById('datacontainer');
-                var monthsRows = dataContainer.innerText;
-
-                //split and parse
-                if (typeof monthsRows === 'undefined' || monthsRows === null)
-                {
-                    alert("No months to display");
-                    return;
-                }
-                var months = monthsRows.split(BR1);
-
-                if (months.length <= 0)
-                {
-                    alert("Wrong rows format " + monthsRows);
-                    return;
-                }
-                var monthsDiv = document.getElementById("months-table");
-                var uniqueCounterForId = 0;
-                months.forEach(function (month, index) {
-                    if (month.length > 0)//non empty line
-                    {
-                        //split by pair separator
-                        var items = month.split(BR2);
-                        if (items.length <= 0) {
-                            alert("Wrong line format1 " + month);
-                        }
-                        //add new month to table
-
-                        // Now create and append to iDiv
-                        var innerDiv = document.createElement('div');
-                        innerDiv.className = 'month';
-                        innerDiv.id = 'month' + index;
-                        innerDiv.innerHTML += items[0];
-                        monthsDiv.appendChild(innerDiv);
-
-                        var featuresWithIssues = items[1].split(BR3);
-                        if (featuresWithIssues.length < 2) {
-                            alert("Wrong line format2 " + featuresWithIssues);
-                        }
-
-
-                        featuresWithIssues.forEach(function (feature, index) {
-                            if (feature.length > 0)//non empty line
-                            {
-                                var featureItems = feature.split(BR5);
-                                if (featureItems.length <= 0) {
-                                    alert("Wrong line format3 " + feature);
-                                }
-                                var featureItself = featureItems[0];
-
-                                var featureProperties = featureItself.split(BR777);
-                                if (featureProperties.length < 4)
-                                {
-                                    alert("Wrong feature properties line " + featureItself);
-                                }
-
-
-                                // Now create and append to iDiv
-                                var innerDivFeature = document.createElement('button');
-                                innerDivFeature.className = 'feature';
-                                innerDivFeature.id = 'monthfeature' + uniqueCounterForId++;
-                                innerDivFeature.innerHTML =
-                                        featureProperties[0] + //name and key
-                                        " is to be approved by business till " + featureProperties[1];
-
-                                innerDivFeature.style.backgroundColor = featureProperties[2];
-                                innerDivFeature.style.color = featureProperties[3];
-                                monthsDiv.appendChild(innerDivFeature);
-
-                                //now fill the issues
-                                var issuesBulk = featureItems[1];
-
-                                var issues = issuesBulk.split(BR4);
-                                if (issues.length <= 0)
-                                {
-                                    alert("Wrong list of issues " + issuesBulk);
-                                }
-
-                                var innerDivIssues = document.createElement('div');
-                                //innerDivFeature.className = 'issue';
-                                innerDivIssues.id = 'issues' + innerDivFeature.id;
-
-
-                                monthsDiv.appendChild(innerDivIssues);
-
-                                var data = new google.visualization.DataTable();
-                                data.addColumn('string', 'Task ID');
-                                data.addColumn('string', 'Task Name');
-                                data.addColumn('string', 'Resource');
-                                data.addColumn('date', 'Start Date');
-                                data.addColumn('date', 'End Date');
-                                data.addColumn('number', 'Duration');
-                                data.addColumn('number', 'Percent Complete');
-                                data.addColumn('string', 'Dependencies');
-
-                                issues.forEach(function (issue, index) {
-                                    if (issue.length > 0)//non empty line
-                                    {
-                                        var issueItems = issue.split(BR777);
-                                        if (issueItems.length < 7)
-                                        {
-                                            alert("Wrong issue format " + issue);
-                                        }
-                                        var percentageCompleted = parseFloat(issueItems[4]);
-                                        data.addRows([
-                                            [issueItems[0], issueItems[0], null,
-                                                new Date(issueItems[2]), new Date(issueItems[3]), null,  percentageCompleted,  null]
-                                        ]);
-                                        /*
-                                                                            data.addRows([
-                                                                                ['BI', 'BI', null,
-                                                                                    new Date("1/5/2021"), new Date("1/15/2021"), null,  100,  null]
-                                                                            ]);
-                                        */
-                                    }
-                                });
-                                var options = {
-                                    height: 275,
-
-                                    gantt: {
-                                        criticalPathEnabled: false,
-                                        innerGridHorizLine: {
-                                            stroke: '#ffe0b2',
-                                            strokeWidth: 2
-                                        },
-                                        innerGridTrack: {fill: '#fff3e0'},
-                                        innerGridDarkTrack: {fill: '#ffcc80'}
-                                    }
-                                };
-
-                                var chart = new google.visualization.Gantt(document.getElementById(innerDivIssues.id));
-
-                                chart.draw(data, options);
-                            }
-                        });
-                    }
-                });
-
-                //code below takes care on accordeon
-
-                var coll = document.getElementsByClassName("feature");
-                var i;
-
-                for (i = 0; i < coll.length; i++) {
-                    coll[i].addEventListener("click", function() {
-                        this.classList.toggle("active");
-                        var content = this.nextElementSibling;
-                        if (content.style.display === "block") {
-                            content.style.display = "none";
-                        } else {
-                            content.style.display = "block";
-                        }
-                    });
-                    coll[i].nextElementSibling.style.display = "none";
-                }
+            .componentHeader span {
+                margin-right: 20px;
             }
-        </script>
+
+            .custom-link {
+                color: #0052cc !important;
+            }
+
+            .backgroundColor1 {
+                background: rgb(0 128 0 / 0.5) !important;
+            }
+
+            .backgroundColor2 {
+                background: rgba(255, 255, 0, 0.5) !important;
+            }
+
+            .backgroundColor3 {
+                background: rgba(255, 0, 0, 0.5) !important;
+            }
+        </style>
     </head>
+
     <body>
+        <div class="pluginContent">
+            <div class="accordion"></div>
+
+        </div>
         #if (!$allisok)
         <h1 style="color:red">$messagetodisplay</h1>
         #end
@@ -189,15 +52,150 @@
         #if ($allisok)
 
         <div style="display: none;" id="datacontainer">$monthsrows</div>
-        <div id="months-table"; width="100%">
+        <div id="months-table" ; width="100%">
         </div>
 
         #end
+        <script type="text/javascript">
+
+            /**
+            * Logic for debug mode
+            */
+            const DEBUG_MODE = eval(localStorage.pluginDebugMode) ? 'sendLog=1&' : '';
+            /**
+             * Url constants
+             */
+            const BASE_URL = '$baseurl';
+            const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
+            const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getPreparationFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
+
+            window.onload = () => {
+                init()
+            }
+            function init() {
+                /**
+                 * Prepare DOM links
+                 */
+                let $accordion = $('.accordion')
+                /**
+                 * Request features data from servelet and draw it
+                 */
+                doPost(GET_FEATURE_DATA_URL, {}, addDataToTable)
+            }
+            function addDataToTable(data) {
+                console.log(data);
+                let dataList = data.featuresListByMonthYear;
+                let accordionItems = [];
+                dataList.forEach((data, i) => {
+                    let month = moment(data.monthYear).format('MMMM');
+                    let year = moment(data.monthYear).format('YYYY');
+                    accordionItems.push(
+                        componentHeader({
+                            children: month + ' ' + year
+                        }).addClass('customMonth'),
+                        componentItemsBody({
+                            children: componentItem({ array: data.featuresList })
+                        })
+                    )
+                });
+                $('.accordion').append(accordionItems)
+                /**
+                 * Create accordion for data
+                 */
+                $(document).ready(function () {
+                    $('.accordion2').accordion({
+                        collapsible: true,
+                        active: 0,
+                        heightStyle: "content"
+                    });
+                })
+            }
+            function componentItem({ array }) {
+                let itemsArray = []
+                array.forEach(_feature => {
+                    let feature = _feature.projectPreparationIssue
+                    itemsArray.push(
+                        componentHeader({
+                            children: componentFeatureHeader({ issueKey: feature.issueKey, issueSummary: feature.issueSummary, businessApprovalDate: feature.businessApprovalDate })
+                        }).addClass('backgroundColor' + feature.tardiness),
+                        componentItemsBody({
+                            children: componentTasks({ tasks: feature.preparationTasks })
+                        })
+                    )
+                })
+                return $('<div class="accordion2">').append(itemsArray)
+            }
+            function componentFeatureHeader({ issueKey, issueSummary, businessApprovalDate }) {
+                var _bad = moment(businessApprovalDate).format('LL')
+                return `<a href="${BASE_URL}/browse/${issueKey}" target="_blank"><span>${issueKey}</span><span>${issueSummary}</span><span>${_bad}</span></a>`
+            }
+            function componentTasks({ tasks }) {
+                let $table = $(`<table class="aui">`)
+                $table.append(`<thead>
+                                    <tr>
+                                        <th id="basic-Key">Key</th>
+                                        <th id="basic-Summary">Summary</th>
+                                        <th id="basic-DueDate">Due Date</th>
+                                        <th id="basic-Assignee">Assignee</th>
+                                    </tr>
+                                </thead>`)
+                tasks.forEach(task => {
+                    var _duedD = moment(task.dueDate).format('LL')
+                    $table.append(`<tr class="backgroundColor${task.tardiness}"><td headers="basic-Key"><a class="custom-link" href="${BASE_URL}/browse/${task.issueKey}" target="_blank">${task.issueKey}</a></td>
+                        <td headers="basic-Summary">${task.issueSummary}</td>
+                        <td headers="basic-DueDate">${_duedD}</td>
+                        <td headers="basic-Assignee">${task.assignee}</td></tr>`)
+                });
+                return $table
+            }
+            function componentHeader({ children }) {
+                return $(
+                    `<div class="componentHeader"></div>`
+                ).append(children)
+            }
+            function componentItemsBody({ children }) {
+                return $(
+                    `<div componentItemsBody"></div>`
+                ).append(children)
+            }
+            /**
+            * Post request with error handling
+            * @param {string} url
+            * @param {{}} postData
+            * @param {function} callback
+            */
+            function doPost(url, postData, callback) {
+                jQuery.post(url, postData)
+                    .done(function (textData) {
+                        var jsonData = JSON.parse(textData)
+                        if (!!jsonData.logInfo) {
+                            console.warn(
+                                `
+url: ${url}
+body: ${jsonData}
+statusMessage: ${jsonData.statusMessage}
+logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
+`)
+                        }
+                        if (!!jsonData.statusMessage) { dataMessageError(jsonData) }
+                        callback(jsonData)
+                    })
+                    .fail(function (err) {
+                        alert("POST error")
+                    })
+            }
+            /**
+            * Logging error in console
+            * @param {object} data
+            */
+            function dataMessageError(data) {
+                AJS.banner({
+                    body: data.statusMessage
+                });
+                console.log('----------------data.statusMessage----ERROR---------------')
+                console.log(data.statusMessage)
+                console.log(data)
+            }
+        </script>
     </body>
-    </html>
-    <table>
-        <div style="height:50px;width:100px;border:1px solid #ccc;font:8px/8px Georgia, Garamond, Serif;overflow:auto;">
-            $statustext
-        </div>
-    </table>
     </div>
