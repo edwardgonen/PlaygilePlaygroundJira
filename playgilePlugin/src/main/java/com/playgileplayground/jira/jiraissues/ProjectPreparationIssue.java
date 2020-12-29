@@ -29,7 +29,7 @@ public class ProjectPreparationIssue
     private Issue jiraIssue;
     private JiraInterface jiraInterface;
 
-    final double ALLOWED_TARDINESS_PERCENTAGE = 10.0;
+    final double ALLOWED_TARDINESS_DAYS = 2.0;
     final double TARDINESS_OK = 1.0;
     final double TARDINESS_GETTING_LATE = 2.0;
     final double TARDINESS_TOO_LATE = 3.0;
@@ -64,7 +64,7 @@ public class ProjectPreparationIssue
             return false;
         }
 
-        Date today = DateTimeUtils.getCurrentDate();
+        Date today = DateTimeUtils.getZeroTimeDate(DateTimeUtils.getCurrentDate());
         if (today.after(businessApprovalDate))
         {
             tardiness = TARDINESS_TOO_LATE; //too late...
@@ -72,9 +72,8 @@ public class ProjectPreparationIssue
         else //still have time
         {
             //how much is till end?
-            double daysTillDueDate = DateTimeUtils.Days(businessApprovalDate, today);
-            double totalDaysForTask = DateTimeUtils.Days(businessApprovalDate, createdDate);
-            if ((daysTillDueDate / totalDaysForTask) * 100.0 <= ALLOWED_TARDINESS_PERCENTAGE) //less than 10% - becoming late
+            double daysTillBusinessApprovalDate = DateTimeUtils.Days(businessApprovalDate, today);
+            if (daysTillBusinessApprovalDate <= ALLOWED_TARDINESS_DAYS) //less than 2 days  - becoming late
             {
                 tardiness = TARDINESS_GETTING_LATE;
             }
@@ -119,8 +118,7 @@ public class ProjectPreparationIssue
                     {
                         //how much is till end?
                         double daysTillDueDate = DateTimeUtils.Days(projectPreparationTask.dueDate, today);
-                        double totalDaysForTask = DateTimeUtils.Days(projectPreparationTask.dueDate, projectPreparationTask.createDate);
-                        if ((daysTillDueDate / totalDaysForTask) * 100.0 <= ALLOWED_TARDINESS_PERCENTAGE) //less than 10% - becoming late
+                        if (daysTillDueDate <= ALLOWED_TARDINESS_DAYS) //less than 2 - becoming late
                         {
                             projectPreparationTask.tardiness = TARDINESS_GETTING_LATE;
                         }
@@ -143,20 +141,5 @@ public class ProjectPreparationIssue
         }
 
         return true;
-    }
-    public Date getStartDate()
-    {
-        Date result;
-        //if start date is not available return the creation date
-        result = createdDate;
-        return result;
-    }
-
-    public Date getDueDate()
-    {
-        Date result = dueDate;
-        //if due date is not available return the business approval date
-        if (result == null) result = businessApprovalDate;
-        return result;
     }
 }
