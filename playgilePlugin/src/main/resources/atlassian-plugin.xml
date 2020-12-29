@@ -51,26 +51,6 @@
         <context-provider class="com.playgileplayground.jira.impl.ProjectPreparationImpl"/>
         <resource name="view" type="velocity" location="templates/projectpreparation-tab-panel.vm"/>
     </web-panel>
-    <!--web-resource key="playgilePlugin-resources" name="playgilePlugin Web Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
-        <resource type="download" name="playgilePlugin.css" location="/css/playgilePlugin.css"/>
-        <resource type="download" name="playgilePlugin.js" location="/js/playgilePlugin.js"/>
-        <resource type="download" name="images/" location="/images"/>
-        <context>playgilePlugin</context>
-    </web-resource>
-    <web-item name="metrics-page-item" i18n-name-key="metrics--page--item.name" key="metrics--page--item" section="jira.project.sidebar.plugins.navigation" weight="1000">
-        <description key="metrics--page--item.description">Menu Item For Project Monitor</description>
-        <icon width="32" height="32">
-            <link linkId="metrics--page--item-icon">${baseurl}/download/resources/${atlassian.plugin.key}:playgilePlugin-resources/images/project-monitoring.png</link>
-        </icon>
-        <label key="metrics--page--item.label"/>
-        <link linkId="metrics--page--item-link">/projects/${pathEncodedProjectKey}?selectedItem=com.atlassian.jira.jira-projects-plugin:metrics-page</link>
-    </web-item>
-    <web-panel name="metrics-page" i18n-name-key="metrics--page.name" key="metrics--page" location="com.atlassian.jira.jira-projects-plugin:metrics-page" weight="1000">
-        <description key="metrics--page.description">Playgile Project Monitor</description>
-        <context-provider class="com.playgileplayground.jira.impl.ProjectMonitorImpl"/>
-        <resource name="view" type="velocity" location="templates/metrics-tab-panel.vm"/>
-    </web-panel-->
   <ao key="ao-module"> 
     <description>The configuration of the Active Objects service</description>  
     <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity>
@@ -115,5 +95,9 @@
  <servlet name="Playgile get analyzed preparation feature" i18n-name-key="get-analyzed-preparation-feature.name" key="get-analyzed-preparation-feature" class="com.playgileplayground.jira.servlet.getAnalyzedPreparationFeature">
     <description key="get-analyzed-preparation-feature.description">Playgile Get Analyzed Preparation Feature</description>
     <url-pattern>/getAnalyzedPreparationFeature</url-pattern>
+ </servlet>
+ <servlet name="Playgile get all stories for project" i18n-name-key="get-all-project-stories.name" key="get-all-project-stories" class="com.playgileplayground.jira.servlet.getAllStories">
+    <description key="get-all-project-stories.description">Playgile get all stories for project</description>
+    <url-pattern>/getAllStories</url-pattern>
  </servlet>
 </atlassian-plugin>

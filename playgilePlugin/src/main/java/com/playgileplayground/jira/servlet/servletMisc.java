@@ -66,4 +66,21 @@ public class servletMisc {
         }
         simpleResponseToWeb(answer, resp);
     }
+    static void responseSimpleListToWeb(ArrayList<String> list, HttpServletResponse resp)
+    {
+        String answer;
+        if (list != null && list.size() >0) {
+            StringBuilder output = new StringBuilder();
+            for (String entity : list)
+            {
+                output.append(entity).append("<br>");
+            }
+            answer = output.toString();
+        }
+        else
+        {
+            answer = "Failure";
+        }
+        simpleResponseToWeb(answer, resp);
+    }
 }

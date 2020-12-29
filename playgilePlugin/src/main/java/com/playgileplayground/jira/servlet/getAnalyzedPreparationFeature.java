@@ -15,17 +15,17 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
-import com.playgileplayground.jira.impl.*;
+import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
+import com.playgileplayground.jira.impl.ProjectPreparationMisc;
+import com.playgileplayground.jira.impl.RoadmapFeaturePreparationAnalysis;
+import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
-import com.playgileplayground.jira.jiraissues.ProjectPreparationTask;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.Optional;
 
 @Scanned
@@ -58,7 +58,7 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
 
     private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
-        GetAnalyzedPreparationFeatureResponse ourResponse = new GetAnalyzedPreparationFeatureResponse();
+        AnalyzedPreparationFeatureResponse ourResponse = new AnalyzedPreparationFeatureResponse();
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
@@ -103,7 +103,7 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
                 jiraInterface,
                 projectPreparationMisc);
             if (roadmapFeaturePreparationAnalysis.analyzePreparationFeature()) { //we take all successfully analyzed features - started or non-started
-                ourResponse.fillTheFields(roadmapFeaturePreparationAnalysis);
+                ourResponse.roadmapFeaturePreparationAnalysis = roadmapFeaturePreparationAnalysis;
                 if (bSendLog)
                 {
                     ourResponse.logInfo = StatusText.getInstance().toString();
@@ -127,25 +127,10 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
     }
 }
 
-class GetAnalyzedPreparationFeatureResponse
+class AnalyzedPreparationFeatureResponse
 {
-
     public String statusMessage = "";
     public String logInfo = "";
-    public String summary;
-    public String key;
-    public Date businessApprovalDate;
-    public ArrayList<ProjectPreparationTask> tasksList;
-
-
-
-
-    public void fillTheFields(RoadmapFeaturePreparationAnalysis roadmapFeatureAnalysis)
-    {
-        summary = roadmapFeatureAnalysis.issueSummary;
-        key = roadmapFeatureAnalysis.issueKey;
-        businessApprovalDate = roadmapFeatureAnalysis.businessApprovalDate;
-        tasksList = roadmapFeatureAnalysis.tasksList;
-        //TODO add the whole feature status and for each task - status of tardiness
-    }
+    public RoadmapFeaturePreparationAnalysis roadmapFeaturePreparationAnalysis;
 }
+

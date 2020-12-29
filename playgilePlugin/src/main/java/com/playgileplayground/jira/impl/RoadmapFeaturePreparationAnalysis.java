@@ -3,13 +3,11 @@
  */
 package com.playgileplayground.jira.impl;
 
-    import com.atlassian.jira.issue.Issue;
-    import com.atlassian.jira.project.Project;
-    import com.atlassian.jira.user.ApplicationUser;
-    import com.playgileplayground.jira.jiraissues.*;
-    import org.codehaus.jackson.map.ser.StdSerializers;
+import com.atlassian.jira.issue.Issue;
+import com.playgileplayground.jira.jiraissues.JiraInterface;
+import com.playgileplayground.jira.jiraissues.ProjectPreparationIssue;
 
-    import java.util.*;
+import java.util.Comparator;
 
 public class RoadmapFeaturePreparationAnalysis implements Comparator<RoadmapFeaturePreparationAnalysis>, Comparable<RoadmapFeaturePreparationAnalysis> {
     Issue roadmapFeature;
@@ -22,11 +20,7 @@ public class RoadmapFeaturePreparationAnalysis implements Comparator<RoadmapFeat
 
 
     /////////// publics
-    public String issueKey;
-    public String issueSummary;
-    public Date businessApprovalDate;
-    public ArrayList<ProjectPreparationTask> tasksList;
-
+    public ProjectPreparationIssue projectPreparationIssue;
 
     public RoadmapFeaturePreparationAnalysis(
         Issue roadmapFeature,
@@ -42,12 +36,12 @@ public class RoadmapFeaturePreparationAnalysis implements Comparator<RoadmapFeat
 
     @Override
     public int compareTo(RoadmapFeaturePreparationAnalysis o) {
-        return issueSummary.compareTo(o.issueSummary);
+        return DateTimeUtils.Days(projectPreparationIssue.businessApprovalDate, o.projectPreparationIssue.businessApprovalDate);
     }
 
     @Override
     public int compare(RoadmapFeaturePreparationAnalysis o1, RoadmapFeaturePreparationAnalysis o2) {
-        return o1.issueSummary.compareTo(o2.issueSummary);
+        return DateTimeUtils.Days(o1.projectPreparationIssue.businessApprovalDate, o2.projectPreparationIssue.businessApprovalDate);
     }
 
 
@@ -56,13 +50,9 @@ public class RoadmapFeaturePreparationAnalysis implements Comparator<RoadmapFeat
         boolean result = false;
         StatusText.getInstance().add(true, "Start preparation analysis for " + roadmapFeature.getKey() + " " + roadmapFeature.getSummary());
 
-        ProjectPreparationIssue projectPreparationIssue = new ProjectPreparationIssue(roadmapFeature, projectPreparationMisc, jiraInterface);
+        projectPreparationIssue = new ProjectPreparationIssue(roadmapFeature, projectPreparationMisc, jiraInterface);
         if (projectPreparationIssue.instantiateProjectPreparationIssue())
         {
-            this.issueKey = projectPreparationIssue.issueKey;
-            this.issueSummary = projectPreparationIssue.issueName;
-            this.businessApprovalDate = projectPreparationIssue.businessApprovalDate;
-            this.tasksList = projectPreparationIssue.preparationTasks;
             result = true;
         }
         else

@@ -220,7 +220,7 @@ public class JiraInterface {
         }
     }
 
-    public List<Issue> getRoadmapFeaturesInPreparationPhase(Project currentProject, String featureKey)
+    public ArrayList<Issue> getRoadmapFeaturesInPreparationPhase(Project currentProject, String featureKey)
     {
         Query query;
         //project="PK Features" AND issuetype="Roadmap Feature" and issueLinkType="Is Parent task of:" AND Status!=Done AND Status!=Resolved AND Status!=Closed
@@ -246,10 +246,39 @@ public class JiraInterface {
         if (searchResults == null)
             return null;
         else {
-            return this.AccessVersionIndependentListOfIssues(searchResults);
+            return new ArrayList<>(this.AccessVersionIndependentListOfIssues(searchResults));
         }
     }
 
+    public List<Issue> getAllStories(Project currentProject, String issueKey)
+    {
+        Query query;
+        //project="BINGOBLITZ" AND issuetype="Story"
+
+        String searchString;
+
+        searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + issueKey + "\"";
+
+        JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
+        try {
+            query = jqlQueryParser.parseQuery(searchString);
+        } catch (JqlParseException e) {
+            return null;
+        }
+
+        PagerFilter pagerFilter = PagerFilter.getUnlimitedFilter();
+        SearchResults searchResults = null;
+        try {
+            searchResults = searchService.search(applicationUser, query, pagerFilter);
+        } catch (SearchException e) {
+            //mainClass.WriteToStatus(true, "In JiraInterface exception " + e.toString());
+        }
+        if (searchResults == null)
+            return null;
+        else {
+            return new ArrayList<>(this.AccessVersionIndependentListOfIssues(searchResults));
+        }
+    }
     public List<Issue> getIssuesByEpic(Issue epic) {
         //if the version is not defined return null. no query
         if (epic == null) return null;

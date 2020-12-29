@@ -10,7 +10,6 @@ import com.playgileplayground.jira.jiraissues.PlaygileIssue;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.jiraissues.SprintState;
 
-import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -28,22 +27,6 @@ public class ProjectMonitoringMisc {
     public ProjectMonitoringMisc(JiraInterface jiraInterface)
     {
         this.jiraInterface = jiraInterface;
-    }
-
-    public static String convertColorToHexadeimal(Color color)
-    {
-        String hex = Integer.toHexString(color.getRGB() & 0xffffff);
-        if(hex.length() < 6)
-        {
-            if(hex.length()==5)
-                hex = "0" + hex;
-            if(hex.length()==4)
-                hex = "00" + hex;
-            if(hex.length()==3)
-                hex = "000" + hex;
-        }
-        hex = "#" + hex;
-        return hex;
     }
 
     public void addIssueSprintsToList(Issue issue, ArrayList<PlaygileSprint> playgileSprints)

@@ -1,7 +1,5 @@
 package com.playgileplayground.jira.projectprogress;
 
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -24,6 +22,6 @@ public class ProjectProgressResult {
 
     /////////// codes
     final static int STATUS_CODE_BASE = 0;
-    public static final int STATUS_CODE_SUCCESS = STATUS_CODE_BASE + 0;
+    public static final int STATUS_CODE_SUCCESS = STATUS_CODE_BASE;
     public static final int STATUS_CODE_BAD_INPUT = STATUS_CODE_BASE + 1;
 }

@@ -124,6 +124,7 @@ public class pluginConfiguration extends HttpServlet {
                     String parameterValue = "";
                     double value;
                     long timeStamp;
+                    //TODO replace collected status by our log - StatusText.getInstance...
                     StringBuilder collectedStatus = new StringBuilder();
                     for (String parameterName : parametersNames) {
                         parameterValue = Optional.ofNullable(req.getParameter(parameterName)).orElse("");

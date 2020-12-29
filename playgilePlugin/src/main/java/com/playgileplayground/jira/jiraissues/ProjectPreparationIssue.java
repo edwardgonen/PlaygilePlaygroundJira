@@ -1,6 +1,7 @@
 package com.playgileplayground.jira.jiraissues;
 
 import com.atlassian.jira.issue.Issue;
+import com.playgileplayground.jira.impl.DateTimeUtils;
 import com.playgileplayground.jira.impl.ProjectPreparationMisc;
 import com.playgileplayground.jira.impl.StatusText;
 
@@ -13,9 +14,10 @@ import java.util.List;
  */
 public class ProjectPreparationIssue
 {
-    public String issueName;
+    public String issueSummary;
     public String issueKey;
     public String issueTypeName;
+    public double tardiness;
     public Date createdDate;
     public Date dueDate;
     public Date businessApprovalDate;
@@ -27,6 +29,10 @@ public class ProjectPreparationIssue
     private Issue jiraIssue;
     private JiraInterface jiraInterface;
 
+    final double ALLOWED_TARDINESS_DAYS = 2.0;
+    final double TARDINESS_OK = 1.0;
+    final double TARDINESS_GETTING_LATE = 2.0;
+    final double TARDINESS_TOO_LATE = 3.0;
 
     public enum IssueState
     {
@@ -41,9 +47,11 @@ public class ProjectPreparationIssue
         this.jiraIssue = jiraIssue;
         this.jiraInterface = jiraInterface;
         this.issueKey = jiraIssue.getKey();
-        this.issueName = jiraIssue.getSummary();
+        this.issueSummary = jiraIssue.getSummary();
+        this.createdDate = jiraIssue.getCreated();
         this.preparationTasks = new ArrayList<>();
         this.projectPreparationMisc = projectPreparationMisc;
+        this.tardiness = TARDINESS_OK; //ok
     }
 
     public boolean instantiateProjectPreparationIssue() {
@@ -52,8 +60,27 @@ public class ProjectPreparationIssue
         businessApprovalDate = projectPreparationMisc.getBusinessApprovalDate(jiraIssue);
         if (businessApprovalDate == null)
         {
-            StatusText.getInstance().add(true, "No or invalid business approval date for " + issueName);
-            return result;
+            StatusText.getInstance().add(true, "No or invalid business approval date for " + issueSummary);
+            return false;
+        }
+
+        Date today = DateTimeUtils.getZeroTimeDate(DateTimeUtils.getCurrentDate());
+        if (today.after(businessApprovalDate))
+        {
+            tardiness = TARDINESS_TOO_LATE; //too late...
+        }
+        else //still have time
+        {
+            //how much is till end?
+            double daysTillBusinessApprovalDate = DateTimeUtils.Days(businessApprovalDate, today);
+            if (daysTillBusinessApprovalDate <= ALLOWED_TARDINESS_DAYS) //less than 2 days  - becoming late
+            {
+                tardiness = TARDINESS_GETTING_LATE;
+            }
+            else
+            {
+                tardiness = TARDINESS_OK;
+            }
         }
 
         //get list of tasks for preparation feature
@@ -65,41 +92,54 @@ public class ProjectPreparationIssue
                 ProjectPreparationTask projectPreparationTask = new ProjectPreparationTask();
                 projectPreparationTask.assignee = projectPreparationMisc.getAssignee(task);
                 projectPreparationTask.dueDate = task.getDueDate();
+                if (projectPreparationTask.dueDate == null) //not defined
+                {
+                    //set it to business approval date
+                    projectPreparationTask.dueDate = businessApprovalDate;
+                }
+                projectPreparationTask.createDate = task.getCreated();
                 projectPreparationTask.issueKey = task.getKey();
                 projectPreparationTask.issueSummary = task.getSummary();
                 if (projectPreparationMisc.isIssueCompleted(task))
                 {
                     projectPreparationTask.state = IssueState.CLOSED;
+                    projectPreparationTask.tardiness = TARDINESS_OK; //ok
                 }
                 else
                 {
                     projectPreparationTask.state = IssueState.ACTIVE;
+                    //calculate tardiness
+                    //1. is it beyond due date?
+                    if (today.after(projectPreparationTask.dueDate))
+                    {
+                        projectPreparationTask.tardiness = TARDINESS_TOO_LATE; //too late...
+                    }
+                    else //still have time
+                    {
+                        //how much is till end?
+                        double daysTillDueDate = DateTimeUtils.Days(projectPreparationTask.dueDate, today);
+                        if (daysTillDueDate <= ALLOWED_TARDINESS_DAYS) //less than 2 - becoming late
+                        {
+                            projectPreparationTask.tardiness = TARDINESS_GETTING_LATE;
+                        }
+                        else
+                        {
+                            projectPreparationTask.tardiness = TARDINESS_OK;
+                        }
+                    }
                 }
+                //if a specific task tardiness is worse than issue tardiness - set issue tardiness to the worst
+                tardiness = Math.max(projectPreparationTask.tardiness,tardiness);
                 preparationTasks.add(projectPreparationTask);
             }
             result = true;
         }
         else
         {
-            StatusText.getInstance().add(true, "No preparation tasks found for " + issueName);
-            return result;
+            StatusText.getInstance().add(true, "No preparation tasks found for " + issueSummary);
+            return false;
         }
 
-        return result;
-    }
-    public Date getStartDate()
-    {
-        Date result = null;
-        //if start date is not available return the creation date
-        result = createdDate;
-        return result;
-    }
-
-    public Date getDueDate()
-    {
-        Date result = dueDate;
-        //if due date is not available return the business approval date
-        if (result == null) result = businessApprovalDate;
-        return result;
+        return true;
     }
 }
