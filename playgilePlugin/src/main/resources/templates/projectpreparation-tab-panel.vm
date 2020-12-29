@@ -22,6 +22,10 @@
                 margin-right: 20px;
             }
 
+            .componentHeader a {
+                color: black !important;
+            }
+
             .custom-link {
                 color: #0052cc !important;
             }
