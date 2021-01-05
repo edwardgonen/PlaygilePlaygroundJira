@@ -8,11 +8,6 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class DateTimeUtils {
-    public static String ConvertDateToOurFormat(Date dateToConvert)
-    {
-        SimpleDateFormat outputDateFormat = new SimpleDateFormat(ManageActiveObjects.DATE_FORMAT);
-        return outputDateFormat.format(dateToConvert);
-    }
 
     public static int CompareZeroBasedDatesOnly(Date firstDate, Date secondDate)
     {

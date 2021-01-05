@@ -126,13 +126,11 @@ public class JiraInterface {
         Query query;
 
         String searchString;
-        //TODO when BK fixes query, remove second condition ("BKM")
-        if (!jiraVersion.startsWith("7.") && !currentProject.getKey().contains("BKM")) //higher than 7
+        if (!jiraVersion.startsWith("7.")) //higher than 7
             searchString = "issueFunction in linkedIssuesOf(\"issueKey=" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
         else searchString = "issue in linkedIssues(\""  + roadmapFeature.getKey() +  "\")";
         //as asked by Dima Gil - don't count not needed epic links
         // issueFunction in linkedIssuesOf("issuekey = BINGOBLITZ-119252","Is Parent task of:")
-        //NOTE - the above query does not work for Board Kings - the Is Parent taks of: does not return any results
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {
