@@ -287,7 +287,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             }
         }
         if (targetDate != null) targetDate = DateTimeUtils.getZeroTimeDate(targetDate);
-        StatusText.getInstance().add(true, "Detected start date is " + targetDate);
+        StatusText.getInstance().add(true, "Detected Target date is " + targetDate);
         return targetDate;
     }
 
