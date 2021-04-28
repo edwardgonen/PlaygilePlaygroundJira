@@ -577,8 +577,8 @@
 			<br>
 			<div hidden>
             <div style="align-items: center; display: inline-flex;">
-            <h3>Switch Run Type:</h3>
-            <button type="button" onclick="switchRunType()">Change</button>
+            <h3>Switch View Type:</h3>
+            <button type="button" onclick="switchViewType()">Change</button>
             </div>
             </div>
         <div id="progressbar" class="progressbarMain">
@@ -756,7 +756,7 @@
                     })
                 }
 
-                function switchRunType(){
+                function switchViewType(){
                  doPost(BASE_URL + '/plugins/servlet/switchViewType?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME,{}, function (data){
                         console.log(data)
                         /** Start build total view blocks */
