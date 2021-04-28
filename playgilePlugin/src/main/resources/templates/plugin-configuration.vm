@@ -118,7 +118,7 @@
         </div>
         <div class="form-content"></div>
 <script>
-    fadeOn() 
+    fadeOn()
     const GET_URL = location.origin+location.pathname+'?projectKey='+getUrlParameterByName('projectKey')
     const POST_UTL = location.origin+location.pathname
     const PROJECT = getUrlParameterByName('projectKey')

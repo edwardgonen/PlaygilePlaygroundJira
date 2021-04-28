@@ -34,4 +34,6 @@ public interface PrjStatEntity extends Entity {
     void setDefNotEstimdIssueValue(double defNotEstimdIssueValue);
     Date getTargetDate();
     void setTargetDate(Date targetDate);
+    String getProjectConfiguration();
+    void setProjectConfiguration(String projectConfiguration);
 }

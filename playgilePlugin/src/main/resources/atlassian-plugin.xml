@@ -100,4 +100,8 @@
     <description key="get-all-project-stories.description">Playgile get all stories for project</description>
     <url-pattern>/getAllStories</url-pattern>
  </servlet>
+    <servlet name="Playgile switch View Type" i18n-name-key="switch-view-type.name" key="switch-view-type" class="com.playgileplayground.jira.servlet.SwitchViewType">
+        <description key="switch-view-type.description">Playgile Switch View Type</description>
+        <url-pattern>/switchViewType</url-pattern>
+    </servlet>
 </atlassian-plugin>
