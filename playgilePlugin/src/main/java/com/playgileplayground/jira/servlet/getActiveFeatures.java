@@ -92,15 +92,23 @@ public class getActiveFeatures extends HttpServlet {
             ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
             ProjectConfiguration config = (ProjectConfiguration) maor.Result;
             String viewType;
-            if (!Strings.isNullOrEmpty(config.ViewType)) {
-                viewType = config.ViewType;
-            } else {
-                viewType = new ProjectConfiguration().ViewType;
+            boolean initViewTypeCheck;
+            try {
+                initViewTypeCheck = Strings.isNullOrEmpty(config.getViewType());
+            } catch (NullPointerException e) {
+                ourResponse.statusMessage = "Failed on check initial view type. getActiveFeatures." + e.getMessage();
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                initViewTypeCheck = true;
             }
+
+            if (initViewTypeCheck) {
+                config = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY);
+            }
+            viewType = config.getViewType();
 
             List<Issue> featuresList = jiraInterface.getRoadmapFeaturesOrEpicsNotCancelledAndNotGoLiveAndNotOnHold(currentProject, viewType);
             if (featuresList == null) {
-                ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
+                ourResponse.statusMessage = "Failed to find any feature for " + projectKey + ". View Type is " + viewType;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
@@ -116,7 +124,7 @@ public class getActiveFeatures extends HttpServlet {
                 }
                 Collections.sort(ourResponse.featuresList);//sort alphabetically for better user experience
             } else {
-                ourResponse.statusMessage = "No active features found for " + projectKey;
+                ourResponse.statusMessage = "No active features found for " + projectKey + ". View type is " + viewType;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }

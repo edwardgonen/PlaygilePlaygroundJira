@@ -11,4 +11,13 @@ public class ProjectConfiguration {
     }
 
     public String ViewType = ProjectMonitor.ROADMAPFEATUREKEY;
+
+
+    public String getViewType() {
+        return ViewType;
+    }
+
+    public void setViewType(String viewType) {
+        ViewType = viewType;
+    }
 }

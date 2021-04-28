@@ -700,7 +700,7 @@
                 const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
                 const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&roadmapFeature=';
                 const GET_URL = location.origin + location.pathname + '?projectKey=' + PROJECT_NAME;
-                const POST_UTL = location.origin + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME;
+                const POST_UTL = BASE_URL + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME;
                 /**
                 * Min and max SP for input fields on configuration page
                 */

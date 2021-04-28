@@ -201,7 +201,7 @@ public class JiraInterface {
     public List<Issue> getRoadmapFeaturesOrEpicsNotCancelledAndNotGoLiveAndNotOnHold(Project currentProject, String featureKey) {
         Query query;
         //query project = "Bingo Blitz 2.0" and issuetype = "Roadmap Feature" and (status !=  Cancelled or status != Go-Live)
-        String searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and status != Cancelled and status != Go-Live and status != \"On Hold\"";
+        String searchString = "project = \"" + currentProject.getName() + "\" and issuetype = \"" + featureKey + "\" and status not in (Cancelled, Go-Live, \"On Hold\", Closed)";
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);
         try {

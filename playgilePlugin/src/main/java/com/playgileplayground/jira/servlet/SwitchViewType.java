@@ -11,6 +11,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.google.common.base.Strings;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.impl.*;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
@@ -22,7 +23,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Optional;
 
 @Scanned
@@ -87,13 +87,29 @@ public class SwitchViewType extends HttpServlet {
             ManageActiveObjectsEntityKey entityKey = new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME);
             ManageActiveObjectsResult configurationResponse;
             ManageActiveObjectsResult initialResult = mao.GetProjectConfiguration(entityKey);
-            switch (((ProjectConfiguration) initialResult.Result).ViewType) {
-                case ProjectMonitor.ROADMAPFEATUREKEY:
-                    configurationResponse = mao.SetProjectConfiguration(mao, entityKey, new ProjectConfiguration(ProjectMonitor.EPIC));
-                    break;
-                default:
-                    configurationResponse = mao.SetProjectConfiguration(mao, entityKey, new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY));
+            ProjectConfiguration initConfig = ((ProjectConfiguration) initialResult.Result);
+            boolean initViewTypeCheck;
+            try {
+                initViewTypeCheck = Strings.isNullOrEmpty(initConfig.getViewType());
+            } catch (NullPointerException e) {
+                ourResponse.statusMessage = "Failed on check initial view type. SwitchViewType. " + e.getMessage();
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                initViewTypeCheck = true;
             }
+
+            if (initViewTypeCheck) {
+                initConfig = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY);
+                configurationResponse = mao.SetProjectConfiguration(mao, entityKey, initConfig);
+            } else {
+                switch (initConfig.getViewType()) {
+                    case ProjectMonitor.ROADMAPFEATUREKEY:
+                        configurationResponse = mao.SetProjectConfiguration(mao, entityKey, new ProjectConfiguration(ProjectMonitor.EPIC));
+                        break;
+                    default:
+                        configurationResponse = mao.SetProjectConfiguration(mao, entityKey, new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY));
+                }
+            }
+
 
             ourResponse.statusMessage = "Switch View type Response: " + configurationResponse.Message;
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
