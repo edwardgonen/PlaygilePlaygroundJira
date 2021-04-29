@@ -87,27 +87,26 @@ public class SwitchViewType extends HttpServlet {
             ManageActiveObjectsEntityKey entityKey = new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME);
             ManageActiveObjectsResult configurationResponse;
             ManageActiveObjectsResult initialResult = mao.GetProjectConfiguration(entityKey);
-            ProjectConfiguration initConfig = ((ProjectConfiguration) initialResult.Result);
-            boolean initViewTypeCheck;
-            try {
-                initViewTypeCheck = Strings.isNullOrEmpty(initConfig.getViewType());
-            } catch (NullPointerException e) {
-                ourResponse.statusMessage = "Failed on check initial view type. SwitchViewType. " + e.getMessage();
-                servletMisc.serializeToJsonAndSend(ourResponse, resp);
-                initViewTypeCheck = true;
-            }
+            ProjectConfiguration initConfig;
 
-            if (initViewTypeCheck) {
-                initConfig = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY);
-                configurationResponse = mao.SetProjectConfiguration(mao, entityKey, initConfig);
-            } else {
-                switch (initConfig.getViewType()) {
+            String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
+            if (initialResult.Result != null) //we got something from the database
+            {
+                ProjectConfiguration config = (ProjectConfiguration) initialResult.Result;
+                viewType = config.getViewType();
+                //flip the value
+                switch (viewType) {
                     case ProjectMonitor.ROADMAPFEATUREKEY:
                         configurationResponse = mao.SetProjectConfiguration(mao, entityKey, new ProjectConfiguration(ProjectMonitor.EPIC));
                         break;
                     default:
                         configurationResponse = mao.SetProjectConfiguration(mao, entityKey, new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY));
                 }
+            }
+            else //failed to read from DB - probably first time
+            {
+                initConfig = new ProjectConfiguration(viewType);
+                configurationResponse = mao.SetProjectConfiguration(mao, entityKey, initConfig);
             }
 
 

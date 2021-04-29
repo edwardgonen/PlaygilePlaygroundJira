@@ -88,23 +88,15 @@ public class getActiveFeatures extends HttpServlet {
                 return;
             }
 
+            //We need to check project configuration - do we want epics or roadmap features
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
-            ProjectConfiguration config = (ProjectConfiguration) maor.Result;
-            String viewType;
-            boolean initViewTypeCheck;
-            try {
-                initViewTypeCheck = Strings.isNullOrEmpty(config.getViewType());
-            } catch (NullPointerException e) {
-                ourResponse.statusMessage = "Failed on check initial view type. getActiveFeatures." + e.getMessage();
-                servletMisc.serializeToJsonAndSend(ourResponse, resp);
-                initViewTypeCheck = true;
+            String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
+            if (maor.Result != null) //we got something from the database
+            {
+                ProjectConfiguration config = (ProjectConfiguration) maor.Result;
+                viewType = config.getViewType();
             }
-
-            if (initViewTypeCheck) {
-                config = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY);
-            }
-            viewType = config.getViewType();
 
             List<Issue> featuresList = jiraInterface.getRoadmapFeaturesOrEpicsNotCancelledAndNotGoLiveAndNotOnHold(currentProject, viewType);
             if (featuresList == null) {

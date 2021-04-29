@@ -4,20 +4,20 @@ import com.playgileplayground.jira.api.ProjectMonitor;
 
 public class ProjectConfiguration {
     public ProjectConfiguration(String viewType) {
-        ViewType = viewType;
+        this.viewType = viewType;
     }
 
     public ProjectConfiguration() {
     }
 
-    public String ViewType = ProjectMonitor.ROADMAPFEATUREKEY;
+    private String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
 
 
     public String getViewType() {
-        return ViewType;
+        return viewType;
     }
 
     public void setViewType(String viewType) {
-        ViewType = viewType;
+        this.viewType = viewType;
     }
 }

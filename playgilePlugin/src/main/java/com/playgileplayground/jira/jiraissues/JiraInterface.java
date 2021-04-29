@@ -117,6 +117,18 @@ public class JiraInterface {
 
         String searchString;
 
+        /*
+        if (viewType.equals(ProjectMonitor.ROADMAPFEATUREKEY)) {
+            if (!jiraVersion.startsWith("7.")) //higher than 7
+                searchString = "project = " + currentProject.getKey() + " AND issueFunction in linkedIssuesOf(\"issueKey=" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
+            else searchString = "project = " + currentProject.getKey() + " AND issue in linkedIssues(\"" + roadmapFeature.getKey() + "\")";
+            //as asked by Dima Gil - don't count not needed epic links
+            // issueFunction in linkedIssuesOf("issuekey = BINGOBLITZ-119252","Is Parent task of:")
+        } else {
+                searchString = "project = " + currentProject.getKey() + " AND issuetype = " + viewType;
+        }
+        */
+
         if (viewType.equals(ProjectMonitor.ROADMAPFEATUREKEY)) {
             if (!jiraVersion.startsWith("7.")) //higher than 7
                 searchString = "issueFunction in linkedIssuesOf(\"issueKey=" + roadmapFeature.getKey() + "\",\"Is Parent task of:\")";
@@ -124,7 +136,7 @@ public class JiraInterface {
             //as asked by Dima Gil - don't count not needed epic links
             // issueFunction in linkedIssuesOf("issuekey = BINGOBLITZ-119252","Is Parent task of:")
         } else {
-                searchString = "project = " + currentProject.getKey() + " AND issuetype = " + viewType;
+            searchString = "project = " + currentProject.getKey() + " AND issuetype = " + viewType;
         }
 
         JqlQueryParser jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser.class);

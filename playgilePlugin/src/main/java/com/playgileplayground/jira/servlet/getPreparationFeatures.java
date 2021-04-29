@@ -97,10 +97,10 @@ public class getPreparationFeatures extends HttpServlet {
             ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
             ProjectConfiguration config = (ProjectConfiguration) maor.Result;
             String viewType;
-            if (!Strings.isNullOrEmpty(config.ViewType)) {
-                viewType = config.ViewType;
+            if (!Strings.isNullOrEmpty(config.getViewType())) {
+                viewType = config.getViewType();
             } else {
-                viewType = new ProjectConfiguration().ViewType;
+                viewType = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY).getViewType();
             }
 
             ArrayList<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, viewType);
