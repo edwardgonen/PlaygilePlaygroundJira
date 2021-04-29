@@ -17,12 +17,15 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.impl.FeatureScore;
+import com.playgileplayground.jira.impl.ProjectConfiguration;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
@@ -112,6 +115,14 @@ public class getAnalyzedFeature extends HttpServlet {
             }
             resp.setContentType("text/html;charset=utf-8");
 
+            ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
+            String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
+            if (maor.Result != null) //we got something from the database
+            {
+                ProjectConfiguration config = (ProjectConfiguration) maor.Result;
+                viewType = config.getViewType();
+            }
+
             //get the feature, analyze it and convert it to our response
             RoadmapFeatureAnalysis roadmapFeatureAnalysis = new RoadmapFeatureAnalysis(
                 selectedRoadmapFeatureIssue,
@@ -120,7 +131,7 @@ public class getAnalyzedFeature extends HttpServlet {
                 currentProject,
                 projectMonitoringMisc,
                 mao);
-            if (roadmapFeatureAnalysis.analyzeRoadmapFeature(ProjectMonitor.EPIC)) { //we take all successfully analyzed features - started or non-started
+            if (roadmapFeatureAnalysis.analyzeRoadmapFeature(viewType)) { //we take all successfully analyzed features - started or non-started
                 ourResponse.fillTheFields(roadmapFeatureAnalysis);
                 if (bSendLog) {
                     ourResponse.logInfo = StatusText.getInstance().toString();

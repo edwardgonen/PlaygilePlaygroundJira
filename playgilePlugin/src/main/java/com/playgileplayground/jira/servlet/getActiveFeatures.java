@@ -92,10 +92,18 @@ public class getActiveFeatures extends HttpServlet {
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
             String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
+            ProjectConfiguration config;
             if (maor.Result != null) //we got something from the database
             {
-                ProjectConfiguration config = (ProjectConfiguration) maor.Result;
+                config = (ProjectConfiguration) maor.Result;
                 viewType = config.getViewType();
+            } else {
+                config = new ProjectConfiguration(viewType);
+                ManageActiveObjectsEntityKey entityKey = new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME);
+                ManageActiveObjectsResult configurationResponse = mao.SetProjectConfiguration(mao, entityKey, config);
+                ourResponse.statusMessage = "Configuration was created for " + projectKey + " and View Type " + viewType +
+                    ". Probably it is first run for this project";
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);
             }
 
             List<Issue> featuresList = jiraInterface.getRoadmapFeaturesOrEpicsNotCancelledAndNotGoLiveAndNotOnHold(currentProject, viewType);
