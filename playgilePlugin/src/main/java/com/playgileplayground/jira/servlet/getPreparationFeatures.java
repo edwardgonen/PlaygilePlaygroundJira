@@ -1,5 +1,6 @@
 package com.playgileplayground.jira.servlet;
 
+import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
@@ -11,9 +12,13 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.google.common.base.Strings;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.impl.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
+import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -33,11 +38,14 @@ public class getPreparationFeatures extends HttpServlet {
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
+    @ComponentImport
+    ActiveObjects ao;
 
     public ApplicationUser applicationUser;
 
-    public getPreparationFeatures(TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
+    public getPreparationFeatures(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
     {
+        this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
@@ -85,7 +93,17 @@ public class getPreparationFeatures extends HttpServlet {
                 return;
             }
 
-            ArrayList<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
+            ManageActiveObjects mao = new ManageActiveObjects(ao);
+            ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
+            ProjectConfiguration config = (ProjectConfiguration) maor.Result;
+            String viewType;
+            if (!Strings.isNullOrEmpty(config.getViewType())) {
+                viewType = config.getViewType();
+            } else {
+                viewType = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY).getViewType();
+            }
+
+            ArrayList<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, viewType);
             if (roadmapFeatures == null) {
                 ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);

@@ -92,7 +92,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     }
 
 
-    public boolean analyzeRoadmapFeature()
+    public boolean analyzeRoadmapFeature(String viewType)
     {
         boolean result;
 
@@ -110,7 +110,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             return false;
         }
 
-        List<Issue> issues = jiraInterface.getIssuesForRoadmapFeature(currentProject, roadmapFeature);
+        List<Issue> issues = jiraInterface.getIssuesForRoadmapFeatureOrEpics(currentProject, roadmapFeature, viewType);
         if (null != issues && issues.size() > 0) {
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);

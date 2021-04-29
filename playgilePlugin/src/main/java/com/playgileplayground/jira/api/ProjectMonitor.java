@@ -29,6 +29,9 @@ public interface ProjectMonitor {
     String ROADMAPFEATURESLIST = "roadmapfeatureslist";
     String CURRENTUSER = "currentuser";
 
+    //project configuration
+    String PROJECTCONFIGURATIONKEYNAME = "congifuration_32_24_32_04_F5_42";
+
     //Stories related
     String NOTESTIMATEDSTORIES = "notestimatedstories";
     String LARGESTORIES  = "largestories";
@@ -42,6 +45,7 @@ public interface ProjectMonitor {
 
     ///////////////////// our pre-defined keys /////////////////
     String ROADMAPFEATUREKEY = "Roadmap Feature";
+    String EPIC = "Epic";
 
     String ISSUESDISTRIBUTION = "issuedistribution";
 

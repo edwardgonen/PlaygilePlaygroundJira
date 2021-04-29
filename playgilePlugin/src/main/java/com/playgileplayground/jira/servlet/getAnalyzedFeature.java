@@ -15,13 +15,17 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.impl.FeatureScore;
+import com.playgileplayground.jira.impl.ProjectConfiguration;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileSprint;
 import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
@@ -43,19 +47,20 @@ public class getAnalyzedFeature extends HttpServlet {
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
+    @ComponentImport
     ActiveObjects ao;
 
-    public getAnalyzedFeature(ActiveObjects ao,TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
-    {
+    public getAnalyzedFeature(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService) {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
     }
+
     @Override
     @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req,  resp);
+        processRequest(req, resp);
     }
 
     @Override
@@ -63,15 +68,14 @@ public class getAnalyzedFeature extends HttpServlet {
         processRequest(req, resp);
     }
 
-    private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
             ApplicationUser applicationUser = jac.getLoggedInUser();
-            if (applicationUser == null)
-            {
+            if (applicationUser == null) {
                 ourResponse.statusMessage = "User authentication failure";
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
@@ -111,6 +115,14 @@ public class getAnalyzedFeature extends HttpServlet {
             }
             resp.setContentType("text/html;charset=utf-8");
 
+            ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
+            String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
+            if (maor.Result != null) //we got something from the database
+            {
+                ProjectConfiguration config = (ProjectConfiguration) maor.Result;
+                viewType = config.getViewType();
+            }
+
             //get the feature, analyze it and convert it to our response
             RoadmapFeatureAnalysis roadmapFeatureAnalysis = new RoadmapFeatureAnalysis(
                 selectedRoadmapFeatureIssue,
@@ -119,52 +131,48 @@ public class getAnalyzedFeature extends HttpServlet {
                 currentProject,
                 projectMonitoringMisc,
                 mao);
-            if (roadmapFeatureAnalysis.analyzeRoadmapFeature()) { //we take all successfully analyzed features - started or non-started
+            if (roadmapFeatureAnalysis.analyzeRoadmapFeature(viewType)) { //we take all successfully analyzed features - started or non-started
                 ourResponse.fillTheFields(roadmapFeatureAnalysis);
-                if (bSendLog)
-                {
+                if (bSendLog) {
                     ourResponse.logInfo = StatusText.getInstance().toString();
                 }
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
             } else //failed to analyze feature
             {
                 ourResponse.statusMessage = "Failed to analyze feature " + roadmapFeatureName;
-                if (bSendLog)
-                {
+                if (bSendLog) {
                     ourResponse.logInfo = StatusText.getInstance().toString();
                 }
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
         }
     }
 }
-class ProgressDataSet
-{
+
+class ProgressDataSet {
     public Date date;
     public double predictedEstimations;
     public double idealEstimations;
 }
-class IssueCountsDataSet
-{
+
+class IssueCountsDataSet {
     public Date date;
     public int openIssues;
     public int totalIssues;
     public int readyForDevelopmentIssues;
     public int readyForEstimationIssues;
 }
-class VelocitiesDataSet
-{
+
+class VelocitiesDataSet {
     public Date date;
     public double realVelocity;
     public double interpolatedVelocity;
 }
-class GetAnalyzedFeatureResponse
-{
+
+class GetAnalyzedFeatureResponse {
 
     public String statusMessage = "";
     public String logInfo = "";
@@ -190,8 +198,7 @@ class GetAnalyzedFeatureResponse
     public ArrayList<VelocitiesDataSet> velocityDataSets;
     public ArrayList<IssueCountsDataSet> issueCountsDataSets;
 
-    public void fillTheFields(RoadmapFeatureAnalysis roadmapFeatureAnalysis)
-    {
+    public void fillTheFields(RoadmapFeatureAnalysis roadmapFeatureAnalysis) {
         summary = roadmapFeatureAnalysis.featureSummary;
         key = roadmapFeatureAnalysis.featureKey;
         teamName = roadmapFeatureAnalysis.teamName;
@@ -220,11 +227,10 @@ class GetAnalyzedFeatureResponse
 
         issueCountsDataSets = getHistoricalIssuesCounts(roadmapFeatureAnalysis.historicalDateAndValues);
     }
-    ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult)
-    {
+
+    ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult) {
         ArrayList<ProgressDataSet> result = new ArrayList<>();
-        for (int i = 0; i < projectProgressResult.idealData.Length(); i++)
-        {
+        for (int i = 0; i < projectProgressResult.idealData.Length(); i++) {
             ProgressDataSet pds = new ProgressDataSet();
             DateAndValues tmpPredictedDataPair = projectProgressResult.progressData.GetElementAtIndex(i);
             DateAndValues tmpIdealDataPair = projectProgressResult.idealData.GetElementAtIndex(i);
@@ -235,12 +241,11 @@ class GetAnalyzedFeatureResponse
         }
         return result;
     }
-    ArrayList<VelocitiesDataSet> getRealInterpolatedVelocities(Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation, ArrayList<Double> interpolatedVelocityPoints)
-    {
+
+    ArrayList<VelocitiesDataSet> getRealInterpolatedVelocities(Collection<PlaygileSprint> artificialTimeWindowsForVelocityCalculation, ArrayList<Double> interpolatedVelocityPoints) {
         ArrayList<VelocitiesDataSet> result = new ArrayList<>();
         int index = 0;
-        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation)
-        {
+        for (PlaygileSprint sprintToConvert : artificialTimeWindowsForVelocityCalculation) {
             VelocitiesDataSet vds = new VelocitiesDataSet();
             vds.date = sprintToConvert.getEndDate();
             vds.realVelocity = sprintToConvert.sprintVelocity;
@@ -249,8 +254,8 @@ class GetAnalyzedFeatureResponse
         }
         return result;
     }
-    ArrayList<IssueCountsDataSet> getHistoricalIssuesCounts(ArrayList<DateAndValues> historicalDateAndValues)
-    {
+
+    ArrayList<IssueCountsDataSet> getHistoricalIssuesCounts(ArrayList<DateAndValues> historicalDateAndValues) {
         ArrayList<IssueCountsDataSet> result = new ArrayList<>();
         for (DateAndValues dateAndValues : historicalDateAndValues) {
             IssueCountsDataSet icds = new IssueCountsDataSet();

@@ -1,6 +1,6 @@
 package com.playgileplayground.jira.servlet;
 
-    import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
@@ -12,10 +12,15 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
+import com.google.common.base.Strings;
 import com.playgileplayground.jira.api.ProjectMonitor;
+import com.playgileplayground.jira.impl.ProjectConfiguration;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
+import com.playgileplayground.jira.persistence.ManageActiveObjects;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsEntityKey;
+import com.playgileplayground.jira.persistence.ManageActiveObjectsResult;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,17 +39,17 @@ public class getActiveFeatures extends HttpServlet {
     SearchService searchService;
     ActiveObjects ao;
 
-    public getActiveFeatures(ActiveObjects ao,TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
-    {
+    public getActiveFeatures(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService) {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
     }
+
     @Override
     @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req,  resp);
+        processRequest(req, resp);
     }
 
     @Override
@@ -52,15 +57,14 @@ public class getActiveFeatures extends HttpServlet {
         processRequest(req, resp);
     }
 
-    private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
         GetActiveFeaturesResponse ourResponse = new GetActiveFeaturesResponse();
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
             ApplicationUser applicationUser = jac.getLoggedInUser();
-            if (applicationUser == null)
-            {
+            if (applicationUser == null) {
                 ourResponse.statusMessage = "User authentication failure";
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
@@ -84,37 +88,49 @@ public class getActiveFeatures extends HttpServlet {
                 return;
             }
 
-            List<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesNotCancelledAndNotGoLiveAndNotOnHold(currentProject, ProjectMonitor.ROADMAPFEATUREKEY);
-            if (roadmapFeatures == null) {
-                ourResponse.statusMessage = "Failed to find any feature for " + projectKey;
+            //We need to check project configuration - do we want epics or roadmap features
+            ManageActiveObjects mao = new ManageActiveObjects(ao);
+            ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
+            String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
+            ProjectConfiguration config;
+            if (maor.Result != null) //we got something from the database
+            {
+                config = (ProjectConfiguration) maor.Result;
+                viewType = config.getViewType();
+            } else {
+                config = new ProjectConfiguration(viewType);
+                ManageActiveObjectsEntityKey entityKey = new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME);
+                mao.SetProjectConfiguration(mao, entityKey, config);
+/*                ourResponse.statusMessage = "Configuration was created for " + projectKey + " and View Type is " + viewType +
+                    ". Probably it is first run for this project. ";
+                servletMisc.serializeToJsonAndSend(ourResponse, resp);*/
+            }
+
+            List<Issue> featuresList = jiraInterface.getRoadmapFeaturesOrEpicsNotCancelledAndNotGoLiveAndNotOnHold(currentProject, viewType);
+            if (featuresList == null) {
+                ourResponse.statusMessage = "Failed to find any feature for " + projectKey + ". View Type is " + viewType;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
 
             //prepare list of short feature descriptors
-            if (roadmapFeatures.size() > 0)
-            {
+            if (featuresList.size() > 0) {
                 //convert to string list
-                for (Issue feature : roadmapFeatures)
-                {
+                for (Issue feature : featuresList) {
                     ActiveFeatureShortDescriptor afsd = new ActiveFeatureShortDescriptor();
                     afsd.featureKey = feature.getKey();
                     afsd.setFeatureSummary(feature.getSummary());
                     ourResponse.featuresList.add(afsd);
                 }
                 Collections.sort(ourResponse.featuresList);//sort alphabetically for better user experience
-            }
-            else
-            {
-                ourResponse.statusMessage = "No active features found for " + projectKey;
+            } else {
+                ourResponse.statusMessage = "No active features found for " + projectKey + ". View type is " + viewType;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
             resp.setContentType("text/html;charset=utf-8");
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
         }
@@ -122,20 +138,19 @@ public class getActiveFeatures extends HttpServlet {
     }
 }
 
-class GetActiveFeaturesResponse
-{
+class GetActiveFeaturesResponse {
     public String statusMessage = "";
     public ArrayList<ActiveFeatureShortDescriptor> featuresList = new ArrayList<>();
 }
-class ActiveFeatureShortDescriptor implements Comparator<ActiveFeatureShortDescriptor>, Comparable<ActiveFeatureShortDescriptor>
-{
+
+class ActiveFeatureShortDescriptor implements Comparator<ActiveFeatureShortDescriptor>, Comparable<ActiveFeatureShortDescriptor> {
     public String featureKey;
     private String featureSummary;
 
-    public void setFeatureSummary(String featureSummary)
-    {
+    public void setFeatureSummary(String featureSummary) {
         this.featureSummary = featureSummary;
     }
+
     @Override
     public int compareTo(ActiveFeatureShortDescriptor o) {
         return featureSummary.compareTo(o.featureSummary);
