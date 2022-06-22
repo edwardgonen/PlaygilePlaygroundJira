@@ -17,9 +17,9 @@ import java.util.Optional;
 
 @Scanned
 @Transactional
-public class activeObjectsDelete extends HttpServlet{
+public class ActiveObjectsDelete extends HttpServlet{
     ActiveObjects ao;
-    public activeObjectsDelete(ActiveObjects ao)
+    public ActiveObjectsDelete(ActiveObjects ao)
     {
         this.ao = ao;
     }
@@ -37,7 +37,7 @@ public class activeObjectsDelete extends HttpServlet{
                 }
                 return null;
             }
-            String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
+            String roadmapFeature = Optional.ofNullable(req.getParameter("feature")).orElse("");
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsEntityKey key = new ManageActiveObjectsEntityKey(projectKey, roadmapFeature);
             ManageActiveObjectsResult maor = mao.DeleteProjectEntity(key); //will not create if exists

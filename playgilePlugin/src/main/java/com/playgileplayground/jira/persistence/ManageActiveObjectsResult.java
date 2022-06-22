@@ -24,5 +24,6 @@ public class ManageActiveObjectsResult {
     public static final int STATUS_CODE_REMAINING_ESTIMATIONS_FOR_DATE_NOT_FOUND = STATUS_CODE_BASE + 5;
     public static final int STATUS_CODE_DATA_FORMAT_PARSING_ERROR = STATUS_CODE_BASE + 6;
     public static final int STATUS_CODE_NO_ESTIMATIONS_YET = STATUS_CODE_BASE + 7;
+    public static final int STATUS_CODE_WRONG_PARAMETER_VALUE = STATUS_CODE_BASE + 8;
 
 }

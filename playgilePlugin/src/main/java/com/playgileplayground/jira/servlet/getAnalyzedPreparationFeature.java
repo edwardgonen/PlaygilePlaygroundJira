@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Scanned
-public class getAnalyzedPreparationFeature extends HttpServlet {
+public class GetAnalyzedPreparationFeature extends HttpServlet {
     @ComponentImport
     TemplateRenderer templateRenderer;
     @ComponentImport
@@ -38,7 +38,7 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
     SearchService searchService;
     ActiveObjects ao;
 
-    public getAnalyzedPreparationFeature(ActiveObjects ao,TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
+    public GetAnalyzedPreparationFeature(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
     {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
@@ -71,9 +71,9 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
             }
 
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
-            String roadmapFeatureName = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
-            if (projectKey.isEmpty() || roadmapFeatureName.isEmpty()) {
-                ourResponse.statusMessage = "Project key and/or roadmap feature is missing " + projectKey + " " + roadmapFeatureName;
+            String featureName = Optional.ofNullable(req.getParameter("feature")).orElse("");
+            if (projectKey.isEmpty() || featureName.isEmpty()) {
+                ourResponse.statusMessage = "Project key and/or roadmap feature is missing " + projectKey + " " + featureName;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
@@ -86,13 +86,13 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
-            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+            JiraInterface jiraInterface = new JiraInterface(ao, applicationUser, searchService);
             ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
-            StatusText.getInstance().add(true, "Getting roadmap feature issues for " + roadmapFeatureName);
-            Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), roadmapFeatureName);
+            StatusText.getInstance().add(true, "Getting roadmap feature issues for " + featureName);
+            Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), featureName);
             if (selectedRoadmapFeatureIssue == null) //not found
             {
-                ourResponse.statusMessage = "Failed to find the selected feature in Jira " + roadmapFeatureName;
+                ourResponse.statusMessage = "Failed to find the selected feature in Jira " + featureName;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
@@ -111,7 +111,7 @@ public class getAnalyzedPreparationFeature extends HttpServlet {
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
             } else //failed to analyze feature
             {
-                ourResponse.statusMessage = "Failed to analyze feature " + roadmapFeatureName;
+                ourResponse.statusMessage = "Failed to analyze feature " + featureName;
                 if (bSendLog)
                 {
                     ourResponse.logInfo = StatusText.getInstance().toString();

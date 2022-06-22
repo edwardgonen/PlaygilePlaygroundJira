@@ -16,9 +16,9 @@ import java.util.Optional;
 
 @Scanned
 @Transactional
-public class activeObjectsUserDelete extends HttpServlet{
+public class ActiveObjectsUserDelete extends HttpServlet{
     ActiveObjects ao;
-    public activeObjectsUserDelete(ActiveObjects ao)
+    public ActiveObjectsUserDelete(ActiveObjects ao)
     {
         this.ao = ao;
     }

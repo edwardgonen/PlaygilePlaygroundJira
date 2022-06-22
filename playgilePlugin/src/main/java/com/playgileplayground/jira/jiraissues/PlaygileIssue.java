@@ -28,43 +28,41 @@ public class PlaygileIssue {
 
     public PlaygileIssue(Issue jiraIssue,
                          ProjectMonitoringMisc projectMonitoringMisc,
-                         JiraInterface jiraInterface)
-    {
+                         JiraInterface jiraInterface) {
         this.jiraIssue = jiraIssue;
         this.projectMonitoringMisc = projectMonitoringMisc;
         this.jiraInterface = jiraInterface;
     }
 
-    public boolean instantiatePlaygileIssue(double defaultNotEstimatedIssueValue)
-    {
+    public boolean instantiatePlaygileIssue(double defaultNotEstimatedIssueValue, Issue roadmapFeature) {
         boolean result = false;
         try {
             issueKey = jiraIssue.getKey();
             issueSummary = jiraIssue.getSummary();
             issueStatus = projectMonitoringMisc.getIssueStatus(jiraIssue);
             bIssueCompleted = projectMonitoringMisc.isIssueCompleted(jiraIssue);
-            bOurIssueType = projectMonitoringMisc.isIssueOneOfOurs(jiraIssue);
+            bOurIssueType = projectMonitoringMisc.isIssueOneOfOurs(jiraIssue, roadmapFeature);
             bIssueOpen = projectMonitoringMisc.isIssueOpen(jiraIssue);
             storyPoints = jiraInterface.getStoryPointsForIssue(jiraIssue);
             bIssueCompleted = projectMonitoringMisc.isIssueCompleted(jiraIssue);
-            bIssueReadyForDevelopment= projectMonitoringMisc.isIssueReadyForDevelopment(jiraIssue);
+            bIssueReadyForDevelopment = projectMonitoringMisc.isIssueReadyForDevelopment(jiraIssue);
             bIssueReadyForEstimation = projectMonitoringMisc.isIssueReadyForEstimation(jiraIssue);
             resolutionDate = jiraIssue.getResolutionDate();
             this.defaultNotEstimatedIssueValue = defaultNotEstimatedIssueValue;
             result = true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             StatusText.getInstance().add(true, "Error instantiating issue " + issueKey + " " + issueSummary + " Exception " + projectMonitoringMisc.getExceptionTrace(e));
         }
 
         return result;
     }
-    public double getAdjustedEstimationValue()
-    {
+
+    public double getAdjustedEstimationValue() {
         double result = storyPoints;
-        if (storyPoints <= 0) result = defaultNotEstimatedIssueValue;
-        return  result;
+        if (storyPoints <= 0) {
+            result = defaultNotEstimatedIssueValue;
+        }
+        return result;
     }
 
 }

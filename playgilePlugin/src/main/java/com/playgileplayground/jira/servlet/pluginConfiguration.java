@@ -33,19 +33,20 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 @Scanned
-public class pluginConfiguration extends HttpServlet {
+public class PluginConfiguration extends HttpServlet {
     @ComponentImport
     TemplateRenderer templateRenderer;
     @ComponentImport
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
+    @ComponentImport
     ActiveObjects ao;
 
     private static final ArrayList<String> parametersNames = new ArrayList<>();
 
 
-    public pluginConfiguration(ActiveObjects ao,TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
+    public PluginConfiguration(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
     {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
@@ -93,7 +94,7 @@ public class pluginConfiguration extends HttpServlet {
 
             //prepare to walk through the features
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+            JiraInterface jiraInterface = new JiraInterface(ao, applicationUser, searchService);
 
             boolean bSendLog = req.getParameter("sendLog") != null;
 

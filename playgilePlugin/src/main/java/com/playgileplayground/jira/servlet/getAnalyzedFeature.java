@@ -17,7 +17,7 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.impl.FeatureScore;
-import com.playgileplayground.jira.impl.ProjectConfiguration;
+import com.playgileplayground.jira.impl.ProjectConfigurationModel;
 import com.playgileplayground.jira.impl.ProjectMonitoringMisc;
 import com.playgileplayground.jira.impl.RoadmapFeatureAnalysis;
 import com.playgileplayground.jira.impl.StatusText;
@@ -40,7 +40,7 @@ import java.util.Date;
 import java.util.Optional;
 
 @Scanned
-public class getAnalyzedFeature extends HttpServlet {
+public class GetAnalyzedFeature extends HttpServlet {
     @ComponentImport
     TemplateRenderer templateRenderer;
     @ComponentImport
@@ -50,7 +50,7 @@ public class getAnalyzedFeature extends HttpServlet {
     @ComponentImport
     ActiveObjects ao;
 
-    public getAnalyzedFeature(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService) {
+    public GetAnalyzedFeature(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService) {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
@@ -64,11 +64,11 @@ public class getAnalyzedFeature extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         processRequest(req, resp);
     }
 
-    private void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void processRequest(HttpServletRequest req, HttpServletResponse resp) {
         StatusText.getInstance().reset();
         GetAnalyzedFeatureResponse ourResponse = new GetAnalyzedFeatureResponse();
         try {
@@ -82,9 +82,9 @@ public class getAnalyzedFeature extends HttpServlet {
             }
 
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
-            String roadmapFeatureName = Optional.ofNullable(req.getParameter("roadmapFeature")).orElse("");
-            if (projectKey.isEmpty() || roadmapFeatureName.isEmpty()) {
-                ourResponse.statusMessage = "Project key and/or roadmap feature is missing " + projectKey + " " + roadmapFeatureName;
+            String featureName = Optional.ofNullable(req.getParameter("feature")).orElse("");
+            if (projectKey.isEmpty() || featureName.isEmpty()) {
+                ourResponse.statusMessage = "Project key and/or feature is missing " + projectKey + " " + featureName;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
@@ -93,7 +93,7 @@ public class getAnalyzedFeature extends HttpServlet {
 
             //prepare to walk through the features
             ManageActiveObjects mao = new ManageActiveObjects(this.ao);
-            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+            JiraInterface jiraInterface = new JiraInterface(ao, applicationUser, searchService);
 
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
             if (currentProject == null) {
@@ -103,26 +103,20 @@ public class getAnalyzedFeature extends HttpServlet {
             }
 
             ProjectMonitoringMisc projectMonitoringMisc = new ProjectMonitoringMisc(jiraInterface);
-            //Issue selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, roadmapFeatureName);
+            //Issue selectedRoadmapFeatureIssue = projectMonitoringMisc.SearchSelectedIssue(roadmapFeatures, featureName);
 
-            StatusText.getInstance().add(true, "Getting roadmap feature issues for " + roadmapFeatureName);
-            Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), roadmapFeatureName);
+            StatusText.getInstance().add(true, "Getting feature issues for " + featureName);
+            Issue selectedRoadmapFeatureIssue = jiraInterface.getIssueByKey(currentProject.getKey(), featureName);
             if (selectedRoadmapFeatureIssue == null) //not found
             {
-                ourResponse.statusMessage = "Failed to find the selected feature in Jira " + roadmapFeatureName;
+                ourResponse.statusMessage = "Failed to find the selected feature in Jira " + featureName;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
             resp.setContentType("text/html;charset=utf-8");
 
             ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
-            String viewType = ProjectMonitor.ROADMAPFEATUREKEY;
-            if (maor.Result != null) //we got something from the database
-            {
-                ProjectConfiguration config = (ProjectConfiguration) maor.Result;
-                viewType = config.getViewType();
-            }
-
+            ProjectConfigurationModel config = ((ProjectConfigurationModel) maor.Result);
             //get the feature, analyze it and convert it to our response
             RoadmapFeatureAnalysis roadmapFeatureAnalysis = new RoadmapFeatureAnalysis(
                 selectedRoadmapFeatureIssue,
@@ -130,21 +124,20 @@ public class getAnalyzedFeature extends HttpServlet {
                 applicationUser,
                 currentProject,
                 projectMonitoringMisc,
-                mao);
-            if (roadmapFeatureAnalysis.analyzeRoadmapFeature(viewType)) { //we take all successfully analyzed features - started or non-started
+                mao,
+                config);
+
+
+            if (roadmapFeatureAnalysis.analyzeRoadmapFeature()) { //we take all successfully analyzed features - started or non-started
                 ourResponse.fillTheFields(roadmapFeatureAnalysis);
-                if (bSendLog) {
-                    ourResponse.logInfo = StatusText.getInstance().toString();
-                }
-                servletMisc.serializeToJsonAndSend(ourResponse, resp);
             } else //failed to analyze feature
             {
-                ourResponse.statusMessage = "Failed to analyze feature " + roadmapFeatureName;
-                if (bSendLog) {
-                    ourResponse.logInfo = StatusText.getInstance().toString();
-                }
-                servletMisc.serializeToJsonAndSend(ourResponse, resp);
+                ourResponse.statusMessage = "Failed to analyze feature " + featureName;
             }
+            if (bSendLog) {
+                ourResponse.logInfo = StatusText.getInstance().toString();
+            }
+            servletMisc.serializeToJsonAndSend(ourResponse, resp);
         } catch (Exception e) {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
@@ -192,6 +185,9 @@ class GetAnalyzedFeatureResponse {
     public double largeStoriesNumber;
     public double veryLargeStoriesNumber;
     public double estimatedStoriesNumber;
+    public boolean isProjectIssues;
+    public String groupBy;
+    public String viewType;
 
     public FeatureScore qualityScore;
     public ArrayList<ProgressDataSet> progressDataSets;
@@ -226,7 +222,11 @@ class GetAnalyzedFeatureResponse {
             roadmapFeatureAnalysis.interpolatedVelocityPoints);
 
         issueCountsDataSets = getHistoricalIssuesCounts(roadmapFeatureAnalysis.historicalDateAndValues);
+        isProjectIssues = roadmapFeatureAnalysis.config.isProjectTickets();
+        groupBy = roadmapFeatureAnalysis.groupBy;
+        viewType = roadmapFeatureAnalysis.config.getViewType();
     }
+
 
     ArrayList<ProgressDataSet> getEstimationsSet(ProjectProgressResult projectProgressResult) {
         ArrayList<ProgressDataSet> result = new ArrayList<>();

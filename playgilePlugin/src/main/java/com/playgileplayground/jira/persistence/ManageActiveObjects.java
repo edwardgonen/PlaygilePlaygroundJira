@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.playgileplayground.jira.api.ProjectMonitor;
-import com.playgileplayground.jira.impl.ProjectConfiguration;
+import com.playgileplayground.jira.impl.ProjectConfigurationModel;
 import com.playgileplayground.jira.impl.StatusText;
 import com.playgileplayground.jira.projectprogress.DateAndValues;
 import org.apache.commons.lang.time.DateUtils;
@@ -224,7 +224,7 @@ public final class ManageActiveObjects {
     }
 
     @Transactional
-    public ManageActiveObjectsResult SetProjectConfiguration(ManageActiveObjects mao, ManageActiveObjectsEntityKey key, ProjectConfiguration projectConfiguration) {
+    public ManageActiveObjectsResult SetProjectConfiguration(ManageActiveObjects mao, ManageActiveObjectsEntityKey key, ProjectConfigurationModel projectConfigurationModel) {
         ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(key.projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME)); //will not create if exists
 
         if (maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_SUCCESS && maorLocal.Code != ManageActiveObjectsResult.STATUS_CODE_ENTRY_ALREADY_EXISTS) {
@@ -236,7 +236,7 @@ public final class ManageActiveObjects {
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonString;
         try {
-            jsonString = objectMapper.writeValueAsString(projectConfiguration);
+            jsonString = objectMapper.writeValueAsString(projectConfigurationModel);
         } catch (JsonProcessingException e) {
             result.Code = ManageActiveObjectsResult.STATUS_CODE_EXCEPTION;
             result.Message = "Failed during conversion of configuration model " + key.projectKey + " : " + e.getMessage();
@@ -261,11 +261,11 @@ public final class ManageActiveObjects {
         if (prjStatEntity != null) {//Check whether optional has element you are looking for
             String projectConfigurationString = prjStatEntity.getProjectConfiguration();
             ObjectMapper jsonMapper = new ObjectMapper();
-            ProjectConfiguration projectConfiguration;
+            ProjectConfigurationModel projectConfigurationModel;
             try {
-                projectConfiguration = jsonMapper.readValue(projectConfigurationString, new TypeReference<ProjectConfiguration>() {
+                projectConfigurationModel = jsonMapper.readValue(projectConfigurationString, new TypeReference<ProjectConfigurationModel>() {
                 });
-                result.Result = projectConfiguration;
+                result.Result = projectConfigurationModel;
                 result.Message = "Project Configuration Value: " + projectConfigurationString;
             } catch (Exception e) {
                 result.Code = ManageActiveObjectsResult.STATUS_CODE_EXCEPTION;
@@ -315,9 +315,55 @@ public final class ManageActiveObjects {
         return result;
     }
 
+    //if the updateValue < 0 just delete the entry, >=0 - update
     @Transactional
-    public ManageActiveObjectsResult AddLatestHistoricalRecord(ManageActiveObjectsEntityKey key, DateAndValues dateAndValues) {
-        //this method does not compress data. If we want to compress data please replace this by the method right below this method (..compressed)
+    public ManageActiveObjectsResult UpdateHistoricalRecord(ManageActiveObjectsEntityKey key,
+                                                            int updatedEstimationEntryNumber, double updateValue) {
+        ManageActiveObjectsResult result = new ManageActiveObjectsResult();
+        PrjStatEntity prjStatEntity = GetProjectEntity(key);
+        if (prjStatEntity != null) {
+            //read the existing data
+            ArrayList<DateAndValues> existingData = GetHistoricalDateAndValuesList(prjStatEntity);
+            //sort - just in case
+            Collections.sort(existingData);
+            //does our number exist
+            if (updatedEstimationEntryNumber < 0 || updatedEstimationEntryNumber >= existingData.size())
+            {
+                result.Code = ManageActiveObjectsResult.STATUS_CODE_WRONG_PARAMETER_VALUE;
+                result.Message = "Invalid entry number " + updatedEstimationEntryNumber + ". Total entries " + existingData.size();
+                return result;
+            }
+
+            if (updateValue >= 0) //update
+            {
+                //get specific element
+                DateAndValues newEntry = existingData.get(updatedEstimationEntryNumber);
+                newEntry.Estimation = updateValue;
+                newEntry.TotalIssues = 1;
+                newEntry.OpenIssues = 1;
+                newEntry.ReadyForEstimationIssues = 0;
+                newEntry.ReadyForDevelopmentIssues = 0;
+                //update
+                existingData.set(updatedEstimationEntryNumber, newEntry);
+                result.Message = "Entry updated";
+            } else { //< 0 - delete
+                existingData.remove(updatedEstimationEntryNumber);
+                result.Message = "Entry removed";
+            }
+            SaveDateAndValuesList(existingData, prjStatEntity);
+            result.Result = existingData; //return back new list
+        } else {
+            result.Code = ManageActiveObjectsResult.STATUS_CODE_PROJECT_NOT_FOUND;
+            result.Message = "Project not found " + key.projectKey + " " + key.roadmapFeature;
+        }
+
+        return result;
+    }
+
+
+    @Transactional
+    public ManageActiveObjectsResult AddLatestHistoricalRecord(ManageActiveObjectsEntityKey key,
+                                                               DateAndValues dateAndValues) {
         ManageActiveObjectsResult result = new ManageActiveObjectsResult();
         PrjStatEntity prjStatEntity = GetProjectEntity(key);
         if (prjStatEntity != null) {

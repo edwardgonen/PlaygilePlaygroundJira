@@ -15,9 +15,9 @@ import java.io.IOException;
 
 @Scanned
 @Transactional
-public class activeObjectsUserList extends HttpServlet{
+public class ActiveObjectsUserList extends HttpServlet{
     ActiveObjects ao;
-    public activeObjectsUserList(ActiveObjects ao)
+    public ActiveObjectsUserList(ActiveObjects ao)
     {
         this.ao = ao;
     }

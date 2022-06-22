@@ -80,8 +80,10 @@
             .FavoritesHeaderLabelText {
                 position: absolute;
                 background: white;
-                width: min-content;
+                /*width: min-content;*/
                 padding: 5px;
+                color:black;
+                font-weight: bold;
             }
 
             .resetSearchBtn {
@@ -241,6 +243,8 @@
             }
 
             .fade {
+                top: 0;
+                left: 0;
                 min-height: 50vh;
                 text-align: center;
                 position: absolute;
@@ -552,6 +556,22 @@
             .generalLoading {
                 display: none;
             }
+            .ProjectConfigDiv{
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+            }
+            .empty_velocity_chart {
+                background: #f4f5f7;
+            }
+            .empty_velocity_chart :first-child {
+                padding-top:20%;
+            }
+            .FavoritesContent:empty:before  {
+              content: "Drag and drop the feature block here to add to favorites";
+              color:gainsboro;
+              margin:auto;
+            }
         </style>
     </head>
 
@@ -574,13 +594,12 @@
         #end
 
         #if ($allisok)
-			<br>
-			<div hidden>
-            <div style="align-items: center; display: inline-flex;">
-            <h3>Switch View Type:</h3>
-            <button type="button" onclick="switchViewType()">Change</button>
+        <br>
+        <div class="ProjectConfigDiv">
+            <h3>Set project configuration:</h3>
+            <div class="ProjectEditPopupBtn ButtonPlugin aui-icon aui-icon-small aui-iconfont-configure">
             </div>
-            </div>
+        </div>
         <div id="progressbar" class="progressbarMain">
             <div class="progress-label">Loading...</div>
         </div>
@@ -629,13 +648,14 @@
             <div class="generalLoading">
                 generalLoading
             </div>
+            <!--
             <div class="FavoritesBlock">
                 <div class="FavoritesHeaderLabel">
                     <div class="FavoritesHeaderLabelText">All</div>
                 </div>
-                <ul class="generalViewBlock connectedSortable ">
+                <ul class="generalViewBlock connectedSortable "></ul>
             </div>
-            </ul>
+            -->
         </div>
         <table id="roadmap-features-table" ; width="100%">
         </table>
@@ -670,6 +690,8 @@
                         this.featureArray = []
                         this.viewChildren = []
                         this.teams = {}
+                        this.projectConfig = {}
+                        this.groupBy = []
                     }
                     addViewChildren(elem) {
                         this.viewChildren.push(elem)
@@ -688,6 +710,7 @@
                 */
                 if (!localStorage.pluginFavorites) { localStorage.pluginFavorites = '[]' };
                 var FAVORITES = JSON.parse(localStorage.pluginFavorites);
+                var GROUP_BY = []
                 /**
                 * First initializing search save logic
                 */
@@ -698,7 +721,8 @@
                 const PROJECT_NAME = /[^/]*$/.exec(location.pathname);
                 const BASE_URL = '$baseurl';
                 const FEATURES_URL = BASE_URL + '/plugins/servlet/getActiveFeatures?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME;
-                const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&roadmapFeature=';
+                const PROJECT_CONFIG_URL = BASE_URL + `/plugins/servlet/projectConfiguration?${DEBUG_MODE}projectKey=${PROJECT_NAME}`
+                const GET_FEATURE_DATA_URL = BASE_URL + '/plugins/servlet/getAnalyzedFeature?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME + '&feature=';
                 const GET_URL = location.origin + location.pathname + '?projectKey=' + PROJECT_NAME;
                 const POST_UTL = BASE_URL + '/plugins/servlet/pluginConfiguration' + '?projectKey=' + PROJECT_NAME;
                 /**
@@ -732,7 +756,11 @@
                         /** Click handler of reset buttom*/
                         .click(resetSearch);
                     /** Initializing progress bar*/
-                    buildProgressBar()
+                    buildProgressBar();
+                    $projectEditPopupBtn = $('.ProjectEditPopupBtn')
+                        .click((e) => {
+                                e.stopPropagation(); new ProjectEditView('', '.editViewWrapper')
+                        })
                     /** Fade turned off, because user already can use plugin */
                     Fade.off()
                     /**
@@ -746,21 +774,28 @@
                             location.reload()
                         })
                     /**
-                    * Request project features from servlet
-                    */
+                     * Request project CONFIG from servlet
+                     */
+                    doPost(PROJECT_CONFIG_URL, {}, function (data) {
+                        STORE.projectConfig = {
+                            isAdmin: data.isAdmin,
+                            isProjectEpics: data.isProjectEpics,
+                            viewType: data.viewType,
+                            isProjectTickets: data.isProjectTickets,
+                            groupBy: data.groupBy,
+                            groups:data.groups
+                        }
+                        console.log(data)
+                    }, 'get')
+                    /**
+                     * Request project features from servlet
+                     */
                     doPost(FEATURES_URL, {}, function (data) {
                         STORE.features = data.featuresList
                         console.log(data)
                         /** Start build total view blocks */
                         initBuildPanels()
                     })
-                }
-
-                function switchViewType(){
-                 doPost(BASE_URL + '/plugins/servlet/switchViewType?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME,{}, function (data){
-                        console.log(data)
-                        /** Start build total view blocks */
-                        location.reload()})
                 }
 
                 /**
@@ -773,10 +808,16 @@
                     let loadingValue = 100 / STORE.features.length;
                     let featureId = encodeURIComponent(STORE.features[STORE.viewChildren.length].featureKey);
                     let $panelBlock = $('<li>')
-                    $generalViewBlock.append($panelBlock)
                     STORE.addViewChildren($panelBlock);
 
                     doPost(GET_FEATURE_DATA_URL + featureId, {}, function (data) {
+                        if(STORE.groupBy.indexOf(data.groupBy)<0&&data.groupBy!=null){
+                            STORE.groupBy.push(data.groupBy)        
+                            var $groupByBlock = $('<div>').html(getGroupByHTMLBlock(data.groupBy))
+                            $('.content').append($groupByBlock)
+                        }
+                        $(`*[data-groupBy="${data.groupBy}"]`).append($panelBlock)
+                        //$generalViewBlock.append($panelBlock)
                         progressbar.progressbar("value", progressbar.progressbar("value") < 90 ? progressbar.progressbar("value") + loadingValue : 100);
                         if (!!data.statusMessage) {
                             $panelBlock.hide()
@@ -812,6 +853,15 @@
                     initBuildPanels()
 
 
+                }
+                function getGroupByHTMLBlock(groupBy){
+                return `
+                    <div class="FavoritesBlock" >
+                        <div class="FavoritesHeaderLabel">
+                        <div class="FavoritesHeaderLabelText">${groupBy}</div>
+                    </div>
+                        <ul class="generalViewBlock connectedSortable " data-groupby="${groupBy}"></ul>
+                    </div>`
                 }
                 function updateTeamsSearch() {
                     var _currentVal = SEARCH_DATA.teamName
@@ -988,7 +1038,7 @@
                     <div>Click outside the panel to close</div>
                     <div class="mobileHeightCahrt" style="width: 90%; display: flex; flex-wrap: wrap; margin: 5px;">   
                         <div id="curve_chart" class="mobileWidthCahrt" style="width:32%; height:100%; padding:5px"></div>
-                        <div id="velocity_chart" class="mobileWidthCahrt" style="width:32%; height:100%;  padding:5px"></div>
+                        <div id="velocity_chart" class="mobileWidthCahrt" style="width:32%; height:100%;  margin:5px"></div>
                         <div id="piechart" class="mobileWidthCahrt" style="width:32%; height:100%;  padding:5px"></div>
                     </div>
                     <div class="mobileHeightCahrt" style="width: 90%; display: flex; flex-wrap: wrap; margin: 5px;">
@@ -1097,7 +1147,7 @@
 
                             var svg = chart.getContainer().getElementsByTagName('svg')[0];
                             var xLoc = layout.getXLocation(value)
-                            svg.appendChild(createLine(xLoc, chartArea.top, chartArea.height, 'red', 4)); // axis line 
+                            svg.appendChild(createLine(xLoc, chartArea.top, chartArea.height, 'red', 4)); // axis line
                         }
                         function createLine(x1, y1, z, color, w) {
                             var line = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -1148,46 +1198,55 @@
                                             break;
                                     }
                                 })()
-                                window.open(`${BASE_URL}/issues/?jql=issueFunction in issuesInEpics("issueFunction in linkedIssuesOf(\\"issuekey = ${featureData.key}\\",\\"Is Parent task of:\\")") and issuetype in (Story, Task) and statusCategory != Done ${storyPointsCondition}`)
+                                var jqlProjectParam = featureData.isProjectIssues ? ` and project=${PROJECT_NAME}` : ''
+                                var bugInclude = featureData.viewType.toLowerCase() === 'epic' ? 'Bug,' : ''
+                                window.open(`${BASE_URL}/issues/?jql=(issueFunction in issuesInEpics("issuekey = ${featureData.key}") OR issueFunction in issuesInEpics("issueFunction in linkedIssuesOf(\\"issuekey = ${featureData.key}\\", \\"Is Parent task of:\\")")) and issuetype in (Story, Task, "Tech Story", ${bugInclude} Research, "Technical Debt") and status not in (Cancelled, Go-Live, "On Hold", Closed, Done) ${storyPointsCondition} ${jqlProjectParam}`)
                             }
                         });
                         chartIssueDistributionPie.draw(dataIssueDistribution, optionsIssueDistribution);
                         ///////////velocity_chart///////
-                        var dataVelocity = new google.visualization.DataTable();
-                        dataVelocity.addColumn('date', 'Date');
-                        dataVelocity.addColumn('number', 'Actual Velocity');
-                        dataVelocity.addColumn('number', 'Predicted Velocity');
                         var velocityChartRows = featureData.velocityDataSets;
-                        velocityChartRows.forEach(function (line, index) {
-                            var date = new Date(line.date);
-                            var realVelocity = line.realVelocity || 0;
-                            var linearVelocity = line.interpolatedVelocity || 0;
-                            dataVelocity.addRow([date, realVelocity, linearVelocity]);
+                        if(velocityChartRows.length>=2){
+                        var dataVelocity = new google.visualization.DataTable();
+                            dataVelocity.addColumn('date', 'Date');
+                            dataVelocity.addColumn('number', 'Actual Velocity');
+                            dataVelocity.addColumn('number', 'Predicted Velocity');
+                            velocityChartRows.forEach(function (line, index) {
+                                var date = new Date(line.date);
+                                var realVelocity = line.realVelocity || 0;
+                                var linearVelocity = line.interpolatedVelocity || 0;
+                                dataVelocity.addRow([date, realVelocity, linearVelocity]);
 
-                        });
-                        var optionsVelocityChart = {
-                            title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + featureData.predictedVelocity,
-                            lineWidth: 3,
-                            width: '100%',
-                            height: '100%',
-                            series: {
-                                0: { lineDashStyle: [0, 0] },
-                                1: { lineDashStyle: [10, 2], color: 'black' }
-                            },
-                            vAxes: {
-                                0: {
-                                    title: 'Story Points per Sprint',
-                                    viewWindow: {
-                                        min: 0
+                            });
+                            var optionsVelocityChart = {
+                                title: 'Actual Velocity Chart\nLinear regression predicted velocity: ' + featureData.predictedVelocity,
+                                lineWidth: 3,
+                                width: '100%',
+                                height: '100%',
+                                series: {
+                                    0: { lineDashStyle: [0, 0] },
+                                    1: { lineDashStyle: [10, 2], color: 'black' }
+                                },
+                                vAxes: {
+                                    0: {
+                                        title: 'Story Points per Sprint',
+                                        viewWindow: {
+                                            min: 0
+                                        }
                                     }
-                                }
-                            },
-                            curveType: 'function',
-                            legend: { position: 'bottom' },
-                            backgroundColor: '#f4f5f7'
-                        };
-                        var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
-                        chartVelocity.draw(dataVelocity, optionsVelocityChart);
+                                },
+                                curveType: 'function',
+                                legend: { position: 'bottom' },
+                                backgroundColor: '#f4f5f7'
+                            };
+                            var chartVelocity = new google.visualization.LineChart($velocity_chart[0]);
+                            chartVelocity.draw(dataVelocity, optionsVelocityChart);
+                        } else {
+                            $($velocity_chart[0])
+                                .html(`<h1>There is not enough data to calculate the actual velocity.</h1>
+                                        <h3>It will be available after the second sprint completed. </h3>`)
+                                .addClass('empty_velocity_chart')
+                        }
                         //////////////////open_total_chart/////////////////////////
                         var dataOpenTotalChart = new google.visualization.DataTable();
                         dataOpenTotalChart.addColumn('date', 'Date');
@@ -1291,7 +1350,7 @@
                         var chartIssueDistribution = new google.visualization.ColumnChart($issue_distribution[0]);
                         chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
                         /**
-                        * Resize handler 
+                        * Resize handler
                         */
                         $(window).resize(function () {
                             //drawDeteilsView(featureData)
@@ -1306,7 +1365,7 @@
                             chartIssueDistribution.draw(dataIssueDistribution, optionsIssueDistribution);
                         });
                         /**
-                        * Close handler 
+                        * Close handler
                         */
                         $detailsView.click((e) => {
                             if (e.target.className == "detailsView") {
@@ -1343,6 +1402,83 @@
                 const LABEL_2_TEXT = 'Originally planned velocity';
                 const LABEL_3_TEXT = 'Sprint length in days';
                 const LABEL_4_TEXT = 'Roadmap Feature start date';
+                /**
+                * Builder view for configuration project page (works only for admins)
+                */
+                class ProjectEditView {
+                    constructor(data, wrapperSelector) {
+                        console.log('start: ProjectEditView');
+                        this.wrapperSelector = wrapperSelector;
+                        this.formArea = $('<div>').addClass('editView').click((e) => {
+                            e.stopPropagation()
+                        });
+                        $(this.wrapperSelector).click(this.close.bind(this));
+                        this.formArea.empty();
+                        $(this.wrapperSelector).show();
+
+                        var header = $('<h2>').text('Edit project page'/*data.summary*/);
+                        var _input0 = Create.dropList({
+                            text: 'Choose View Type',
+                            array: ['Roadmap Feature', 'Epic'],
+                            currentVal: STORE.projectConfig.viewType
+                        });
+                        var _input1 = Create.dropList({
+                            text: 'Epics related only to current project:',
+                            array: [true, false],
+                            currentVal: STORE.projectConfig.isProjectEpics
+                        });
+                        var _input2 = Create.dropList({
+                            text: 'Tickets related only to current project:',
+                            array: [true, false],
+                            currentVal: STORE.projectConfig.isProjectTickets
+                        });
+                        var _input3 = Create.dropList({
+                            text: 'Group features by:',
+                            array: STORE.projectConfig.groups,
+                            currentVal: STORE.projectConfig.groupBy
+                        });
+                        var _saveButton = $('<button>').toggleClass('saveButtun').text('Save').click((e) => {
+                            e.stopPropagation();
+                            var result = {};
+                            result.viewType = _input0.find('select').children("option:selected").text();
+                            result.showOnlyProjectEpics = _input1.find('select').children("option:selected").text();
+                            result.isProjectTickets = _input2.find('select').children("option:selected").text();
+                            result.groupBy = _input3.find('select').children("option:selected").text();
+
+                            projectConfiguration(result, this.close.bind(this));
+                        })
+                        this.formArea.append(header, _input0, _input1,_input2,_input3,_saveButton);
+                        $(this.wrapperSelector).append(this.formArea);
+
+                        console.log('end: render edit view');
+                    }
+                    /**
+                    * Close configuration page
+                    */
+                    close() {
+                        $(this.wrapperSelector).empty();
+                        $(this.wrapperSelector).hide();
+                    }
+                }
+                function projectConfiguration(obj, callback) {
+                    Fade.on();
+                    jQuery.post(BASE_URL + '/plugins/servlet/projectConfiguration?' + DEBUG_MODE + 'projectKey=' + PROJECT_NAME+'&viewType='+obj.viewType+'&isProjectEpics='+obj.showOnlyProjectEpics+'&isProjectTickets='+obj.isProjectTickets+'&groupBy='+obj.groupBy)
+                        .done(function (data) {
+                            var jsonData = JSON.parse(data);
+                            callback();
+                            //rebuildPanelBlock(obj.roadmapFeature);
+                            Fade.off();
+                            if (!!jsonData.statusMessage) {
+                                alert(jsonData.statusMessage)
+                            } else {
+                                location.reload()
+                            }
+                        })
+                        .fail(function () {
+                            Fade.off();
+                            alert("Are you Admin? or smth wrong");
+                        })
+                }
                 /**
                 * Builder view for configuration page
                 */
@@ -1411,8 +1547,9 @@
                     }
                 }
                 function getFeaturesDateAndBuild(obj, callback) {
+                    var queryString = new URLSearchParams(obj).toString()
                     Fade.on();
-                    jQuery.post(POST_UTL, obj)
+                    jQuery.post(POST_UTL+'&'+queryString)
                         .done(function (data) {
                             var jsonData = JSON.parse(data);
                             callback();
@@ -1451,6 +1588,17 @@
                         _input.prop({ valueAsNumber: +props.value });
                         return $('<div>').append(_label, _input)
                     }
+                    static dropList(props) {
+                        var _label = $('<label>').text(props.text);
+                        var _select = $('<select>');
+                        var selectedKey = 0
+                        jQuery.each(props.array, function (key, value) {
+                            if(props.currentVal==value){selectedKey = key}
+                            _select.append('<option value="' + key + '">' + value + '</option>');
+                        });
+                        _select.val(selectedKey)
+                        return $('<div>').append(_label, _select)
+                    }
                 }
                 /**
                 * Сhecking if a number is in the range
@@ -1478,13 +1626,15 @@
                 * @param {object} postData
                 * @param {function} callback
                 */
-                function doPost(url, postData, callback) {
-                    jQuery.post(url, postData)
+                function doPost(url, postData, callback,type) {
+                    var POST_OR_GET_TYPE = type=='get'?'get':'post'
+                    jQuery[POST_OR_GET_TYPE](url, postData)
                         .done(function (textData) {
                             var jsonData = JSON.parse(textData)
                             if (!!jsonData.logInfo) {
                                 console.warn(
                                     `
+type:${POST_OR_GET_TYPE}
 url: ${url}
 body: ${jsonData}
 statusMessage: ${jsonData.statusMessage}
@@ -1495,7 +1645,7 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
                             callback(jsonData)
                         })
                         .fail(function (err) {
-                            alert("POST error")
+                            alert(`${POST_OR_GET_TYPE} error`)
                         })
                 }
                 /**
@@ -1516,4 +1666,4 @@ logInfo: ${jsonData.logInfo.replaceAll('<br>', '\n')}
     </body>
 
     </html>
-    </div>
+</div>

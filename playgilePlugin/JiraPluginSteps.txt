@@ -398,7 +398,7 @@ Enter New Classname MyServlet: : activeObjectsAccess
 Enter Package Name com.playgileplayground.jira.servlet: :
 Show Advanced Setup? (Y/y/N/n) N: :
 [INFO] Adding the following items to the project:
-[INFO]   [class: com.playgileplayground.jira.servlet.activeObjectsAccess]
+[INFO]   [class: com.playgileplayground.jira.servlet.ActiveObjectsAccess]
 [INFO]   [class: it.com.playgileplayground.jira.servlet.activeObjectsAccessFuncTest]
 [INFO]   [class: ut.com.playgileplayground.jira.servlet.activeObjectsAccessTest]
 [INFO]   [dependency: javax.servlet:servlet-api]
@@ -439,6 +439,9 @@ https://jira-sandbox.playtika.com/plugins/servlet/getActiveFeatures?projectKey=S
 Get specific feature
 https://jira-sandbox.playtika.com/plugins/servlet/getAnalyzedFeature?projectKey=BINGOBLITZ&roadmapFeature=BINGOBLITZ-130778&sendLog=1
 
+
+Get/Set project configuration
+
 ---------------- jira stop restart -----------
 
 /opt/atlassian/jira/bin/stop-jira.sh и start-jira.sh for sandbox
@@ -466,6 +469,15 @@ https://jira-sandbox.playtika.com/plugins/servlet/getAnalyzedFeature?projectKey=
         sudo -s вначале выполни
     ​[1:11 PM] Maksim Gorgun
         или добавляй sudo к каждой команде вначале
+
+
+====================
+To update historical progress:
+
+The number is 0-based number of the record to update.
+The value is the new value. If the value is < 0 then delete it
+https://jira-sandbox.playtika.com/plugins/servlet/updateProgressList?projectKey=DC&feature=DC-3125&value=2&number=0
+
 
 
 

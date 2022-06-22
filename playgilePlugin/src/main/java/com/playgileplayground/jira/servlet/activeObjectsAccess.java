@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Scanned
-public class activeObjectsAccess extends HttpServlet{
-    private static final Logger log = LoggerFactory.getLogger(activeObjectsAccess.class);
+public class ActiveObjectsAccess extends HttpServlet{
+    private static final Logger log = LoggerFactory.getLogger(ActiveObjectsAccess.class);
     ActiveObjects ao;
-    public activeObjectsAccess(ActiveObjects ao)
+    public ActiveObjectsAccess(ActiveObjects ao)
     {
         this.ao = ao;
     }
@@ -34,7 +34,7 @@ public class activeObjectsAccess extends HttpServlet{
             String projectKey = Optional.ofNullable(req.getParameter("projectKey")).orElse("");
             String currentUser = Optional.ofNullable(req.getParameter("user")).orElse("");
             String teamVelocity = Optional.ofNullable(req.getParameter("teamVelocity")).orElse("");
-            String roadmapFeature = Optional.ofNullable(req.getParameter("roadmapfeature")).orElse("");
+            String roadmapFeature = Optional.ofNullable(req.getParameter("feature")).orElse("");
 
 
             if (projectKey.isEmpty())

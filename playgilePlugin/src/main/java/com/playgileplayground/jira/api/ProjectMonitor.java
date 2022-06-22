@@ -44,9 +44,6 @@ public interface ProjectMonitor {
 
 
     ///////////////////// our pre-defined keys /////////////////
-    String ROADMAPFEATUREKEY = "Roadmap Feature";
-    String EPIC = "Epic";
-
     String ISSUESDISTRIBUTION = "issuedistribution";
 
     double MAX_STORY_ESTIMATION = 21.0;

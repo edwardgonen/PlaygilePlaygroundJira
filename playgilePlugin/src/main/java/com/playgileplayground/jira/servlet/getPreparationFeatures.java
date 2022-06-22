@@ -12,7 +12,6 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.templaterenderer.TemplateRenderer;
-import com.google.common.base.Strings;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.impl.*;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
@@ -31,7 +30,7 @@ import java.util.Date;
 import java.util.Optional;
 
 @Scanned
-public class getPreparationFeatures extends HttpServlet {
+public class GetPreparationFeatures extends HttpServlet {
     @ComponentImport
     TemplateRenderer templateRenderer;
     @ComponentImport
@@ -43,17 +42,17 @@ public class getPreparationFeatures extends HttpServlet {
 
     public ApplicationUser applicationUser;
 
-    public getPreparationFeatures(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
-    {
+    public GetPreparationFeatures(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService) {
         this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
     }
+
     @Override
     @Transactional
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req,  resp);
+        processRequest(req, resp);
     }
 
     @Override
@@ -61,15 +60,14 @@ public class getPreparationFeatures extends HttpServlet {
         processRequest(req, resp);
     }
 
-    private void processRequest (HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    private void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StatusText.getInstance().reset();
         PreparationFeaturesResponse ourResponse = new PreparationFeaturesResponse();
         try {
             //first check user
             JiraAuthenticationContext jac = ComponentAccessor.getJiraAuthenticationContext();
             applicationUser = jac.getLoggedInUser();
-            if (applicationUser == null)
-            {
+            if (applicationUser == null) {
                 ourResponse.statusMessage = "User authentication failure";
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
@@ -84,7 +82,7 @@ public class getPreparationFeatures extends HttpServlet {
 
             //prepare to walk through the features
 
-            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+            JiraInterface jiraInterface = new JiraInterface(ao, applicationUser, searchService);
 
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
             if (currentProject == null) {
@@ -95,12 +93,15 @@ public class getPreparationFeatures extends HttpServlet {
 
             ManageActiveObjects mao = new ManageActiveObjects(ao);
             ManageActiveObjectsResult maor = mao.GetProjectConfiguration(new ManageActiveObjectsEntityKey(projectKey, ProjectMonitor.PROJECTCONFIGURATIONKEYNAME));
-            ProjectConfiguration config = (ProjectConfiguration) maor.Result;
+            ProjectConfigurationModel config;
             String viewType;
-            if (!Strings.isNullOrEmpty(config.getViewType())) {
+
+            if (maor.Result != null) { //we got something from the database
+                config = (ProjectConfigurationModel) maor.Result;
                 viewType = config.getViewType();
             } else {
-                viewType = new ProjectConfiguration(ProjectMonitor.ROADMAPFEATUREKEY).getViewType();
+                config = new ProjectConfigurationModel();
+                viewType = config.getViewType();
             }
 
             ArrayList<Issue> roadmapFeatures = jiraInterface.getRoadmapFeaturesInPreparationPhase(currentProject, viewType);
@@ -111,36 +112,30 @@ public class getPreparationFeatures extends HttpServlet {
             }
 
             //prepare list of short feature descriptors
-            if (roadmapFeatures.size() > 0)
-            {
+            if (roadmapFeatures.size() > 0) {
                 //prepare the response with features sorted by month/year
                 ourResponse.featuresListByMonthYear = createListOfFeaturesByMonthYear(roadmapFeatures);
-            }
-            else
-            {
+            } else {
                 ourResponse.statusMessage = "No features in preparation status found for " + projectKey;
                 servletMisc.serializeToJsonAndSend(ourResponse, resp);
                 return;
             }
             resp.setContentType("text/html;charset=utf-8");
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             ourResponse.statusMessage = "Route exception " + ProjectMonitoringMisc.getExceptionTrace(e);
             servletMisc.serializeToJsonAndSend(ourResponse, resp);
         }
 
     }
-    private ArrayList<PreparationFeaturesListByMonth> createListOfFeaturesByMonthYear(ArrayList<Issue> preparationFeatures)
-    {
+
+    private ArrayList<PreparationFeaturesListByMonth> createListOfFeaturesByMonthYear(ArrayList<Issue> preparationFeatures) {
         ArrayList<PreparationFeaturesListByMonth> result = new ArrayList<>();
-        JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+        JiraInterface jiraInterface = new JiraInterface(ao, applicationUser, searchService);
         ProjectPreparationMisc projectPreparationMisc = new ProjectPreparationMisc(jiraInterface);
         //build a list of analysis
         ArrayList<RoadmapFeaturePreparationAnalysis> analyzedPreparationFeatures = new ArrayList<>();
-        for (Issue preparationFeature : preparationFeatures)
-        {
+        for (Issue preparationFeature : preparationFeatures) {
             //get the feature, analyze it and convert it to our response
             RoadmapFeaturePreparationAnalysis roadmapFeaturePreparationAnalysis = new RoadmapFeaturePreparationAnalysis(
                 preparationFeature,
@@ -163,10 +158,8 @@ public class getPreparationFeatures extends HttpServlet {
         for (Date date = firstDate; date.before(lastDate) || date.equals(lastDate); date = DateTimeUtils.AddMonths(date, 1)) {
             PreparationFeaturesListByMonth preparationFeaturesListByMonth = new PreparationFeaturesListByMonth();
             //go through the list and build our array and find year/month
-            for (RoadmapFeaturePreparationAnalysis analyzedFeature : analyzedPreparationFeatures)
-            {
-                if (DateTimeUtils.CompareDatesByMonthYear(analyzedFeature.projectPreparationIssue.businessApprovalDate, date))
-                {
+            for (RoadmapFeaturePreparationAnalysis analyzedFeature : analyzedPreparationFeatures) {
+                if (DateTimeUtils.CompareDatesByMonthYear(analyzedFeature.projectPreparationIssue.businessApprovalDate, date)) {
                     preparationFeaturesListByMonth.monthYear = date;
                     preparationFeaturesListByMonth.featuresList.add(analyzedFeature);
                 }
@@ -206,13 +199,12 @@ public class getPreparationFeatures extends HttpServlet {
 
 }
 
-class PreparationFeaturesResponse
-{
+class PreparationFeaturesResponse {
     public String statusMessage = "";
     public ArrayList<PreparationFeaturesListByMonth> featuresListByMonthYear = new ArrayList<>();
 }
-class PreparationFeaturesListByMonth
-{
+
+class PreparationFeaturesListByMonth {
     public Date monthYear;
     public ArrayList<RoadmapFeaturePreparationAnalysis> featuresList = new ArrayList<>();
 }

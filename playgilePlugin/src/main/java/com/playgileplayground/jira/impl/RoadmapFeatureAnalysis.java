@@ -1,8 +1,10 @@
 package com.playgileplayground.jira.impl;
 
+import com.atlassian.jira.bc.project.component.ProjectComponent;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
+import com.google.common.base.Strings;
 import com.playgileplayground.jira.api.ProjectMonitor;
 import com.playgileplayground.jira.jiraissues.JiraInterface;
 import com.playgileplayground.jira.jiraissues.PlaygileIssue;
@@ -14,7 +16,13 @@ import com.playgileplayground.jira.projectprogress.DateAndValues;
 import com.playgileplayground.jira.projectprogress.ProjectProgress;
 import com.playgileplayground.jira.projectprogress.ProjectProgressResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis>, Comparable<RoadmapFeatureAnalysis> {
     Issue roadmapFeature;
@@ -23,6 +31,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     Project currentProject;
     ProjectMonitoringMisc projectMonitoringMisc;
     ManageActiveObjects mao;
+    public ProjectConfigurationModel config;
     private int numberOfOpenIssues;
     private int numberOfReadyForDevelopmentIssues;
     private int numberOfReadyForEstimationIssues;
@@ -30,8 +39,6 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
 
     boolean bRoadmapFeatureAnalyzed = false;
-
-
 
     /////////// publics
     public String featureSummary;
@@ -56,6 +63,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     public double sprintLengthRoadmapFeature = 0;
     public Date targetDate;
     public String teamName;
+    public String groupBy;
 
     public RoadmapFeatureAnalysis(
         Issue roadmapFeature,
@@ -63,9 +71,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         ApplicationUser applicationUser,
         Project currentProject,
         ProjectMonitoringMisc projectMonitoringMisc,
-        ManageActiveObjects mao
-    )
-    {
+        ManageActiveObjects mao,
+        ProjectConfigurationModel config
+    ) {
         bRoadmapFeatureAnalyzed = false;
         this.roadmapFeature = roadmapFeature;
         this.jiraInterface = jiraInterface;
@@ -76,9 +84,11 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         this.featureSummary = roadmapFeature.getSummary();
         this.projectKey = currentProject.getKey();
         this.mao = mao;
+        this.config = config;
 
         targetDate = null;
         teamName = "";
+        groupBy = "";
     }
 
     @Override
@@ -92,16 +102,15 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
     }
 
 
-    public boolean analyzeRoadmapFeature(String viewType)
-    {
+    public boolean analyzeRoadmapFeature() {
         boolean result;
+        groupBy = getGroupByValue(config.getGroupBy(), roadmapFeature);
 
         defaultNotEstimatedIssueValue = getDefaultValueForNonEstimatedIssue();
         //get list of issues and convert them to PlaygileIssues
         StatusText.getInstance().add(true, "Start analysis for " + featureKey + " " + featureSummary);
         //get team name.
         teamName = jiraInterface.getTeamNameForIssue(roadmapFeature);
-
         //let's create a key in Active objects if it does not exist yet
 
         ManageActiveObjectsResult maorLocal = mao.CreateProjectEntity(new ManageActiveObjectsEntityKey(projectKey, featureKey)); //will not create if exists
@@ -110,7 +119,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             return false;
         }
 
-        List<Issue> issues = jiraInterface.getIssuesForRoadmapFeatureOrEpics(currentProject, roadmapFeature, viewType);
+        List<Issue> issues = jiraInterface.getIssuesForRoadmapFeatureOrEpics(currentProject, roadmapFeature);
         if (null != issues && issues.size() > 0) {
             for (Issue issue : issues) {
                 PlaygileIssue playgileIssue = new PlaygileIssue(issue, projectMonitoringMisc, jiraInterface);
@@ -118,7 +127,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 //======================================================
                 //for performance and cache instantiate our PlaygileIssue
                 //======================================================
-                playgileIssue.instantiatePlaygileIssue(defaultNotEstimatedIssueValue);
+                playgileIssue.instantiatePlaygileIssue(defaultNotEstimatedIssueValue, roadmapFeature);
 
                 //======================================================
                 //            get list of sprint for issue
@@ -135,10 +144,18 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                     double estimationForIssue = playgileIssue.getAdjustedEstimationValue();
                     remainingTotalEstimations += estimationForIssue;
 
-                    if (playgileIssue.storyPoints > 0 && playgileIssue.storyPoints < 13) analyzedStories.EstimatedStoriesNumber++;
-                    if (playgileIssue.storyPoints == 13) analyzedStories.LargeStoriesNumber++;
-                    if (playgileIssue.storyPoints > 13) analyzedStories.VeryLargeStoriesNumber++;
-                    if (playgileIssue.storyPoints <= 0) analyzedStories.NotEstimatedStoriesNumber++;
+                    if (playgileIssue.storyPoints > 0 && playgileIssue.storyPoints < 13) {
+                        analyzedStories.EstimatedStoriesNumber++;
+                    }
+                    if (playgileIssue.storyPoints == 13) {
+                        analyzedStories.LargeStoriesNumber++;
+                    }
+                    if (playgileIssue.storyPoints > 13) {
+                        analyzedStories.VeryLargeStoriesNumber++;
+                    }
+                    if (playgileIssue.storyPoints <= 0) {
+                        analyzedStories.NotEstimatedStoriesNumber++;
+                    }
 
                     if (playgileIssue.bIssueOpen) {
                         numberOfOpenIssues++;
@@ -161,8 +178,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             //========================================================
             // calculate average issues closure distribution across all closed sprints
             //========================================================
-            for (PlaygileSprint notFutureSprint : playgileSprints)
-            {
+            for (PlaygileSprint notFutureSprint : playgileSprints) {
                 double[] sprintIssuesDistribution = notFutureSprint.getIssuesTimeDistribution();
                 //update main counters
                 for (int i = 0; i < overallIssuesDistributionInSprint.length; i++) {
@@ -180,8 +196,9 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             //the first sprint startDate would be the project start date.
             //BUT!!! there may be no sprints at all
             PlaygileSprint oldestSprint = null;
-            if (playgileSprints != null && playgileSprints.size() > 0)  oldestSprint = playgileSprints.iterator().next(); //first - the oldest
-
+            if (playgileSprints != null && playgileSprints.size() > 0) {
+                oldestSprint = playgileSprints.iterator().next(); //first - the oldest
+            }
             //we have the sprints, so let's read and set configuration parameters
             //we couldn't read those parameters up to now since we didn't have the sprint list
             //which is mandatory to find the fallback values in case sprint length and RF start are nod configured
@@ -226,12 +243,11 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
             //now do predictions
             historicalDateAndValues = getHistoricalEstimations();
-            if (historicalDateAndValues != null)
-            {
+            if (historicalDateAndValues != null) {
                 ProjectProgress projectProgress = new ProjectProgress();
                 projectProgressResult = projectProgress.Initiate(plannedRoadmapFeatureVelocity,
                     predictedVelocity,
-                    (int)sprintLengthRoadmapFeature,
+                    (int) sprintLengthRoadmapFeature,
                     historicalDateAndValues);
 
                 /*
@@ -244,16 +260,12 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
                 qualityScore = getQualityScore();
                 StatusText.getInstance().add(true, "Finished processing " + featureSummary);
                 result = true;
-            }
-            else
-            {
+            } else {
                 StatusText.getInstance().add(true, "Failed to get historical estimations for " + featureSummary);
                 result = false; //no estimations
             }
 
-        }
-        else
-        {
+        } else {
             StatusText.getInstance().add(true, "Failed to retrieve any project issues for " + featureSummary);
             result = false;
         }
@@ -261,22 +273,21 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         bRoadmapFeatureAnalyzed = result; //set to true if analyzed ok
         return result;
     }
-    private ArrayList<DateAndValues> getHistoricalEstimations()
-    {
+
+    private ArrayList<DateAndValues> getHistoricalEstimations() {
         ArrayList<DateAndValues> result = null;
         ManageActiveObjectsResult maor = mao.GetProgressDataList(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            result = (ArrayList<DateAndValues>)maor.Result;
+            result = (ArrayList<DateAndValues>) maor.Result;
         }
         return result;
     }
 
-    private Date getTargetDate()
-    {
+    private Date getTargetDate() {
         targetDate = null;
         ManageActiveObjectsResult maor = mao.GetTargetDate(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            targetDate = (Date)maor.Result;
+            targetDate = (Date) maor.Result;
             StatusText.getInstance().add(true, "Target date from DB is " + targetDate);
         }
         if (targetDate == null) {
@@ -291,32 +302,35 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         return targetDate;
     }
 
-    private double getDefaultValueForNonEstimatedIssue()
-    {
+    private double getDefaultValueForNonEstimatedIssue() {
         defaultNotEstimatedIssueValue = 0;
         ManageActiveObjectsResult maor = mao.GetDefaultNotEstimatedIssueValue(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            defaultNotEstimatedIssueValue = (double)maor.Result;
+            defaultNotEstimatedIssueValue = (double) maor.Result;
         }
-        if (defaultNotEstimatedIssueValue <= 0) defaultNotEstimatedIssueValue = ProjectMonitor.defaultNotEstimatedIssueValueHardCoded;
+        if (defaultNotEstimatedIssueValue <= 0) {
+            defaultNotEstimatedIssueValue = ProjectMonitor.defaultNotEstimatedIssueValueHardCoded;
+        }
         return defaultNotEstimatedIssueValue;
+
     }
-    private void getConfiguredParameters(PlaygileSprint oldestSprint)
-    {
+
+    private void getConfiguredParameters(PlaygileSprint oldestSprint) {
         //we read them from DB (Active objects) and provide fallback if not found
         plannedRoadmapFeatureVelocity = 0;
         ManageActiveObjectsResult maor = mao.GetPlannedRoadmapVelocity(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            plannedRoadmapFeatureVelocity = (double)maor.Result;
+            plannedRoadmapFeatureVelocity = (double) maor.Result;
         }
-        if (plannedRoadmapFeatureVelocity <= 0) plannedRoadmapFeatureVelocity = ProjectMonitor.defaultInitialRoadmapFeatureVelocity;
-
+        if (plannedRoadmapFeatureVelocity <= 0) {
+            plannedRoadmapFeatureVelocity = ProjectMonitor.defaultInitialRoadmapFeatureVelocity;
+        }
         getDefaultValueForNonEstimatedIssue();
 
         startDateRoadmapFeature = null;
         maor = mao.GetProjectStartDate(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            startDateRoadmapFeature = (Date)maor.Result;
+            startDateRoadmapFeature = (Date) maor.Result;
             StatusText.getInstance().add(true, "Start feature date from DB is " + startDateRoadmapFeature);
         }
         if (startDateRoadmapFeature == null) {
@@ -324,9 +338,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
             if (oldestSprint != null) {
                 startDateRoadmapFeature = oldestSprint.getStartDate();
                 StatusText.getInstance().add(true, "Start feature date from oldest sprint is " + startDateRoadmapFeature);
-            }
-            else //set today as latest fall back
-            {
+            } else { //set today as latest fall back
                 startDateRoadmapFeature = DateTimeUtils.getCurrentDate();
                 StatusText.getInstance().add(true, "Start feature date is set for today as fallback " + startDateRoadmapFeature);
             }
@@ -343,7 +355,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         sprintLengthRoadmapFeature = 0;
         maor = mao.GetSprintLength(new ManageActiveObjectsEntityKey(projectKey, featureKey));
         if (maor.Code == ManageActiveObjectsResult.STATUS_CODE_SUCCESS) {
-            sprintLengthRoadmapFeature = (double)maor.Result;
+            sprintLengthRoadmapFeature = (double) maor.Result;
             StatusText.getInstance().add(true, "Detected sprint length from DB is " + sprintLengthRoadmapFeature);
         }
         if (sprintLengthRoadmapFeature <= 0) {
@@ -370,8 +382,7 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
 
     }
 
-    FeatureScore getQualityScore()
-    {
+    FeatureScore getQualityScore() {
         FeatureScore result = new FeatureScore();
         boolean bFeatureIsReady = false;
 
@@ -381,19 +392,14 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         int targetMinusToday = DateTimeUtils.Days(targetDate, DateTimeUtils.getZeroTimeDate(DateTimeUtils.getCurrentDate()));
         int predictedMinusTarget = DateTimeUtils.Days(projectProgressResult.predictedProjectEnd, targetDate);
 
-        if (targetMinusToday <= 0 && predictedMinusTarget > 0)
-        {
+        if (targetMinusToday <= 0 && predictedMinusTarget > 0) {
             result.delayScore = 1;
             result.delayScoreComment = "Already behind target date";
-        }
-        else
-        {
-            if (predictedMinusTarget <= 0 && targetMinusToday > 0)
-            {
+        } else {
+            if (predictedMinusTarget <= 0 && targetMinusToday > 0) {
                 result.delayScore = 3;
                 result.delayScoreComment = "According to schedule";
-            }
-            else if (predictedMinusTarget <= 0 && targetMinusToday <= 0) {
+            } else if (predictedMinusTarget <= 0 && targetMinusToday <= 0) {
                 result.delayScore = 3;
                 result.delayScoreComment = "Seems like the feature is ready";
                 bFeatureIsReady = true;
@@ -419,12 +425,10 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         */
         double goodEstimationRatio = 90.0;
         double mediocreEstimationRation = 60.0;
-        if (bFeatureIsReady)
-        {
+        if (bFeatureIsReady) {
             result.estimationScore = 3;
             result.estimationScoreComment = "Seems like the feature is ready";
-        }
-        else {
+        } else {
             double estimationRatio = (analyzedStories.EstimatedStoriesNumber / (double) numberOfTotalNotCompletedIssues) * 100.0;
             estimationRatio = projectMonitoringMisc.roundToDecimalNumbers(estimationRatio, 1);
             if (estimationRatio >= 100.0) {
@@ -449,12 +453,10 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         */
         double smallAmountOfOpenIssues = 10.0;
         double mediumAmountOfOpenIssues = 30.0;
-        if (bFeatureIsReady)
-        {
+        if (bFeatureIsReady) {
             result.readinessScore = 3;
             result.readinessScoreComment = "Seems like the feature is ready";
-        }
-        else {
+        } else {
             result.readinessScore = 3;
             double readinessRatio = ((double) numberOfOpenIssues / (double) numberOfTotalNotCompletedIssues) * 100.0;
             readinessRatio = projectMonitoringMisc.roundToDecimalNumbers(readinessRatio, 1);
@@ -479,5 +481,59 @@ public class RoadmapFeatureAnalysis implements Comparator<RoadmapFeatureAnalysis
         result.totalScore = Math.min(result.delayScore, Math.min(result.estimationScore, result.readinessScore));
 
         return result;
+    }
+
+    private String getGroupByValue(String groupByField, Issue issue) {
+        String result = "";
+        switch (groupByField) {
+            case GroupByTypes.ASSIGNEE:
+                try {
+                    result = issue.getAssigneeUser().getDisplayName();
+                } catch (NullPointerException e) {
+                    result = "Unassigned";
+                }
+                break;
+
+            case GroupByTypes.CREATOR:
+                result = Strings.isNullOrEmpty(issue.getCreator().getName()) ? "Unassigned" : issue.getCreator().getDisplayName();
+                break;
+
+            case GroupByTypes.BP_TEAM:
+                try {
+                    result = jiraInterface.getSpecificCustomFields(issue, "BP Team")[0];
+                } catch (Exception e) {
+                    result = GroupByTypes.NONE;
+                }
+                break;
+
+            case GroupByTypes.INITIATIVE:
+                List<Issue> issues = jiraInterface.getInitiative(issue);
+                if (!issues.isEmpty()) {
+                    result = issues.get(0).getSummary();
+                }
+                break;
+
+            case GroupByTypes.COMPONENT:
+                List<String> components = issue.getComponents().stream()
+                    .map(ProjectComponent::getName)
+                    .collect(Collectors.toList());
+                if (!components.isEmpty()) {
+                    for (String component : components) {
+                        if (Strings.isNullOrEmpty(result)) {
+                            result = component;
+                        } else {
+                            result = result + ", " + component;
+                        }
+                    }
+                } else {
+                    result = GroupByTypes.NONE;
+                }
+                break;
+            default:
+                result = GroupByTypes.NONE;
+                break;
+        }
+        return result;
+
     }
 }

@@ -56,52 +56,56 @@
     <entity>com.playgileplayground.jira.persistence.PrjStatEntity</entity>
     <entity>com.playgileplayground.jira.persistence.UserEntity</entity>
   </ao>
-    <servlet name="active Objects Access" i18n-name-key="active-objects-access.name" key="active-objects-access" class="com.playgileplayground.jira.servlet.activeObjectsAccess">
+    <servlet name="active Objects Access" i18n-name-key="active-objects-access.name" key="active-objects-access" class="com.playgileplayground.jira.servlet.ActiveObjectsAccess">
     <description key="active-objects-access.description">The active Objects Access Plugin</description>  
     <url-pattern>/activeobjectsaccess</url-pattern> 
   </servlet>  
-  <servlet name="active Objects Delete" i18n-name-key="active-objects-delete.name" key="active-objects-delete" class="com.playgileplayground.jira.servlet.activeObjectsDelete"> 
+  <servlet name="active Objects Delete" i18n-name-key="active-objects-delete.name" key="active-objects-delete" class="com.playgileplayground.jira.servlet.ActiveObjectsDelete">
     <description key="active-objects-delete.description">The active Objects Delete Plugin</description>  
     <url-pattern>/activeobjectsdelete</url-pattern> 
   </servlet>
- <servlet name="active Objects List" i18n-name-key="active-objects-list.name" key="active-objects-list" class="com.playgileplayground.jira.servlet.activeObjectsList">
+ <servlet name="active Objects List" i18n-name-key="active-objects-list.name" key="active-objects-list" class="com.playgileplayground.jira.servlet.ActiveObjectsList">
    <description key="active-objects-list.description">The active Objects List Plugin</description>
    <url-pattern>/activeobjectslist</url-pattern>
  </servlet>
- <servlet name="user Objects List" i18n-name-key="user-objects-list.name" key="user-objects-list" class="com.playgileplayground.jira.servlet.activeObjectsUserList">
+ <servlet name="user Objects List" i18n-name-key="user-objects-list.name" key="user-objects-list" class="com.playgileplayground.jira.servlet.ActiveObjectsUserList">
    <description key="user-objects-list.description">The users List Plugin</description>
    <url-pattern>/activeobjectsuserlist</url-pattern>
  </servlet>
- <servlet name="user Objects Delete" i18n-name-key="user-objects-delete.name" key="user-objects-delete" class="com.playgileplayground.jira.servlet.activeObjectsUserDelete">
+ <servlet name="user Objects Delete" i18n-name-key="user-objects-delete.name" key="user-objects-delete" class="com.playgileplayground.jira.servlet.ActiveObjectsUserDelete">
    <description key="user-objects-delete.description">The users List Plugin</description>
    <url-pattern>/activeobjectsuserdelete</url-pattern>
  </servlet>
- <servlet name="Playgile plugin configuration" i18n-name-key="plugin-configuration.name" key="plugin-configuration" class="com.playgileplayground.jira.servlet.pluginConfiguration">
+ <servlet name="Playgile plugin configuration" i18n-name-key="plugin-configuration.name" key="plugin-configuration" class="com.playgileplayground.jira.servlet.PluginConfiguration">
    <description key="plugin-configuration.description">Playgile Configuration</description>
    <url-pattern>/pluginConfiguration</url-pattern>
  </servlet>
- <servlet name="Playgile get active features" i18n-name-key="get-active-features.name" key="get-active-features" class="com.playgileplayground.jira.servlet.getActiveFeatures">
+ <servlet name="Playgile get active features" i18n-name-key="get-active-features.name" key="get-active-features" class="com.playgileplayground.jira.servlet.GetActiveFeatures">
     <description key="get-active-features.description">Playgile Get Active Features</description>
     <url-pattern>/getActiveFeatures</url-pattern>
  </servlet>
- <servlet name="Playgile get analyzed feature" i18n-name-key="get-analyzed-feature.name" key="get-analyzed-feature" class="com.playgileplayground.jira.servlet.getAnalyzedFeature">
+ <servlet name="Playgile get analyzed feature" i18n-name-key="get-analyzed-feature.name" key="get-analyzed-feature" class="com.playgileplayground.jira.servlet.GetAnalyzedFeature">
     <description key="get-analyzed-feature.description">Playgile Get Analyzed Feature</description>
     <url-pattern>/getAnalyzedFeature</url-pattern>
  </servlet>
- <servlet name="Playgile get preparation features" i18n-name-key="get-preparation-features.name" key="get-preparation-features" class="com.playgileplayground.jira.servlet.getPreparationFeatures">
+ <servlet name="Playgile get preparation features" i18n-name-key="get-preparation-features.name" key="get-preparation-features" class="com.playgileplayground.jira.servlet.GetPreparationFeatures">
     <description key="get-preparation-features.description">Playgile Get Preparation Features</description>
     <url-pattern>/getPreparationFeatures</url-pattern>
  </servlet>
- <servlet name="Playgile get analyzed preparation feature" i18n-name-key="get-analyzed-preparation-feature.name" key="get-analyzed-preparation-feature" class="com.playgileplayground.jira.servlet.getAnalyzedPreparationFeature">
+ <servlet name="Playgile get analyzed preparation feature" i18n-name-key="get-analyzed-preparation-feature.name" key="get-analyzed-preparation-feature" class="com.playgileplayground.jira.servlet.GetAnalyzedPreparationFeature">
     <description key="get-analyzed-preparation-feature.description">Playgile Get Analyzed Preparation Feature</description>
     <url-pattern>/getAnalyzedPreparationFeature</url-pattern>
  </servlet>
- <servlet name="Playgile get all stories for project" i18n-name-key="get-all-project-stories.name" key="get-all-project-stories" class="com.playgileplayground.jira.servlet.getAllStories">
+ <servlet name="Playgile get all stories for project" i18n-name-key="get-all-project-stories.name" key="get-all-project-stories" class="com.playgileplayground.jira.servlet.GetAllStories">
     <description key="get-all-project-stories.description">Playgile get all stories for project</description>
     <url-pattern>/getAllStories</url-pattern>
  </servlet>
-    <servlet name="Playgile switch View Type" i18n-name-key="switch-view-type.name" key="switch-view-type" class="com.playgileplayground.jira.servlet.SwitchViewType">
-        <description key="switch-view-type.description">Playgile Switch View Type</description>
-        <url-pattern>/switchViewType</url-pattern>
-    </servlet>
+ <servlet name="Playgile Project Configuration" i18n-name-key="project-configuration.name" key="project-configuration" class="com.playgileplayground.jira.servlet.ProjectConfiguration">
+    <description key="project-configuration.description">Playgile Project Configuration</description>
+    <url-pattern>/projectConfiguration</url-pattern>
+ </servlet>
+ <servlet name="Playgile Update Progress List" i18n-name-key="update-progress-list.name" key="update-progress-list" class="com.playgileplayground.jira.servlet.UpdateProgressList">
+    <description key="update-progress-list.description">Playgile Update Progress List</description>
+    <url-pattern>/updateProgressList</url-pattern>
+ </servlet>
 </atlassian-plugin>

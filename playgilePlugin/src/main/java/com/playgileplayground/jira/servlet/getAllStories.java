@@ -1,5 +1,6 @@
 package com.playgileplayground.jira.servlet;
 
+    import com.atlassian.activeobjects.external.ActiveObjects;
     import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
@@ -25,16 +26,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Scanned
-public class getAllStories extends HttpServlet {
+public class GetAllStories extends HttpServlet {
     @ComponentImport
     TemplateRenderer templateRenderer;
     @ComponentImport
     ProjectManager projectManager;
     @ComponentImport
     SearchService searchService;
+    @ComponentImport
+    ActiveObjects ao;
 
-    public getAllStories(TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
+    public GetAllStories(ActiveObjects ao, TemplateRenderer templateRenderer, ProjectManager projectManager, SearchService searchService)
     {
+        this.ao = ao;
         this.templateRenderer = templateRenderer;
         this.projectManager = projectManager;
         this.searchService = searchService;
@@ -71,7 +75,7 @@ public class getAllStories extends HttpServlet {
 
             String issueTypeKey = Optional.ofNullable(req.getParameter("issueType")).orElse("story");
 
-            JiraInterface jiraInterface = new JiraInterface(applicationUser, searchService);
+            JiraInterface jiraInterface = new JiraInterface(ao, applicationUser, searchService);
 
             Project currentProject = projectManager.getProjectByCurrentKey(projectKey);
             if (currentProject == null) {
