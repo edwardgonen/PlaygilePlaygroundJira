@@ -479,6 +479,10 @@ The value is the new value. If the value is < 0 then delete it
 https://jira-sandbox.playtika.com/plugins/servlet/updateProgressList?projectKey=DC&feature=DC-3125&value=2&number=0
 
 
+==================== Build plugin ==================
+atlas-package -DskipTests=true
+
+
 
 
 
