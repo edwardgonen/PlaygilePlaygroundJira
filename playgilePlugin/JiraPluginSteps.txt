@@ -483,6 +483,3 @@ https://jira-sandbox.playtika.com/plugins/servlet/updateProgressList?projectKey=
 atlas-package -DskipTests=true
 
 
-
-
-
